@@ -1,0 +1,13 @@
+# Login to Azure subscription
+name: 'Login Azure'
+description: 'Login Azure wraps the az login, allowing for Azure actions to log into Azure'
+inputs: 
+  creds:
+    description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
+    required: true
+branding:
+  icon: 'login.svg'
+  color: 'blue'
+runs:
+  using: 'node12'
+  main: 'lib/main.js'
