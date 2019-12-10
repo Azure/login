@@ -18,7 +18,7 @@ async function main() {
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
-            throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied");
+            throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
         }
 
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
