@@ -36,22 +36,16 @@ jobs:
 
 ```
 
-## Configure deployment credentials:
+## Configure Azure credentials:
 
-For any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
+To fetch the credentials required to authenticate with Azure, run the following command to generate an Azure Service Principal (SPN) with Contributor permissions:
 
-The above example uses user-level credentials i.e., Azure Service Principal for deployment. 
-
-Follow the steps to configure the secret:
-  * Define a new secret under your repository settings, Add secret menu
-  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
-```bash  
-
-   az ad sp create-for-rbac --name "myApp" --role contributor \
+```sh
+az ad sp create-for-rbac --name "myApp" --role contributor \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
                             
-  # Replace {subscription-id}, {resource-group} with the subscription, resource group details
+  # Replace {subscription-id}, {resource-group} with the subscription, resource group details of your keyvault
 
   # The command should output a JSON object similar to this:
 
@@ -62,31 +56,8 @@ Follow the steps to configure the secret:
     "tenantId": "<GUID>",
     (...)
   }
-  
 ```
-  * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
-
-
-# Azure Login metadata file
-
-```yaml
-
-# action.yml
-
-# Login to Azure subscription
-name: 'Login Azure'
-description: 'Login Azure wraps the az login, allowing for Azure actions to log into Azure'
-inputs: 
-  creds: # id of input
-    description: 'Paste the contents of `az ad sp create-for-rbac... as value of secret variable: AZURE_CREDENTIALS'
-    required: true
-branding:
-  icon: 'login.svg' 
-  color: 'blue' 
-runs:
-  using: 'node12'
-  main: 'main.js'
-```
+Add the json output as [a secret](https://aka.ms/create-secrets-for-GitHub-workflows) (let's say with the name `AZURE_CREDENTIALS`) in the GitHub repository. 
 
 # Contributing
 
