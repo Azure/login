@@ -29,6 +29,7 @@ async function main() {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
 
+        await executeAzCliCommand(`cloud set --name AzureUSGovernment`);
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
         console.log("Login successful.");    
