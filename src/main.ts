@@ -19,6 +19,7 @@ async function main() {
         azPath = await io.which("az", true);
         await executeAzCliCommand("--version");
 
+        let cloud = core.getInput('cloud', { required: false });
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
@@ -28,8 +29,12 @@ async function main() {
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
+        if (!cloud){
 
-        await executeAzCliCommand(`cloud set --name AzureUSGovernment`);
+        }else{
+            await executeAzCliCommand(`cloud set --name "${cloud}"`);
+        }
+    
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
         console.log("Login successful.");    
