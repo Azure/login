@@ -5,6 +5,9 @@ inputs:
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: true
+  cloud:
+    description: 'Include the name of the Sovereign cloud that you would like to connect to:  Options include AzureUSGovernment, AzureChinaCloud, AzureGermanCloud'
+    required: false
 branding:
   icon: 'login.svg'
   color: 'blue'
