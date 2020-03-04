@@ -5,12 +5,16 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Sumiran Aggarwal",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^25.1.4",
     "@types/node": "^12.7.11",
+    "jest": "^25.2.4",
+    "jest-circus": "^25.2.7",
+    "ts-jest": "^25.3.0",
     "typescript": "^3.6.3"
   },
   "dependencies": {
