@@ -13,8 +13,7 @@ function setPSModulePath() {
     // TODO: get latest module/setup action
     let azPSVersion: string = "2.6.0";
     let modulePath: string = "";
-    const runner = JSON.parse(process.env.RUNNER_CONTEXT);
-    switch (runner.os) {
+    switch (process.env.RUNNER_OS) {
         case "Linux":
             modulePath = `/usr/share/az_${azPSVersion}:`;
             break;
