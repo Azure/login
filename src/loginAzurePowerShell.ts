@@ -11,7 +11,7 @@ export const initializeAz = async (servicePrincipalId: string, servicePrincipalK
 
 function setPSModulePath() {
     // TODO: get latest module/setup action
-    let azPSVersion: string = "2.6.0";
+    let azPSVersion: string = "3.5.0";
     let modulePath: string = "";
     switch (process.env.RUNNER_OS) {
         case "Linux":
