@@ -64,5 +64,9 @@ async function loginToAzure(servicePrincipalId: string, servicePrincipalKey: str
 }
 
 async function executePowerShellCommand(command: string, options: any = {}) {
-    await exec.exec(`"${psPath}" -Command "${command}"`, [], options);
+    try {
+        await exec.exec(`"${psPath}" -Command "${command}"`, [], options);
+    } catch (error) {
+        throw new Error(error);
+    }
 }
