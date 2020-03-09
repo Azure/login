@@ -1,34 +1,39 @@
+import * as os from 'os';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
+import { defaultCoreCipherList } from 'constants';
 
 var psPath: string;
 
 export const initializeAz = async (servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) => {
     psPath = await io.which("pwsh", true);
     setPSModulePath();
-    setPSModulePath(await getLatestAzModule());
+    setPSModulePath(await getLatestModule());
     await loginToAzure(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
 }
 
-function setPSModulePath(azPSVersion = "") {
+function setPSModulePath(azPSVersion: string = "") {
     let modulePath: string = "";
-    switch (process.env.RUNNER_OS) {
+    const RUNNER: string = process.env.RUNNER_OS || os.type();
+    switch (RUNNER) {
         case "Linux":
             modulePath = `/usr/share/${azPSVersion}:`;
             break;
         case "Windows":
+        case "Windows_NT":
             modulePath = `C:\\Modules\\${azPSVersion};`;
             break;
         case "macOS":
+        case "Darwin":
             // TODO: add modulepath
             break;
     }
     process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
 }
 
-async function getLatestAzModule() {
-    const moduleName = "Az.Accounts";
+async function getLatestModule() {
+    const moduleName: string = "Az.Accounts";
     let output: string = "";
     let error: string = "";
     let options: any = {
