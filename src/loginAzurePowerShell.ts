@@ -2,14 +2,15 @@ import * as os from 'os';
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
-import { defaultCoreCipherList } from 'constants';
 
 var psPath: string;
 
 export const initializeAz = async (servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) => {
     psPath = await io.which("pwsh", true);
+    const prefix = "az_";
     setPSModulePath();
-    setPSModulePath(await getLatestModule());
+    const azLatestVersion: string = await getLatestAzModule();
+    setPSModulePath(`${prefix}${azLatestVersion}`);
     await loginToAzure(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
 }
 
@@ -32,7 +33,7 @@ function setPSModulePath(azPSVersion: string = "") {
     process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
 }
 
-async function getLatestModule() {
+async function getLatestAzModule() {
     const moduleName: string = "Az.Accounts";
     let output: string = "";
     let error: string = "";
@@ -48,7 +49,7 @@ async function getLatestModule() {
     };
     await executePowerShellCommand(`(Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).Version.ToString()`, options);
     core.debug(`Az Module version used: ${output}`);
-    return `az_${output}`;
+    return output;
 }
 
 async function loginToAzure(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) {
@@ -63,9 +64,5 @@ async function loginToAzure(servicePrincipalId: string, servicePrincipalKey: str
 }
 
 async function executePowerShellCommand(command: string, options: any = {}) {
-    try {
-        await exec.exec(`"${psPath}" -Command "${command}"`, [], options);
-    } catch (error) {
-        throw new Error(error);
-    }
+    await exec.exec(`"${psPath}" -Command "${command}"`, [], options);
 }
