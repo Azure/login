@@ -7,11 +7,17 @@ var psPath: string;
 
 export const initializeAz = async (servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) => {
     psPath = await io.which("pwsh", true);
-    const prefix = "az_";
-    setPSModulePath();
-    const azLatestVersion: string = await getLatestAzModule();
-    setPSModulePath(`${prefix}${azLatestVersion}`);
+    await importModule();
     await loginToAzure(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+}
+
+async function importModule() {
+    setPSModulePath();
+    const prefix = "az_";
+    const moduleName: string = "Az.Accounts";
+    const azLatestVersion: string = await getLatestModule(moduleName);
+    core.debug(`Az Module version used: ${azLatestVersion}`);
+    setPSModulePath(`${prefix}${azLatestVersion}`);
 }
 
 function setPSModulePath(azPSVersion: string = "") {
@@ -33,8 +39,7 @@ function setPSModulePath(azPSVersion: string = "") {
     process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
 }
 
-async function getLatestAzModule() {
-    const moduleName: string = "Az.Accounts";
+async function getLatestModule(moduleName: string) {
     let output: string = "";
     let error: string = "";
     let options: any = {
@@ -48,8 +53,7 @@ async function getLatestAzModule() {
         }
     };
     await executePowerShellCommand(`(Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).Version.ToString()`, options);
-    core.debug(`Az Module version used: ${output}`);
-    return output;
+    return output.trim();
 }
 
 async function loginToAzure(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) {
@@ -66,7 +70,7 @@ async function loginToAzure(servicePrincipalId: string, servicePrincipalKey: str
 async function executePowerShellCommand(command: string, options: any = {}) {
     try {
         await exec.exec(`"${psPath}" -Command "${command}"`, [], options);
-    } catch (error) {
+    } catch(error) {
         throw new Error(error);
     }
 }
