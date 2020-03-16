@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 
-import { Constants } from '../Constants';
+import Constants from '../Constants';
 import PowerShellToolRunner from './PowerShellToolRunner';
 
 export default class Utils {
@@ -19,7 +19,7 @@ export default class Utils {
                 }
             }
         };
-        PowerShellToolRunner.init();
+        await PowerShellToolRunner.init();
         await PowerShellToolRunner.executePowerShellCommand(`(Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).Version.ToString()`, options);
         if(!Utils.isValidVersion(output.trim())) {
             return "";

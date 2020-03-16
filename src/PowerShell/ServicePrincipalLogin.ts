@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import Utils from './Utilities/Utils';
 import PowerShellToolRunner from './Utilities/PowerShellToolRunner';
 import ScriptBuilder from './Utilities/ScriptBuilder';
-import { Constants } from './Constants';
+import Constants from './Constants';
 
 export class ServicePrincipalLogin implements IAzurePowerShellSession {
     static readonly environment: string = Constants.environment;
@@ -29,7 +29,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
     }
 
     async login() {
-        PowerShellToolRunner.init();
+        await PowerShellToolRunner.init();
         const scriptBuilder: ScriptBuilder = new ScriptBuilder();
         const script: string = scriptBuilder.getScript(ServicePrincipalLogin.scheme, this.tenantId, this.servicePrincipalId, this.servicePrincipalKey, 
             this.subscriptionId, ServicePrincipalLogin.environment, ServicePrincipalLogin.scopeLevel);
