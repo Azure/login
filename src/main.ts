@@ -4,7 +4,7 @@ import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 
 import { FormatType, SecretParser } from 'actions-secret-parser';
-import { initializeAz } from './loginAzurePowerShell';
+import { ServicePrincipalLogin } from './ServicePrincipalLogin';
 
 var azPath: string;
 var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
@@ -26,12 +26,18 @@ async function main() {
         let servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
+        const enablePSSession = !!core.getInput('enable-PSSession');
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
-        await initializeAz(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+        if (enablePSSession) {
+            console.log(`Running Azure PS Login`);
+            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+            spnlogin.initialize();
+            spnlogin.login();
+        }
         console.log("Login successful.");
     } catch (error) {
         core.error("Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
