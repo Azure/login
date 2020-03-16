@@ -1,8 +1,8 @@
 import * as core from '@actions/core';
 
-import Utils from './Utils';
-import PowerShellToolRunner from './PowerShellToolRunner';
-import ScriptBuilder from './ScriptBuilder';
+import Utils from './Utilities/Utils';
+import PowerShellToolRunner from './Utilities/PowerShellToolRunner';
+import ScriptBuilder from './Utilities/ScriptBuilder';
 import { Constants } from './Constants';
 
 export class ServicePrincipalLogin implements IAzurePowerShellSession {
