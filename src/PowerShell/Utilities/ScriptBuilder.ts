@@ -1,5 +1,5 @@
 export default class ScriptBuilder {
-    script: string;
+    script: string = "";
     getScript(scheme: string, tenantId: string, servicePrincipalId: string, servicePrincipalKey: string, subscriptionId: string, environment: string, scopeLevel: string): string {
         this.script += `Clear-AzContext -Scope Process; Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
         if (scheme === "ServicePrincipal") {
