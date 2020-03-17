@@ -4,7 +4,7 @@ import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 
 import { FormatType, SecretParser } from 'actions-secret-parser';
-import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
+import ServicePrincipalLogin from 'PowerShell/ServicePrincipalLogin';
 
 var azPath: string;
 var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
