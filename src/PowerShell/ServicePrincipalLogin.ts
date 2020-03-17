@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
 
-import Utils from 'PowerShell/Utilities/Utils';
-import PowerShellToolRunner from 'PowerShell/Utilities/PowerShellToolRunner';
-import ScriptBuilder from 'PowerShell/Utilities/ScriptBuilder';
-import Constants from 'PowerShell/Constants';
+import Utils from './Utilities/Utils';
+import PowerShellToolRunner from './Utilities/PowerShellToolRunner';
+import ScriptBuilder from './Utilities/ScriptBuilder';
+import Constants from './Constants';
 
-export default class ServicePrincipalLogin implements IAzurePowerShellSession {
+export class ServicePrincipalLogin implements IAzurePowerShellSession {
     static readonly environment: string = Constants.environment;
     static readonly scopeLevel: string = Constants.scopeLevel;
     static readonly scheme: string = Constants.scheme;

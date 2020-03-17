@@ -1,7 +1,9 @@
 import * as os from 'os';
+import * as exec from '@actions/exec';
+import * as io from '@actions/io';
 
-import Constants from 'PowerShell/Constants';
-import PowerShellToolRunner from 'PowerShell/Utilities/PowerShellToolRunner';
+import Constants from '../Constants';
+import PowerShellToolRunner from './PowerShellToolRunner';
 
 export default class Utils {
     static async getLatestModule(moduleName: string): Promise<string> {
