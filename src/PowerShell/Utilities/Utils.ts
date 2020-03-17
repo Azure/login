@@ -33,17 +33,17 @@ export default class Utils {
     
     static setPSModulePath(azPSVersion: string = "") {
         let modulePath: string = "";
-        const RUNNER: string = process.env.RUNNER_OS || os.type();
-        switch (RUNNER) {
-            case "Linux":
+        const runner: string = process.env.RUNNER_OS || os.type();
+        switch (runner.toLowerCase()) {
+            case "linux":
                 modulePath = `/usr/share/${azPSVersion}:`;
                 break;
-            case "Windows":
-            case "Windows_NT":
+            case "windows":
+            case "windows_nt":
                 modulePath = `C:\\Modules\\${azPSVersion};`;
                 break;
-            case "macOS":
-            case "Darwin":
+            case "macos":
+            case "darwin":
                 // TODO: add modulepath
                 break;
             default:
