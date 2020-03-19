@@ -1,16 +1,50 @@
+import * as core from '@actions/core';
+
+import Constants from "../Constants";
+
 export default class ScriptBuilder {
     script: string = "";
-    getScript(scheme: string, tenantId: string, servicePrincipalId: string, servicePrincipalKey: string, subscriptionId: string, environment: string, scopeLevel: string): string {
-        this.script += `Clear-AzContext -Scope Process; Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
-        if (scheme === "ServicePrincipal") {
-            this.script += `Connect-AzAccount -ServicePrincipal -Tenant ${tenantId} -Credential \
-            (New-Object System.Management.Automation.PSCredential('${servicePrincipalId}',(ConvertTo-SecureString ${servicePrincipalKey} -AsPlainText -Force))) \
-                -Environment ${environment};`;
-            if (scopeLevel === "Subscription") {
-                this.script += `Set-AzContext -SubscriptionId ${subscriptionId} -TenantId ${tenantId};`;
+
+    getAzPSLoginScript(scheme: string, tenantId: string, args: any): string {
+        let command = `Clear-AzContext -Scope Process;
+             Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
+        if (scheme === Constants.ServicePrincipal) {
+            command += `Connect-AzAccount -ServicePrincipal -Tenant ${tenantId} -Credential \
+            (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString ${args.servicePrincipalKey} -AsPlainText -Force))) \
+                -Environment ${args.environment};`;
+            if (args.scopeLevel === Constants.Subscription) {
+                command += `Set-AzContext -SubscriptionId ${args.subscriptionId} -TenantId ${tenantId};`;
             }
         }
-        this.script += `Get-AzContext`;
+        command += `Get-AzContext`;
+        this.script += `try {
+            $$ErrorActionPreference = "Stop";
+            $$output = @{};
+            ${command}
+            $$output['${Constants.Success}'] = "true";
+        }
+        catch {
+            $$output['${Constants.Error}'] = $$_.exception.Message;
+        }
+        return ConvertTo-Json $$a`;
+        core.debug(`Azure PowerShell Login Script: ${this.script}`);
+        return this.script;
+    }
+
+    getLatestModuleScript(moduleName: string): string {
+        const command: string = `Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
+        this.script += `try {
+            $$ErrorActionPreference = "Stop";
+            $$output = @{};
+            $$data = ${command};
+            $$output['${Constants.AzVersion}'] = $$data.Version.ToString();
+            $$output['${Constants.Success}'] = "true";
+        }
+        catch {
+            $$output['${Constants.Error}'] = $$_.exception.Message;
+        }
+        return ConvertTo-Json $$a`;
+        core.debug(`GetLatestModuleScript: ${this.script}`);
         return this.script;
     }
 }

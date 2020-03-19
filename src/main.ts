@@ -30,13 +30,15 @@ async function main() {
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
+        // Attempting Az cli login
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
         if (enablePSSession) {
+            // Attempting Az PS login
             console.log(`Running Azure PS Login`);
             const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
-            spnlogin.initialize();
-            spnlogin.login();
+            await spnlogin.initialize();
+            await spnlogin.login();
         }
         console.log("Login successful.");
     } catch (error) {
