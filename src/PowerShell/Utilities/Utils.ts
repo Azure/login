@@ -1,7 +1,6 @@
 import * as os from 'os';
 
 import Constants from '../Constants';
-import PowerShellToolRunner from './PowerShellToolRunner';
 
 export default class Utils {
     static setPSModulePath(azPSVersion: string = "") {
@@ -17,8 +16,7 @@ export default class Utils {
                 break;
             case "macos":
             case "darwin":
-                // TODO: add modulepath
-                break;
+                throw new Error(`OS not supported`);
             default:
                 throw new Error(`Unknown os: ${runner.toLowerCase()}`);
         }

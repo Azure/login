@@ -25,7 +25,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         Utils.setPSModulePath();
         const script: string = new ScriptBuilder().getLatestModuleScript(Constants.moduleName);
         const outputJson  = await this.getLatestModule(script);
-        const azLatestVersion: string = outputJson.Constants.AzPSVersion;
+        const azLatestVersion: string = outputJson[Constants.AzVersion];
         if (!(Constants.Success in outputJson) || !Utils.isValidVersion(azLatestVersion)) {
             throw new Error(`Invalid AzPSVersion: ${azLatestVersion}`);
         }
@@ -43,7 +43,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             }
         };
         await PowerShellToolRunner.init();
-        await PowerShellToolRunner.executePowerShellCommand(script, options);
+        await PowerShellToolRunner.executePowerShellScriptBlock(script, options);
         return JSON.parse(output.trim());
     }
 
@@ -65,10 +65,10 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         }
         const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
         await PowerShellToolRunner.init();
-        await PowerShellToolRunner.executePowerShellCommand(script, options);
+        await PowerShellToolRunner.executePowerShellScriptBlock(script, options);
         const outputJson: any = JSON.parse(output.trim());
         if (!(Constants.Success in outputJson)) {
-            throw new Error(`Azure PowerShell login failed with error: ${outputJson.Constants.Error}`);
+            throw new Error(`Azure PowerShell login failed with error: ${outputJson[Constants.Error]}`);
         }
     }
 
