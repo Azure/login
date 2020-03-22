@@ -23,28 +23,9 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
 
     async initialize() {
         Utils.setPSModulePath();
-        const script: string = new ScriptBuilder().getLatestModuleScript(Constants.moduleName);
-        const outputJson  = await this.getLatestModule(script);
-        const azLatestVersion: string = outputJson[Constants.AzVersion];
-        if (!(Constants.Success in outputJson) || !Utils.isValidVersion(azLatestVersion)) {
-            throw new Error(`Invalid AzPSVersion: ${azLatestVersion}`);
-        }
+        const azLatestVersion: string = await Utils.getLatestModule(Constants.moduleName);
         core.debug(`Az Module version used: ${azLatestVersion}`);
         Utils.setPSModulePath(`${Constants.prefix}${azLatestVersion}`);
-    }
-
-    private async getLatestModule(script: string): Promise<any> {
-        let output: string = "";
-        const options: any = {
-            listeners: {
-                stdout: (data: Buffer) => {
-                    output += data.toString();
-                }
-            }
-        };
-        await PowerShellToolRunner.init();
-        await PowerShellToolRunner.executePowerShellScriptBlock(script, options);
-        return JSON.parse(output.trim());
     }
 
     async login() {

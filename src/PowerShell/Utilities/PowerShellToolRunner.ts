@@ -17,4 +17,5 @@ export default class PowerShellToolRunner {
     static async executePowerShellCommand(command: string, options: any = {}) {
         await exec.exec(`"${PowerShellToolRunner.psPath}" -Command "${command}"`, [], options);
     }
+    
 }
