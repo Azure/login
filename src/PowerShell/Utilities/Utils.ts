@@ -5,6 +5,15 @@ import ScriptBuilder from './ScriptBuilder';
 import PowerShellToolRunner from './PowerShellToolRunner';
 
 export default class Utils {
+    /**
+     * Add the folder path where Az modules are present to PSModulePath based on runner
+     * 
+     * @param azPSVersion 
+     * 
+     * If azPSVersion is empty, folder path in which all Az modules are present are set
+     * If azPSVersion is not empty, folder path of exact Az module version is set
+     * 
+     */
     static setPSModulePath(azPSVersion: string = "") {
         let modulePath: string = "";
         const runner: string = process.env.RUNNER_OS || os.type();
@@ -37,11 +46,11 @@ export default class Utils {
         await PowerShellToolRunner.init();
         await PowerShellToolRunner.executePowerShellScriptBlock(new ScriptBuilder()
                                 .getLatestModuleScript(moduleName), options);
-        const outputJson = JSON.parse(output.trim());
-        if (!(Constants.Success in outputJson)) {
-            throw new Error(outputJson[Constants.Error]);
+        const result = JSON.parse(output.trim());
+        if (!(Constants.Success in result)) {
+            throw new Error(result[Constants.Error]);
         }
-        const azLatestVersion: string = outputJson[Constants.AzVersion];
+        const azLatestVersion: string = result[Constants.AzVersion];
         if (!Utils.isValidVersion(azLatestVersion)) {
             throw new Error(`Invalid AzPSVersion: ${azLatestVersion}`);
         }

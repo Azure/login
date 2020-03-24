@@ -47,9 +47,9 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
         await PowerShellToolRunner.init();
         await PowerShellToolRunner.executePowerShellScriptBlock(script, options);
-        const outputJson: any = JSON.parse(output.trim());
-        if (!(Constants.Success in outputJson)) {
-            throw new Error(`Azure PowerShell login failed with error: ${outputJson[Constants.Error]}`);
+        const result: any = JSON.parse(output.trim());
+        if (!(Constants.Success in result)) {
+            throw new Error(`Azure PowerShell login failed with error: ${result[Constants.Error]}`);
         }
     }
 
