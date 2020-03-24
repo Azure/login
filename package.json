@@ -17,7 +17,6 @@
     "@actions/core": "^1.1.3",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
-    "actions-secret-parser": "^1.0.2",
-    "tslint": "^6.1.0"
+    "actions-secret-parser": "^1.0.2"
   }
 }
