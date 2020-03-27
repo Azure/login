@@ -51,6 +51,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         if (!(Constants.Success in result)) {
             throw new Error(`Azure PowerShell login failed with error: ${result[Constants.Error]}`);
         }
+        console.log(`Azure PowerShell session successfully initialized`);
     }
 
 }
