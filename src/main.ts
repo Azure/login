@@ -13,6 +13,7 @@ var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREP
 async function main() {
     try {
         // Set user agent variable
+        var isAzCLISuccess = false;
         let usrAgentRepo = crypto.createHash('sha256').update(`${process.env.GITHUB_REPOSITORY}`).digest('hex');
         let actionName = 'AzureLogin';
         let userAgentString = (!!prefix ? `${prefix}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
@@ -36,6 +37,7 @@ async function main() {
         // Attempting Az cli login
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
+        isAzCLISuccess = true;
         if (enablePSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
@@ -45,11 +47,16 @@ async function main() {
         }
         console.log("Login successful.");
     } catch (error) {
-        core.error("Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
+        if (!isAzCLISuccess) {
+            core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
+        } else {
+            core.error(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
+        }
         core.setFailed(error);
     } finally {
         // Reset AZURE_HTTP_USER_AGENT
         core.exportVariable('AZURE_HTTP_USER_AGENT', prefix);
+        core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azPSHostEnv);
     }
 }
 
