@@ -34,7 +34,7 @@ export default class Utils {
         process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
     }
 
-    static async getLatestModule(moduleName: string): Promise<any> {
+    static async getLatestModule(moduleName: string): Promise<string> {
         let output: string = "";
         const options: any = {
             listeners: {
