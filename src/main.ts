@@ -30,7 +30,7 @@ async function main() {
         let servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
-        const enablePSSession = core.getInput('enable-PSSession').toLowerCase() === "true";
+        const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
@@ -38,7 +38,7 @@ async function main() {
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
         isAzCLISuccess = true;
-        if (enablePSSession) {
+        if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
             const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
