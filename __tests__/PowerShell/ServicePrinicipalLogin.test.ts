@@ -12,10 +12,16 @@ afterEach(() => {
     jest.restoreAllMocks();
 });
 
-test('ServicePrincipalLogin initialize should pass', async () => {
-    const initializeSpy = jest.spyOn(spnlogin, 'initialize');
-    await spnlogin.initialize();
-    expect(initializeSpy).toHaveBeenCalled();
+describe('Testing initialize', () => {
+    var initializeSpy;
+    beforeEach(() => {
+        initializeSpy = jest.spyOn(spnlogin, 'initialize');
+    });
+
+    test('ServicePrincipalLogin initialize should pass', async () => {
+        await spnlogin.initialize();
+        expect(initializeSpy).toHaveBeenCalled();
+    });
 });
 
 describe('Testing login', () => {
@@ -23,19 +29,11 @@ describe('Testing login', () => {
     beforeEach(() => {
         loginSpy = jest.spyOn(spnlogin, 'login');
     });
-
+    
     test('ServicePrincipal login should pass', async () => {
         loginSpy.mockImplementationOnce(() => Promise.resolve(
             console.log('Azure PowerShell session successfully initialized')));
         await spnlogin.login();
         expect(loginSpy).toHaveBeenCalled();
-    });
-
-    test('ServicePrincipal login should fail', async () => {
-        loginSpy.mockImplementationOnce(() => {
-           Promise.reject(new Error('Azure PowerShell login failed'));
-        });
-        await spnlogin.login();
-        expect(loginSpy).rejects;
     });
 });

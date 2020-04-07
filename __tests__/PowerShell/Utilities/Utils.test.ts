@@ -38,18 +38,10 @@ describe('Testing getLatestModule', () => {
     beforeEach(() => {
         getLatestModuleSpy = jest.spyOn(Utils, 'getLatestModule');
     });
-
+   
     test('getLatestModule should pass', async () => {
         getLatestModuleSpy.mockImplementationOnce((_moduleName: string) => Promise.resolve(version));
         await Utils.getLatestModule('az');
         expect(getLatestModuleSpy).toHaveBeenCalled();
-    });
-
-    test('getLatestModule should fail', async () => {
-        getLatestModuleSpy.mockImplementationOnce((_moduleName: string) => {
-            Promise.reject(new Error('Invalid AzPSVersion'));
-        });
-        await Utils.getLatestModule('az');
-        expect(getLatestModuleSpy).rejects;
     });
 });
