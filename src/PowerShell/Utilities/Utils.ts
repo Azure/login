@@ -7,12 +7,9 @@ import PowerShellToolRunner from './PowerShellToolRunner';
 export default class Utils {
     /**
      * Add the folder path where Az modules are present to PSModulePath based on runner
-     * 
-     * @param azPSVersion 
-     * 
+     * @param azPSVersion
      * If azPSVersion is empty, folder path in which all Az modules are present are set
      * If azPSVersion is not empty, folder path of exact Az module version is set
-     * 
      */
     static setPSModulePath(azPSVersion: string = "") {
         let modulePath: string = "";
@@ -34,7 +31,7 @@ export default class Utils {
         process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
     }
 
-    static async getLatestModule(moduleName: string): Promise<any> {
+    static async getLatestModule(moduleName: string): Promise<string> {
         let output: string = "";
         const options: any = {
             listeners: {
