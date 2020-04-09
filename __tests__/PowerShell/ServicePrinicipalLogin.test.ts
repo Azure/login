@@ -31,8 +31,7 @@ describe('Testing login', () => {
         loginSpy = jest.spyOn(spnlogin, 'login');
     });
     test('ServicePrincipal login should pass', async () => {
-        loginSpy.mockImplementationOnce(() => Promise.resolve(
-            console.log('Azure PowerShell session successfully initialized')));
+        loginSpy.mockImplementationOnce(() => Promise.resolve());
         await spnlogin.login();
         expect(loginSpy).toHaveBeenCalled();
     });
