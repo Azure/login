@@ -35,8 +35,8 @@ async function main() {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         // Attempting Az cli login
-        await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`);
-        await executeAzCliCommand(`account set --subscription "${subscriptionId}"`);
+        await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
+        await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         isAzCLISuccess = true;
         if (enableAzPSSession) {
             // Attempting Az PS login
@@ -45,7 +45,7 @@ async function main() {
             await spnlogin.initialize();
             await spnlogin.login();
         }
-        console.log("Login successful.");
+        console.log("Login successful.");    
     } catch (error) {
         if (!isAzCLISuccess) {
             core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
@@ -60,9 +60,9 @@ async function main() {
     }
 }
 
-async function executeAzCliCommand(command: string) {
+async function executeAzCliCommand(command: string, silent?: boolean) {
     try {
-        await exec.exec(`"${azPath}" ${command}`, [], {});
+        await exec.exec(`"${azPath}" ${command}`, [],  {silent: !!silent}); 
     }
     catch(error) {
         throw new Error(error);
