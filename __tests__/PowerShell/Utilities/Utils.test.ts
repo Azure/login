@@ -20,17 +20,14 @@ describe('Testing isValidVersion', () => {
 });
 
 describe('Testing setPSModulePath', () => {
-    test('PSModulepath with azPSVersion non-empty', () => {
-        if(!process.env.PSModulePath) {
-            process.env.PSModulePath = process.env.PSModulePath + "modulePath";
-        }
+    test('PSModulePath with azPSVersion non-empty', () => {
         Utils.setPSModulePath(version);
-        expect(process.env.PSModulepath).toContain(version);
+        expect(process.env.PSModulePath).toContain(version);
     });
     test('PSModulePath with azPSVersion empty', () => {
-        const currPSModulePath = process.env.PSModulepath;
+        const prevPSModulePath = process.env.PSModulePath;
         Utils.setPSModulePath();
-        expect(process.env.PSModulePath).not.toEqual(currPSModulePath);
+        expect(process.env.PSModulePath).not.toEqual(prevPSModulePath);
     });
 });
 
