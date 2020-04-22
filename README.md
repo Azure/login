@@ -35,10 +35,12 @@ jobs:
         az webapp list --query "[?state=='Running']"
 
 ```
-
+## Prerequisites:
+  * You should have installed Azure cli on your local machine to run the commands or use the cloudshell in the Azure portal. To install       Azure cli, follow [Install Azure Cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest). To use       cloudshell, follow(https://docs.microsoft.com/en-us/azure/cloud-shell/quickstart).
+  
 ## Configure Azure credentials:
 
-To fetch the credentials required to authenticate with Azure, run the following command to generate an Azure Service Principal (SPN) with Contributor permissions:
+To fetch the credentials required to authenticate with Azure, run the following command in your local Azure cli interface or cloudshell to generate an Azure Service Principal (SPN) with Contributor permissions:
 
 ```sh
 az ad sp create-for-rbac --name "myApp" --role contributor \
