@@ -36,7 +36,7 @@ jobs:
 
 ```
 ## Prerequisites:
-  * You should have installed Azure cli on your local machine to run the commands or use the cloudshell in the Azure portal. To install       Azure cli, follow [Install Azure Cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest). To use       cloudshell, follow(https://docs.microsoft.com/en-us/azure/cloud-shell/quickstart).
+  * You should have installed Azure cli on your local machine to run the commands or use the cloudshell in the Azure portal. To install     Azure cli, follow [Install Azure Cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest). To use       cloudshell, follow [CloudShell Quickstart](https://docs.microsoft.com/en-us/azure/cloud-shell/quickstart).
   
 ## Configure Azure credentials:
 
