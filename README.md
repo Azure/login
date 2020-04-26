@@ -41,6 +41,7 @@ jobs:
 ## Configure Azure credentials:
 
 To fetch the credentials required to authenticate with Azure, run the following command in your local Azure cli interface or cloudshell to generate an Azure Service Principal (SPN) with Contributor permissions:
+Note: The \ character works as a line break on Unix based systems. If you are on a Windows based system the \ character will cause this command to fail. Place this command on a single line if you are using Windows.
 
 ```sh
 az ad sp create-for-rbac --name "myApp" --role contributor \
