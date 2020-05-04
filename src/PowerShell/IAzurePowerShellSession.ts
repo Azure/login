@@ -1,0 +1,4 @@
+interface IAzurePowerShellSession {
+    initialize();
+    login();
+}
