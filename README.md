@@ -7,7 +7,9 @@
 With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
 
 # GitHub Action for Azure Login
-With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI scripts.
+With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
+
+By default, only az cli login will be done. In addition to az cli, you can login using Az module to run Azure PowerShell scripts by setting enable-AzPSSession to true.
 
 Get started today with a [free Azure account](https://azure.com/free/open-source)!
 
@@ -37,6 +39,35 @@ jobs:
         az webapp list --query "[?state=='Running']"
 
 ```
+
+## Sample workflow that uses Azure login action to run Azure PowerShell
+
+```yaml
+
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzurePowerShellLoginSample
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Login via Az module
+      uses: azure/login@v1.1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
+        enable-AzPSSession: true 
+     
+     - run: |
+        Get-AzVM -ResourceGroupName "ResourceGroup11"
+        
+```
+
+Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
 
 ## Configure deployment credentials:
 
@@ -76,18 +107,22 @@ Follow the steps to configure the secret:
 # action.yml
 
 # Login to Azure subscription
-name: 'Login Azure'
-description: 'Login Azure wraps the az login, allowing for Azure actions to log into Azure'
+name: 'Azure Login'
+description: 'Authenticate to Azure and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
 inputs: 
-  creds: # id of input
-    description: 'Paste the contents of `az ad sp create-for-rbac... as value of secret variable: AZURE_CREDENTIALS'
+  creds:
+    description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: true
+  enable-AzPSSession: 
+    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
+    required: false
+    default: false
 branding:
-  icon: 'login.svg' 
-  color: 'blue' 
+  icon: 'login.svg'
+  color: 'blue'
 runs:
   using: 'node12'
-  main: 'main.js'
+  main: 'lib/main.js'
 ```
 
 # Contributing
