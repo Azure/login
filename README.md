@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-    - uses: azure/login@v1
+    - uses: azure/login@v1.1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
@@ -48,11 +48,11 @@ jobs:
 
 on: [push]
 
-name: AzurePowerShellLoginSample
+name: AzurePowerShellSample
 
 jobs:
 
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     
@@ -61,9 +61,19 @@ jobs:
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
         enable-AzPSSession: true 
+    
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+   
+    - name: Run Azure PowerShell script
+      uses: azure/powershell@v1
+      with:
+        azPSVersion: '3.1.0'
+        inlineScript: |
+          Get-AzVM -ResourceGroupName "ActionsDemo"
+        
      
-     - run: |
-        Get-AzVM -ResourceGroupName "ResourceGroup11"
         
 ```
 
