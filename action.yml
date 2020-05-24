@@ -1,6 +1,6 @@
 # Login to Azure subscription
 name: 'Azure Login'
-description: 'Azure Login wraps the az login, allowing Azure actions to log into Azure or to run Az CLI scripts. github.com/Azure/Actions'
+description: 'Authenticate to Azure and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
@@ -8,6 +8,10 @@ inputs:
   cloud:
     description: 'Include the name of the Sovereign cloud that you would like to connect to:  Options include AzureUSGovernment, AzureChinaCloud, AzureGermanCloud'
     required: false
+  enable-AzPSSession: 
+    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
+    required: false
+    default: false
 branding:
   icon: 'login.svg'
   color: 'blue'

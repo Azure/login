@@ -2,10 +2,14 @@
 
 ## Automate your GitHub workflows using Azure Actions
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions)  gives you the flexibility to build an automated software development lifecycle workflow. With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
+[GitHub Actions](https://help.github.com/en/articles/about-github-actions)  gives you the flexibility to build an automated software development lifecycle workflow. 
+
+With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
 
 # GitHub Action for Azure Login
-With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI scripts.
+With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
+
+By default, only az cli login will be done. In addition to az cli, you can login using Az module to run Azure PowerShell scripts by setting enable-AzPSSession to true.
 
 Get started today with a [free Azure account](https://azure.com/free/open-source)!
 
@@ -27,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-    - uses: azure/login@v1
+    - uses: azure/login@v1.1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
@@ -36,16 +40,61 @@ jobs:
 
 ```
 
-## Configure Azure credentials:
+## Sample workflow that uses Azure login action to run Azure PowerShell
 
-To fetch the credentials required to authenticate with Azure, run the following command to generate an Azure Service Principal (SPN) with Contributor permissions:
+```yaml
 
-```sh
-az ad sp create-for-rbac --name "myApp" --role contributor \
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzurePowerShellSample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Login via Az module
+      uses: azure/login@v1.1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
+        enable-AzPSSession: true 
+    
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+   
+    - name: Run Azure PowerShell script
+      uses: azure/powershell@v1
+      with:
+        azPSVersion: '3.1.0'
+        inlineScript: |
+          Get-AzVM -ResourceGroupName "ActionsDemo"
+        
+     
+        
+```
+
+Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
+
+## Configure deployment credentials:
+
+For any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
+
+The above example uses user-level credentials i.e., Azure Service Principal for deployment. 
+
+Follow the steps to configure the secret:
+  * Define a new secret under your repository settings, Add secret menu
+  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+```bash  
+
+   az ad sp create-for-rbac --name "myApp" --role contributor \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
                             
-  # Replace {subscription-id}, {resource-group} with the subscription, resource group details of your keyvault
+  # Replace {subscription-id}, {resource-group} with the subscription, resource group details
 
   # The command should output a JSON object similar to this:
 
@@ -56,8 +105,35 @@ az ad sp create-for-rbac --name "myApp" --role contributor \
     "tenantId": "<GUID>",
     (...)
   }
+  
 ```
-Add the json output as [a secret](https://aka.ms/create-secrets-for-GitHub-workflows) (let's say with the name `AZURE_CREDENTIALS`) in the GitHub repository. 
+  * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
+
+
+# Azure Login metadata file
+
+```yaml
+
+# action.yml
+
+# Login to Azure subscription
+name: 'Azure Login'
+description: 'Authenticate to Azure and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
+inputs: 
+  creds:
+    description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
+    required: true
+  enable-AzPSSession: 
+    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
+    required: false
+    default: false
+branding:
+  icon: 'login.svg'
+  color: 'blue'
+runs:
+  using: 'node12'
+  main: 'lib/main.js'
+```
 
 # Contributing
 
