@@ -20,7 +20,7 @@ async function main() {
         await executeAzCliCommand("--version");
 
         let cloud = core.getInput('cloud', { required: false });
-        if (cloud){
+        if (!!cloud){
             await executeAzCliCommand(`cloud set --name "${cloud}"`);
         }
 
