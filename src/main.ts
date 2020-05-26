@@ -24,7 +24,7 @@ async function main() {
         azPath = await io.which("az", true);
         await executeAzCliCommand("--version");
 
-        let cloud = core.getInput('cloud', { required: false });
+        const cloud = core.getInput('cloud', { required: false });
         if (!!cloud){
             await executeAzCliCommand(`cloud set --name "${cloud}"`);
         }
@@ -46,7 +46,8 @@ async function main() {
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+            
+            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId,cloud);
             await spnlogin.initialize();
             await spnlogin.login();
         }

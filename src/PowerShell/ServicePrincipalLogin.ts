@@ -4,21 +4,24 @@ import Utils from './Utilities/Utils';
 import PowerShellToolRunner from './Utilities/PowerShellToolRunner';
 import ScriptBuilder from './Utilities/ScriptBuilder';
 import Constants from './Constants';
+import { threadId } from 'worker_threads';
 
 export class ServicePrincipalLogin implements IAzurePowerShellSession {
-    static readonly environment: string = Constants.AzureCloud;
     static readonly scopeLevel: string = Constants.Subscription;
     static readonly scheme: string = Constants.ServicePrincipal;
     servicePrincipalId: string;
     servicePrincipalKey: string;
     tenantId: string;
     subscriptionId: string;
+    environment: string;
+    
 
-    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) {
+    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string, cloud: string) {
         this.servicePrincipalId = servicePrincipalId;
         this.servicePrincipalKey = servicePrincipalKey;
         this.tenantId = tenantId;
         this.subscriptionId = subscriptionId;
+        (!!cloud) ? this.environment : Constants.AzureCloud;
     }
 
     async initialize() {
@@ -41,7 +44,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             servicePrincipalId: this.servicePrincipalId,
             servicePrincipalKey: this.servicePrincipalKey,
             subscriptionId: this.subscriptionId,
-            environment: ServicePrincipalLogin.environment,
+            environment: this.environment,
             scopeLevel: ServicePrincipalLogin.scopeLevel
         }
         const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
