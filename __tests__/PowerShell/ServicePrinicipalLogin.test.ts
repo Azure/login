@@ -5,7 +5,7 @@ jest.mock('../../src/PowerShell/Utilities/PowerShellToolRunner');
 let spnlogin: ServicePrincipalLogin;
 
 beforeAll(() => {
-    spnlogin = new ServicePrincipalLogin("servicePrincipalID", "servicePrinicipalkey", "tenantId", "subscriptionId");
+    spnlogin = new ServicePrincipalLogin("servicePrincipalID", "servicePrinicipalkey", "tenantId", "subscriptionId", "cloud");
 });
 
 afterEach(() => {
