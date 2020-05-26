@@ -26,7 +26,7 @@ async function main() {
 
         const cloud = core.getInput('cloud', { required: false });
         if (!!cloud){
-            await executeAzCliCommand(`cloud set --name "${cloud}"`);
+            await executeAzCliCommand(`cloud set --name "${cloud}"`, true);
         }
 
         let creds = core.getInput('creds', { required: true });
