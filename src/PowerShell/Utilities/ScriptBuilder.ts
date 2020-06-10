@@ -9,11 +9,11 @@ export default class ScriptBuilder {
         let command = `Clear-AzContext -Scope Process;
              Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
         if (scheme === Constants.ServicePrincipal) {
-            command += `Connect-AzAccount -ServicePrincipal -Tenant ${tenantId} -Credential \
-            (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString ${args.servicePrincipalKey} -AsPlainText -Force))) \
-                -Environment ${args.environment} | out-null;`;
+            command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
+            (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey}' -AsPlainText -Force))) \
+                -Environment '${args.environment}' | out-null;`;
             if (args.scopeLevel === Constants.Subscription) {
-                command += `Set-AzContext -SubscriptionId ${args.subscriptionId} -TenantId ${tenantId} | out-null;`;
+                command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
             }
         }
         this.script += `try {
@@ -32,7 +32,7 @@ export default class ScriptBuilder {
     }
 
     getLatestModuleScript(moduleName: string): string {
-        const command: string = `Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
+        const command: string = `Get-Module -Name '${moduleName}' -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
         this.script += `try {
             $ErrorActionPreference = "Stop"
             $WarningPreference = "SilentlyContinue"
