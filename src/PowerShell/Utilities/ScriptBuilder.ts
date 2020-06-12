@@ -32,7 +32,7 @@ export default class ScriptBuilder {
     }
 
     getLatestModuleScript(moduleName: string): string {
-        const command: string = `Get-Module -Name '${moduleName}' -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
+        const command: string = `Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
         this.script += `try {
             $ErrorActionPreference = "Stop"
             $WarningPreference = "SilentlyContinue"
