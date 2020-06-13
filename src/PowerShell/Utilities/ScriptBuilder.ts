@@ -10,7 +10,7 @@ export default class ScriptBuilder {
              Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
         if (scheme === Constants.ServicePrincipal) {
             command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
-            (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey}' -AsPlainText -Force))) \
+            (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey.replace("'", "''")}' -AsPlainText -Force))) \
                 -Environment '${args.environment}' | out-null;`;
             if (args.scopeLevel === Constants.Subscription) {
                 command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
@@ -48,4 +48,5 @@ export default class ScriptBuilder {
         core.debug(`GetLatestModuleScript: ${this.script}`);
         return this.script;
     }
+
 }
