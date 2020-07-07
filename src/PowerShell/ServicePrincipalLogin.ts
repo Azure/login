@@ -13,12 +13,18 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
     servicePrincipalKey: string;
     tenantId: string;
     subscriptionId: string;
+    customEnvironmentName: string;
+    resourceManagerEndpointUrl: string;
+    profileVersion: string;
 
-    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) {
+    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string, customEnvironmentName: string, resourceManagerEndpointUrl: string, profileVersion: string) {
         this.servicePrincipalId = servicePrincipalId;
         this.servicePrincipalKey = servicePrincipalKey;
         this.tenantId = tenantId;
         this.subscriptionId = subscriptionId;
+        this.customEnvironmentName = customEnvironmentName;
+        this.resourceManagerEndpointUrl = resourceManagerEndpointUrl;
+        this.profileVersion = profileVersion;
     }
 
     async initialize() {
@@ -42,7 +48,10 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             servicePrincipalKey: this.servicePrincipalKey,
             subscriptionId: this.subscriptionId,
             environment: ServicePrincipalLogin.environment,
-            scopeLevel: ServicePrincipalLogin.scopeLevel
+            scopeLevel: ServicePrincipalLogin.scopeLevel,
+            customEnvironmentName: this.customEnvironmentName,
+            resourceManagerEndpointUrl: this.resourceManagerEndpointUrl,
+            profileVersion: this.profileVersion
         }
         const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
         await PowerShellToolRunner.init();

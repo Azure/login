@@ -9,6 +9,10 @@ export default class ScriptBuilder {
         let command = `Clear-AzContext -Scope Process;
              Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
         if (scheme === Constants.ServicePrincipal) {
+            if (args.customEnvironmentName != "") {
+                command += `Add-AzEnvironment -Name ${args.customEnvironmentName} -ARMEndpoint ${args.resourceManagerEndpointUrl} | out-null;`;
+                args.environment = args.customEnvironmentName;
+            }
             command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
             (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey.replace("'", "''")}' -AsPlainText -Force))) \
                 -Environment '${args.environment}' | out-null;`;
