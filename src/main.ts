@@ -31,19 +31,23 @@ async function main() {
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-        let profileVersion = secrets.getSecret("$.profileVersion", false);
-        let customEnvironmentName = secrets.getSecret("$.customEnvironmentName", false);
+        let profileVersion = core.getInput("profileVersion");
+        let customEnvironmentName = core.getInput("customEnvironmentName");
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         // Attempting Az cli login
         if (customEnvironmentName != "") {
+            if (!resourceManagerEndpointUrl) {
+                throw new Error("resourceManagerEndpointUrl is a required parameter when customEnvironmentName is defined.")
+            }
             console.log(`Registering custom cloud: "${customEnvironmentName}" with ARM endpoint: "${resourceManagerEndpointUrl}"`);
             try {
-                await executeAzCliCommand(`cloud register -n "${customEnvironmentName}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" `, false);
-            }
-            catch(error) {
+                let suffixKeyvault = ".vault" + resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'))
+                let suffixStorage = resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'))
+                await executeAzCliCommand(`cloud register -n "${customEnvironmentName}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" `, false);
+            } catch(error) {
                 console.log(`Ignore already registered cloud: "${error}"`);
             }
             await executeAzCliCommand(`cloud set -n "${customEnvironmentName}"`, false);
