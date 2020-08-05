@@ -13,16 +13,16 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
     servicePrincipalKey: string;
     tenantId: string;
     subscriptionId: string;
-    customEnvironmentName: string;
+    environmentName: string;
     resourceManagerEndpointUrl: string;
     profileVersion: string;
 
-    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string, customEnvironmentName: string, resourceManagerEndpointUrl: string, profileVersion: string) {
+    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string, environmentName: string, resourceManagerEndpointUrl: string, profileVersion: string) {
         this.servicePrincipalId = servicePrincipalId;
         this.servicePrincipalKey = servicePrincipalKey;
         this.tenantId = tenantId;
         this.subscriptionId = subscriptionId;
-        this.customEnvironmentName = customEnvironmentName;
+        this.environmentName = environmentName;
         this.resourceManagerEndpointUrl = resourceManagerEndpointUrl;
         this.profileVersion = profileVersion;
     }
@@ -49,7 +49,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             subscriptionId: this.subscriptionId,
             environment: ServicePrincipalLogin.environment,
             scopeLevel: ServicePrincipalLogin.scopeLevel,
-            customEnvironmentName: this.customEnvironmentName,
+            environmentName: this.environmentName,
             resourceManagerEndpointUrl: this.resourceManagerEndpointUrl,
             profileVersion: this.profileVersion
         }

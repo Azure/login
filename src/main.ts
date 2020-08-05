@@ -31,27 +31,27 @@ async function main() {
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        let environmentName = core.getInput("environmentName");
         let profileVersion = core.getInput("profileVersion");
-        let customEnvironmentName = core.getInput("customEnvironmentName");
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         // Attempting Az cli login
-        if (customEnvironmentName != "") {
+        if (environmentName != "") {
             if (!resourceManagerEndpointUrl) {
-                throw new Error("resourceManagerEndpointUrl is a required parameter when customEnvironmentName is defined.")
+                throw new Error("resourceManagerEndpointUrl is a required parameter when environmentName is defined.");
             }
-            console.log(`Registering custom cloud: "${customEnvironmentName}" with ARM endpoint: "${resourceManagerEndpointUrl}"`);
+            console.log(`Registering custom cloud: "${environmentName}" with ARM endpoint: "${resourceManagerEndpointUrl}"`);
             try {
-                let suffixKeyvault = ".vault" + resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'))
-                let suffixStorage = resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'))
-                await executeAzCliCommand(`cloud register -n "${customEnvironmentName}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" `, false);
+                let suffixKeyvault = ".vault" + resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'));
+                let suffixStorage = resourceManagerEndpointUrl.substring(resourceManagerEndpointUrl.indexOf('.'));
+                await executeAzCliCommand(`cloud register -n "${environmentName}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" `, false);
             } catch(error) {
                 console.log(`Ignore already registered cloud: "${error}"`);
             }
-            await executeAzCliCommand(`cloud set -n "${customEnvironmentName}"`, false);
-            console.log(`Done registering custom cloud: "${customEnvironmentName}"`);
+            await executeAzCliCommand(`cloud set -n "${environmentName}"`, false);
+            console.log(`Done registering custom cloud: "${environmentName}"`);
         }
         if (profileVersion != "") {
             console.log(`updating profile version to "${profileVersion}"`);
@@ -63,7 +63,7 @@ async function main() {
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId, customEnvironmentName, resourceManagerEndpointUrl, profileVersion);
+            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId, environmentName, resourceManagerEndpointUrl, profileVersion);
             await spnlogin.initialize();
             await spnlogin.login();
         }
