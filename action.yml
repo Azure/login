@@ -9,12 +9,10 @@ inputs:
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
     default: false
-  environmentName:
-    description: 'Name of the environment if running against Azure Stack'
+  environment:
+    description: 'Name of the environment. Supported values are AzureStack, AzureCloud. Default being AzureCloud'
     required: false
-  profileVersion:
-    description: 'Set this value to 2019-03-01-hybrid if running against Azure Stack'
-    required: false
+    default: AzureCloud
 branding:
   icon: 'login.svg'
   color: 'blue'
