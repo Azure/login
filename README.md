@@ -86,8 +86,9 @@ For any credentials like Azure Service Principal, Publish Profile etc add them a
 The above example uses user-level credentials i.e., Azure Service Principal for deployment. 
 
 Follow the steps to configure the secret:
-  * Define a new secret under your repository settings, Add secret menu
-  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+  * Define a new secret variable under your repository **Settings** -> **Secrets** -> **New secret**.  Provide a secret variable **Name**, for example 'AZURE_CREDENTIALS'. 
+  * Run the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command and Store the output as the **Value** of the secret variable
+  * Below *az ad* command scopes the service principal to a specific resource group *{resource-group}* within a specific Azure subscription *{subscription-id}*
 ```bash  
 
    az ad sp create-for-rbac --name "myApp" --role contributor \
@@ -107,33 +108,17 @@ Follow the steps to configure the secret:
   }
   
 ```
+ * You can also further scope down the Azure Credentials to a specific Azure resource, for example - a Web App by specifying the path to the specic resource in the *--scopes* attribute. Below script is for scoping the credentials to a web app of name *{app-name}*
+```bash
+   az ad sp create-for-rbac --name "myApp" --role contributor \
+                            --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name} \
+                            --sdk-auth
+
+  # Replace {subscription-id}, {resource-group}, and {app-name} with the names of your subscription, resource group, and Azure Web App.
+```
   * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
 
 
-# Azure Login metadata file
-
-```yaml
-
-# action.yml
-
-# Login to Azure subscription
-name: 'Azure Login'
-description: 'Authenticate to Azure and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
-inputs: 
-  creds:
-    description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
-    required: true
-  enable-AzPSSession: 
-    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
-    required: false
-    default: false
-branding:
-  icon: 'login.svg'
-  color: 'blue'
-runs:
-  using: 'node12'
-  main: 'lib/main.js'
-```
 
 # Contributing
 
