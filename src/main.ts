@@ -30,18 +30,47 @@ async function main() {
         let servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
+        let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        let environment = core.getInput("environment");
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         // Attempting Az cli login
+        if (environment.toLowerCase() == "azurestack") {
+            if (!resourceManagerEndpointUrl) {
+                throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
+            }
+            console.log(`Unregistering cloud: "${environment}" first if it exists`);
+            try {
+                await executeAzCliCommand(`cloud set -n AzureCloud`, true);
+                await executeAzCliCommand(`cloud unregister -n "${environment}"`, false);
+            } catch (error) {
+                console.log(`Ignore cloud not registered error: "${error}"`);
+            }
+            console.log(`Registering cloud: "${environment}" with ARM endpoint: "${resourceManagerEndpointUrl}"`);
+            try {
+                let baseUri = resourceManagerEndpointUrl;
+                if (baseUri.endsWith('/')) {
+                    baseUri = baseUri.substring(0, baseUri.length-1); // need to remove trailing / from resourceManagerEndpointUrl to correctly derive suffixes below
+                }
+                let suffixKeyvault = ".vault" + baseUri.substring(baseUri.indexOf('.')); // keyvault suffix starts with .
+                let suffixStorage = baseUri.substring(baseUri.indexOf('.')+1); // storage suffix starts without .
+                let profileVersion = "2019-03-01-hybrid";
+                await executeAzCliCommand(`cloud register -n "${environment}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" --profile "${profileVersion}"`, false);
+            } catch (error) {
+                core.error(`Error while trying to register cloud "${environment}": "${error}"`);
+            }
+            await executeAzCliCommand(`cloud set -n "${environment}"`, false);
+            console.log(`Done registering cloud: "${environment}"`);
+        }
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         isAzCLISuccess = true;
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId, environment, resourceManagerEndpointUrl);
             await spnlogin.initialize();
             await spnlogin.login();
         }
