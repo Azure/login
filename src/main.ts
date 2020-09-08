@@ -35,6 +35,7 @@ async function main() {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         // Attempting Az cli login
+        await executeAzCliCommand(`cloud set -n AzureChinaCloud`, true);
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         isAzCLISuccess = true;
