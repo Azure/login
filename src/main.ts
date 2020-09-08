@@ -25,7 +25,6 @@ async function main() {
         await executeAzCliCommand("--version");
 
         let provider = core.getInput('provider');
-        console.log(`provider = "${provider}"`);
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
