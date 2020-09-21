@@ -1,4 +1,4 @@
-# GitHub Actions for deploying to Azure
+# GitHub Actions Beta Preview for deploying to Azure Stack Hub
 
 ## Automate your GitHub workflows using Azure Actions
 
@@ -15,7 +15,7 @@ Get started today with a [free Azure account](https://azure.com/free/open-source
 
 This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
 
-## Sample workflow that uses Azure login action to run az cli
+## Sample workflow that uses Azure login action to run az cli on Azure Stack Hub
 
 ```yaml
 
@@ -31,16 +31,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-    - uses: azure/login@v1.1
+    - uses: azure/login@AzureStackSupport-Beta
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+        environment: 'AzureStack'
     
     - run: |
         az webapp list --query "[?state=='Running']"
 
 ```
 
-## Sample workflow that uses Azure login action to run Azure PowerShell
+## Sample workflow that uses Azure login action to run Azure PowerShell on Azure Stack Hub
 
 ```yaml
 
@@ -57,10 +58,11 @@ jobs:
     steps:
     
     - name: Login via Az module
-      uses: azure/login@v1.1
+      uses: azure/login@AzureStackSupport-Beta
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
         enable-AzPSSession: true 
+        environment: 'AzureStack'
     
     - name: Run Az CLI script
       run: |
@@ -79,7 +81,7 @@ jobs:
 
 Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
 
-## Configure deployment credentials:
+## Configure deployment credentials (AAD):
 
 For any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
 
@@ -87,9 +89,14 @@ The above example uses user-level credentials i.e., Azure Service Principal for 
 
 Follow the steps to configure the secret:
   * Define a new secret under your repository settings, Add secret menu
-  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+  * For Azure Stack Hub Environments- Run the following command to set the SQL Management endpoint to not supported
 ```bash  
 
+az cloud update -n {environmentName} --endpoint-sql-management https://notsupported 
+
+```
+  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+```bash  
    az ad sp create-for-rbac --name "myApp" --role contributor \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
@@ -123,6 +130,10 @@ inputs:
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: true
+  environment: 
+    description: 'Set value to AzureStack for an Azure Stack Hub environment'
+    required: false
+    default: AzureCloud
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
