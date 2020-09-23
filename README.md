@@ -89,7 +89,7 @@ The above example uses user-level credentials i.e., Azure Service Principal for 
 
 Follow the steps to configure the secret:
   * Define a new secret under your repository settings, Add secret menu
-  * For Azure Stack Hub Environments- Run the following command to set the SQL Management endpoint to not supported
+  * For Azure Stack Hub Environments- Run the following command to set the SQL Management endpoint to 'not supported'
 ```bash  
 
 az cloud update -n {environmentName} --endpoint-sql-management https://notsupported 
