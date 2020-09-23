@@ -14,6 +14,8 @@ jobs:
         matrix:
           os: [windows-latest, ubuntu-latest]
     steps:
+    - name: Azure Login
+      uses: Azure/login@v1
 
     - name: 'Checking out repo code'
       uses: actions/checkout@v2
