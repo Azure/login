@@ -108,7 +108,7 @@ Follow the steps to configure the secret:
   }
   
 ```
- * You can also further scope down the Azure Credentials to a specific Azure resource, for example - a Web App by specifying the path to the specic resource in the *--scopes* attribute. Below script is for scoping the credentials to a web app of name *{app-name}*
+ * You can also further scope down the Azure Credentials to a specific Azure resource, for example - a Web App by specifying the path to the specific resource in the *--scopes* attribute. Below script is for scoping the credentials to a web app of name *{app-name}*
 ```bash
    az ad sp create-for-rbac --name "myApp" --role contributor \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name} \
