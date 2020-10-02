@@ -8,19 +8,25 @@ export default class Utils {
     /**
      * Add the folder path where Az modules are present to PSModulePath based on runner
      * @param azPSVersion
-     * If azPSVersion is empty, folder path in which all Az modules are present are set
-     * If azPSVersion is not empty, folder path of exact Az module version is set
+     * Obtain specified version, otherwise use latest version installed
+     * @returns Az Powershell version added to path
      */
-    static setPSModulePath(azPSVersion: string = "") {
+    static async setPSModulePath(azPSVersion: string = "latest"): Promise<string> {
         let modulePath: string = "";
+        let modulePathRoot: string = "";
+        let modulePathSeparator: string = "";
+        let modulePathPrefix: string = "";
         const runner: string = process.env.RUNNER_OS || os.type();
+
         switch (runner.toLowerCase()) {
             case "linux":
-                modulePath = `/usr/share/${azPSVersion}:`;
+                modulePathRoot = '/usr/share/';
+                modulePathSeparator = ':';
                 break;
             case "windows":
             case "windows_nt":
-                modulePath = `C:\\Modules\\${azPSVersion};`;
+                modulePathRoot = 'C:\\Modules\\';
+                modulePathSeparator = ';';
                 break;
             case "macos":
             case "darwin":
@@ -28,10 +34,20 @@ export default class Utils {
             default:
                 throw new Error(`Unknown os: ${runner.toLowerCase()}`);
         }
+
+        modulePathPrefix = `${modulePathRoot}${Constants.prefix}`;
+        
+        if(azPSVersion === "latest") { // transform to latest version
+            azPSVersion = await Utils.getLatestAzModule(modulePathPrefix);
+        }
+        
+        modulePath = `${modulePathPrefix}${azPSVersion}${modulePathSeparator}`;
         process.env.PSModulePath = `${modulePath}${process.env.PSModulePath}`;
+
+        return azPSVersion;
     }
 
-    static async getLatestModule(moduleName: string): Promise<string> {
+    static async getLatestAzModule(azPathPrefix: string): Promise<string> {
         let output: string = "";
         const options: any = {
             listeners: {
@@ -42,7 +58,7 @@ export default class Utils {
         };
         await PowerShellToolRunner.init();
         await PowerShellToolRunner.executePowerShellScriptBlock(new ScriptBuilder()
-                                .getLatestModuleScript(moduleName), options);
+                                .getLatestAzModuleScript(azPathPrefix), options);
         const result = JSON.parse(output.trim());
         if (!(Constants.Success in result)) {
             throw new Error(result[Constants.Error]);

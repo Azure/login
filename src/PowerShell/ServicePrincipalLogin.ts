@@ -22,10 +22,8 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
     }
 
     async initialize() {
-        Utils.setPSModulePath();
-        const azLatestVersion: string = await Utils.getLatestModule(Constants.moduleName);
+        const azLatestVersion: string = await Utils.setPSModulePath("latest");
         core.debug(`Az Module version used: ${azLatestVersion}`);
-        Utils.setPSModulePath(`${Constants.prefix}${azLatestVersion}`);
     }
 
     async login() {

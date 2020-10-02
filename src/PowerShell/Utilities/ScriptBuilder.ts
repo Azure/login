@@ -31,14 +31,25 @@ export default class ScriptBuilder {
         return this.script;
     }
 
-    getLatestModuleScript(moduleName: string): string {
-        const command: string = `Get-Module -Name ${moduleName} -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1`;
+    getLatestAzModuleScript(azPathPrefix: string): string {        
+        const command: string = `$(if (Test-Path ${azPathPrefix}*) { \`
+                                   (Get-ChildItem ${azPathPrefix}* -Directory -Name \`
+                                       | Sort-Object -Descending \`
+                                       | Select-Object -First 1 \`
+                                   ).Substring(${Constants.prefix.length}) \`
+                                 } else {  \` 
+                                    (Get-Module -Name ${Constants.moduleName} -ListAvailable \`
+                                       | Sort-Object Version -Descending \`
+                                       | Select-Object -First 1 -ExpandProperty Version \`
+                                    ).ToString() \`
+                                 })`;
+
         this.script += `try {
             $ErrorActionPreference = "Stop"
             $WarningPreference = "SilentlyContinue"
             $output = @{}
             $data = ${command}
-            $output['${Constants.AzVersion}'] = $data.Version.ToString()
+            $output['${Constants.AzVersion}'] = $data
             $output['${Constants.Success}'] = "true"
         }
         catch {

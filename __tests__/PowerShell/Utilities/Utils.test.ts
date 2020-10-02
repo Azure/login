@@ -20,26 +20,26 @@ describe('Testing isValidVersion', () => {
 });
 
 describe('Testing setPSModulePath', () => {
-    test('PSModulePath with azPSVersion non-empty', () => {
-        Utils.setPSModulePath(version);
+    test('PSModulePath with azPSVersion non-empty', async () => {
+        await Utils.setPSModulePath(version);
         expect(process.env.PSModulePath).toContain(version);
     });
-    test('PSModulePath with azPSVersion empty', () => {
+    test('PSModulePath with azPSVersion empty', async () => {
         const prevPSModulePath = process.env.PSModulePath;
-        Utils.setPSModulePath();
+        await Utils.setPSModulePath();
         expect(process.env.PSModulePath).not.toEqual(prevPSModulePath);
     });
 });
 
-describe('Testing getLatestModule', () => {
-    let getLatestModuleSpy;
+describe('Testing getLatestAzModule', () => {
+    let getLatestAzModuleSpy;
 
     beforeEach(() => {
-        getLatestModuleSpy = jest.spyOn(Utils, 'getLatestModule');
+        getLatestAzModuleSpy = jest.spyOn(Utils, 'getLatestAzModule');
     });
-    test('getLatestModule should pass', async () => {
-        getLatestModuleSpy.mockImplementationOnce((_moduleName: string) => Promise.resolve(version));
-        await Utils.getLatestModule(moduleName);
-        expect(getLatestModuleSpy).toHaveBeenCalled();
+    test('getLatestAzModule should pass', async () => {
+        getLatestAzModuleSpy.mockImplementationOnce((_moduleName: string) => Promise.resolve(version));
+        await Utils.getLatestAzModule(moduleName);
+        expect(getLatestAzModuleSpy).toHaveBeenCalled();
     });
 });
