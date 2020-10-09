@@ -14,7 +14,7 @@ async function main() {
     try {
         // Set user agent variable
         var isAzCLISuccess = false;
-        let usrAgentRepo = ${process.env.GITHUB_REPOSITORY};
+        let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
         let actionName = 'AzureLogin';
         let userAgentString = (!!prefix ? `${prefix}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
         let azurePSHostEnv = (!!azPSHostEnv ? `${azPSHostEnv}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
