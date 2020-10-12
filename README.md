@@ -130,6 +130,93 @@ The following steps describe how to create the service principal, assign the rol
 
 NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
 
+## Using Azure Managed Identities with self-hosted runners:
+If using managed identities (system- or user-assigned), a **self-hosted Github runner is required**, installed on an Azure VM with a managed identity configured. To use managed identity, set the `enable-managed-identity` flag to `true`. This will use a system-assigned managed identity unless the resource ID of a user-assigned managed identity is supplied. This supports az CLI in addition to Azure Powershell.
+To get the resource ID of a user-assigned managed identity:
+- in the portal, `Resource ID` is available in the Properties blade of the user-assigned managed identity resource
+- in az PowerShell, use this command: `$(Get-AzUserAssignedIdentity -Name name-of-the-managed-identity-resource -ResourceGroupName name-of-the-resource-group).Id`{:.pwsh}
+- in az cli, use this command: `az identity list -g resource-group-name`{:.bash}
+The resource ID usually follows a format similar to this:
+
+`/subscriptions/subscription-id/resourcegroups/resource-group-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/your-user-assigned-managed-identity-name`
+
+Subscription ID is not required, although some managed identities may have permission in more than one subscription. Provide the subscription ID via a secret to explictly use a specific subscription.
+
+## Sample workflow that uses Azure login action with system-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Azure System-assigned Managed Identity sample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+
+    - name: Login via Az module
+      uses: azure/login@v1.XX
+      with:
+        enable-managed-identity: true
+
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+```
+## Sample workflow that uses Azure login action with user-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Azure User-assigned Managed Identity sample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+
+    - name: Login via Az module
+      uses: azure/login@v1.XX
+      with:
+        enable-managed-identity: true
+        user-managed-identity-resource-id: "/subscriptions/subscription-id/resourcegroups/resource-group-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/your-user-assigned-managed-identity-name"
+
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+```
+## Sample workflow that uses Azure login action with user-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Azure User-assigned Managed Identity sample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+
+    - name: Login via Az module
+      uses: azure/login@v1.XX
+      with:
+        enable-managed-identity: true
+        user-managed-identity-resource-id: "/subscriptions/subscription-id/resourcegroups/resource-group-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/your-user-assigned-managed-identity-name"
+        managed-identity-subscription-id: ${{secrets.SUBSCRIPTION_ID}}
+
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+```
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
