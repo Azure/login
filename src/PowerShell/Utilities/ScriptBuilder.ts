@@ -5,16 +5,22 @@ import Constants from "../Constants";
 export default class ScriptBuilder {
     script: string = "";
 
-    getAzPSLoginScript(scheme: string, tenantId: string, args: any): string {
+    getAzPSLoginScript(scheme: string, tenantId: string, args: any, userManagedIdentityResourceId?: string): string {
         let command = `Clear-AzContext -Scope Process;
              Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
         if (scheme === Constants.ServicePrincipal) {
             command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
             (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey.replace("'", "''")}' -AsPlainText -Force))) \
                 -Environment '${args.environment}' | out-null;`;
+        }
+        if (scheme === Constants.SystemManagedIdentity) {
+            command += `Connect-AzAccount -Identity | out-null`
+        }
+        if (scheme === Constants.UserManagedIdentity && userManagedIdentityResourceId) {
+            command += `Connect-AzAccount -Identity -AccountId '${userManagedIdentityResourceId}' | out-null;`
+        }
             if (args.scopeLevel === Constants.Subscription) {
                 command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
-            }
         }
         this.script += `try {
             $ErrorActionPreference = "Stop"

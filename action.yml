@@ -4,7 +4,21 @@ description: 'Authenticate to Azure and run your Az CLI or Az�
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
-    required: true
+    required: false
+  enable-managed-identity: 
+    description: >-
+      'Set this value to true to enable Managed Identity for your action. Requires a self-hosted Github runner on an Azure VM with Managed Identity enabled.'
+    required: false
+    default: false
+  user-managed-identity-resource-id:
+    description: >-
+      'Set this value to the Resource ID of your user managed identity. If using a system managed identity, leave this empty.
+      This setting has no effect if enable-managed-identity is false.'
+    required: false
+  managed-identity-subscription-id: 
+    description: >- 
+      'When using Managed Identity, subscription is not required, however if the managed identity has access to multiple subscriptions, indicate the target subscription ID
+      using a secret.'
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false

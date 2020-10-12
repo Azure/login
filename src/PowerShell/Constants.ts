@@ -6,6 +6,8 @@ export default class Constants {
     static readonly AzureCloud: string = "AzureCloud";
     static readonly Subscription: string = "Subscription";
     static readonly ServicePrincipal: string = "ServicePrincipal";
+    static readonly SystemManagedIdentity: string = "SystemManagedIdentity";
+    static UserManagedIdentity: string = "UserManagedIdentity";
 
     static readonly Success: string = "Success";
     static readonly Error: string = "Error";
