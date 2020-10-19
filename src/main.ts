@@ -26,6 +26,7 @@ async function main() {
 
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
+        let azCloudName= core.getInput('azcloudname', { required: false }); 
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
         let servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
         let tenantId = secrets.getSecret("$.tenantId", false);
@@ -34,6 +35,10 @@ async function main() {
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
+        //uf value is passed for Azure Gov Cloud
+        if (azCloudName==='AzureUSGovernment' || azCloudName==='AzureGermanCloud' || azCloudName==='AzureChinaCloud' ) {
+  	       await executeAzCliCommand(`az cloud set --name"${azCloudName}"`, true);        
+        } 
         // Attempting Az cli login
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
