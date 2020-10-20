@@ -12,7 +12,9 @@ export default class ScriptBuilder {
             command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
             (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey.replace("'", "''")}' -AsPlainText -Force))) \
                 -Environment '${args.environment}' | out-null;`;
-            if (args.scopeLevel === Constants.Subscription) {
+            if (args.scopeLevel === Constants.Subscription && 
+                args.subscriptionId && 
+                args.subscriptionId.length > 0) {
                 command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
             }
         }
