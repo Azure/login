@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import * as crypto from "crypto";
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 
