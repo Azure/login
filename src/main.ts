@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import * as crypto from "crypto";
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 
@@ -14,7 +13,7 @@ async function main() {
     try {
         // Set user agent variable
         var isAzCLISuccess = false;
-        let usrAgentRepo = crypto.createHash('sha256').update(`${process.env.GITHUB_REPOSITORY}`).digest('hex');
+        let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
         let actionName = 'AzureLogin';
         let userAgentString = (!!prefix ? `${prefix}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
         let azurePSHostEnv = (!!azPSHostEnv ? `${azPSHostEnv}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;

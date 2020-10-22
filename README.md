@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v1.1
+    - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -57,7 +57,7 @@ jobs:
     steps:
 
     - name: Login via Az module
-      uses: azure/login@v1.1
+      uses: azure/login@v1
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
         enable-AzPSSession: true 
