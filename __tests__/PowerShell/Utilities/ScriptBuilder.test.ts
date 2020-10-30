@@ -7,16 +7,18 @@ describe("Getting AzLogin PS script" , () => {
         servicePrincipalId: "service-principal-id",
         servicePrincipalKey: "service-principal-key",
         environment: "environment",
-        scopeLevel: Constants.Subscription
+        scopeLevel: Constants.Subscription,
+        subscriptionId: "subId",
+        allowNoSubscriptionsLogin: true
     }
 
-    test("PS script should not set context without passing subscriptionId", () => {
+    test("PS script should not set context while passing allowNoSubscriptionsLogin as true", () => {
         const loginScript = new ScriptBuilder().getAzPSLoginScript(scheme, "tenant-id", args);
         expect(loginScript.includes("Set-AzContext -SubscriptionId")).toBeFalsy();
     });
 
-    test("PS script should set context after passing subscriptionId", () => {
-        args["subscriptionId"] = "subscription-id";
+    test("PS script should set context while passing allowNoSubscriptionsLogin as false", () => {
+        args["allowNoSubscriptionsLogin"] = false;
         const loginScript = new ScriptBuilder().getAzPSLoginScript(scheme, "tenant-id", args);
         expect(loginScript.includes("Set-AzContext -SubscriptionId")).toBeTruthy();
     });
