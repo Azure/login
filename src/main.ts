@@ -30,17 +30,29 @@ async function main() {
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
-        if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
-            throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
+        const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
+        console.log(allowNoSubscriptionsLogin);
+        if (!servicePrincipalId || !servicePrincipalKey || !tenantId) {
+            throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret and tenantId are supplied.");
         }
+
+        if (!subscriptionId && !allowNoSubscriptionsLogin) {
+            throw new Error("Not all values are present in the creds object. Ensure subscriptionId is supplied.");
+        }
+
         // Attempting Az cli login
-        await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
-        await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
+        if (allowNoSubscriptionsLogin) {
+            await executeAzCliCommand(`login --allow-no-subscriptions --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
+        }
+        else {
+            await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
+            await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
+        }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId);
+            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId, allowNoSubscriptionsLogin);
             await spnlogin.initialize();
             await spnlogin.login();
         }
