@@ -132,7 +132,7 @@ NOTE: to manage service principals created with `az ad sp create-for-rbac`, visi
 
 ## Support for using `allow-no-subscriptions` flag with az login
 
-Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as 'az ad'. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
 
 ```yaml
 # File: .github/workflows/workflow.yml
