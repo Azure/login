@@ -14,7 +14,7 @@ Get started today with a [free Azure account](https://azure.com/free/open-source
 
 With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Azure CLI and Azure PowerShell scripts.
 
-By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true.
+By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
 This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
 
