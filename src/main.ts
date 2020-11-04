@@ -50,11 +50,28 @@ async function main() {
 
         // Attempting Az cli login
         if (allowNoSubscriptionsLogin) {
-            await executeAzCliCommand(`login --allow-no-subscriptions --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
+            let parameters = [
+                "--allow-no-subscriptions",
+                "--service-principal",
+                "-u", servicePrincipalId,
+                "-p", servicePrincipalKey,
+                "--tenant", tenantId
+            ];
+            await executeAzCliCommand(`login`, true, {}, parameters);
         }
         else {
-            await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
-            await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
+            let parameters = [
+                "--service-principal",
+                "-u", servicePrincipalId,
+                "-p", servicePrincipalKey,
+                "--tenant", tenantId
+            ];
+            await executeAzCliCommand(`login`, true, {}, parameters);
+            parameters = [
+                "--subscription",
+                subscriptionId
+            ];
+            await executeAzCliCommand(`account set`, true, {}, parameters);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
@@ -79,10 +96,10 @@ async function main() {
     }
 }
 
-async function executeAzCliCommand(command: string, silent?: boolean, options: any = {}) {
+async function executeAzCliCommand(command: string, silent?: boolean, options: any = {}, parameters: any = []) {
     options.silent = !!silent;
     try {
-        await exec.exec(`"${azPath}" ${command}`, [],  options); 
+        await exec.exec(`"${azPath}" ${command}`, parameters,  options); 
     }
     catch(error) {
         throw new Error(error);
