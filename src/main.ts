@@ -21,8 +21,17 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        await executeAzCliCommand("--version");
-
+        let output: string = "";
+        const options: any = {
+            listeners: {
+                stdout: (data: Buffer) => {
+                    output += data.toString();
+                }
+            }
+        };
+        await executeAzCliCommand("--version", true, options);
+        core.debug(`az cli version used:\n${output}`);
+    
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
@@ -70,9 +79,10 @@ async function main() {
     }
 }
 
-async function executeAzCliCommand(command: string, silent?: boolean) {
+async function executeAzCliCommand(command: string, silent?: boolean, options: any = {}) {
+    options.silent = !!silent;
     try {
-        await exec.exec(`"${azPath}" ${command}`, [],  {silent: !!silent}); 
+        await exec.exec(`"${azPath}" ${command}`, [],  options); 
     }
     catch(error) {
         throw new Error(error);
