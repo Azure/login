@@ -22,14 +22,14 @@ async function main() {
 
         azPath = await io.which("az", true);
         let output: string = "";
-        const options: any = {
+        const execOptions: any = {
             listeners: {
                 stdout: (data: Buffer) => {
                     output += data.toString();
                 }
             }
         };
-        await executeAzCliCommand("--version", true, options);
+        await executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
     
         let creds = core.getInput('creds', { required: true });
@@ -50,28 +50,28 @@ async function main() {
 
         // Attempting Az cli login
         if (allowNoSubscriptionsLogin) {
-            let parameters = [
+            let args = [
                 "--allow-no-subscriptions",
                 "--service-principal",
                 "-u", servicePrincipalId,
                 "-p", servicePrincipalKey,
                 "--tenant", tenantId
             ];
-            await executeAzCliCommand(`login`, true, {}, parameters);
+            await executeAzCliCommand(`login`, true, {}, args);
         }
         else {
-            let parameters = [
+            let args = [
                 "--service-principal",
                 "-u", servicePrincipalId,
                 "-p", servicePrincipalKey,
                 "--tenant", tenantId
             ];
-            await executeAzCliCommand(`login`, true, {}, parameters);
-            parameters = [
+            await executeAzCliCommand(`login`, true, {}, args);
+            args = [
                 "--subscription",
                 subscriptionId
             ];
-            await executeAzCliCommand(`account set`, true, {}, parameters);
+            await executeAzCliCommand(`account set`, true, {}, args);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
