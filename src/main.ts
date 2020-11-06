@@ -96,10 +96,10 @@ async function main() {
     }
 }
 
-async function executeAzCliCommand(command: string, silent?: boolean, options: any = {}, parameters: any = []) {
-    options.silent = !!silent;
+async function executeAzCliCommand(command: string, silent?: boolean, execOptions: any = {}, args: any = []) {
+    execOptions.silent = !!silent;
     try {
-        await exec.exec(`"${azPath}" ${command}`, parameters,  options); 
+        await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
     }
     catch(error) {
         throw new Error(error);
