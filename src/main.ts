@@ -64,6 +64,10 @@ async function main() {
             await executeAzCliCommand(`cloud set -n "${environment}"`, false);
             console.log(`Done registering cloud: "${environment}"`);
         }
+        //setting context to Azure Gov Cloud
+        if (environment.toLowerCase() =='azureusgovernment' || environment.toLowerCase() =='azuregermancloud' || environment.toLowerCase() =='azurechinacloud' ) {
+            await executeAzCliCommand(`cloud set --name "${environment}"`, true);       
+        } 
         await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
         await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         isAzCLISuccess = true;
