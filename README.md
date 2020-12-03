@@ -14,7 +14,7 @@ Get started today with a [free Azure account](https://azure.com/free/open-source
 
 With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Azure CLI and Azure PowerShell scripts.
 
-By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true.
+By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
 This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
 
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v1.1
+    - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -57,7 +57,7 @@ jobs:
     steps:
 
     - name: Login via Az module
-      uses: azure/login@v1.1
+      uses: azure/login@v1
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
         enable-AzPSSession: true 
@@ -86,7 +86,7 @@ The following steps describe how to create the service principal, assign the rol
 
 1. Open the Azure Cloud Shell at [https://shell.azure.com](https://shell.azure.com). You can alternately use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you've installed it locally. (For more information on Cloud Shell, see the [Cloud Shell Overview](https://docs.microsoft.com/azure/cloud-shell/overview).)
   
-2. Use the [az ad dp create-for-rbac](https://docs.microsoft.com/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac) command to create a service principal and assign a Contributor role:
+2. Use the [az ad sp create-for-rbac](https://docs.microsoft.com/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac) command to create a service principal and assign a Contributor role:
 
     ```azurecli
     az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
@@ -129,6 +129,29 @@ The following steps describe how to create the service principal, assign the rol
 5. Paste the entire JSON object produced by the `az ad sp create-for-rbac` command as the secret value and save the secret.
 
 NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
+
+## Support for using `allow-no-subscriptions` flag with az login
+
+Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginWithNoSubscriptions
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        allow-no-subscriptions: true
+```
 
 # Contributing
 
