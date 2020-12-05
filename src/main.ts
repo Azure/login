@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import * as crypto from "crypto";
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
-
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
 
@@ -68,8 +67,7 @@ async function main() {
         if (environment.toLowerCase() =='azureusgovernment' || environment.toLowerCase() =='azuregermancloud' || environment.toLowerCase() =='azurechinacloud' || environment.toLowerCase() =='azurecloud' ) {
             await executeAzCliCommand(`cloud set --name "${environment}"`, true);       
         } 
-        await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
-        await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
+    
         isAzCLISuccess = true;
         if (enableAzPSSession) {
             // Attempting Az PS login
@@ -77,6 +75,11 @@ async function main() {
             const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(servicePrincipalId, servicePrincipalKey, tenantId, subscriptionId, environment, resourceManagerEndpointUrl);
             await spnlogin.initialize();
             await spnlogin.login();
+        }
+        else{
+            //else login using az cli    
+            await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
+            await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         }
         console.log("Login successful.");    
     } catch (error) {
