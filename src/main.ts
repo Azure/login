@@ -4,6 +4,7 @@ import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
+import { AzureCloudName} from './PowerShell/Enums';
 
 var azPath: string;
 var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
@@ -35,6 +36,7 @@ async function main() {
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
+
         // Attempting Az cli login
         if (environment.toLowerCase() == "azurestack") {
             if (!resourceManagerEndpointUrl) {
@@ -63,8 +65,9 @@ async function main() {
             await executeAzCliCommand(`cloud set -n "${environment}"`, false);
             console.log(`Done registering cloud: "${environment}"`);
         }
-            //setting context to Azure Gov Cloud
-        if (environment.toLowerCase() =='azureusgovernment' || environment.toLowerCase() =='azuregermancloud' || environment.toLowerCase() =='azurechinacloud' || environment.toLowerCase() =='azurecloud' ) {
+           
+        //setting context to Azure Gov Cloud
+        if (environment.toLowerCase() == AzureCloudName.AzureUSGovernment|| environment.toLowerCase() ==AzureCloudName.AzureChinaCloud || environment.toLowerCase() ==AzureCloudName.AzureGermanCloud  || environment.toLowerCase() ==AzureCloudName.AzureCloud  ) {
             await executeAzCliCommand(`cloud set --name "${environment}"`, true);       
         } 
     
@@ -77,7 +80,7 @@ async function main() {
             await spnlogin.login();
         }
         else{
-            //else login using az cli    
+            // login using az cli    
             await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
             await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         }
