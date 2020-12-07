@@ -4,7 +4,7 @@ import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
-import { AzureCloudName} from './PowerShell/Enums';
+import   Constants from './PowerShell/Constants';
 
 var azPath: string;
 var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
@@ -32,23 +32,31 @@ async function main() {
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         let environment = core.getInput("environment");
+        environment = environment.toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
-
+        
+       if(!Constants.AzureSupportedCloudName.includes(environment)){
+            throw new Error("Unsuppoted value is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
+       }
+    
         // Attempting Az cli login
-        if (environment.toLowerCase() == "azurestack") {
+        if (environment == "azurestack") {
             if (!resourceManagerEndpointUrl) {
                 throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
             }
+
             console.log(`Unregistering cloud: "${environment}" first if it exists`);
             try {
                 await executeAzCliCommand(`cloud set -n AzureCloud`, true);
                 await executeAzCliCommand(`cloud unregister -n "${environment}"`, false);
-            } catch (error) {
+            }
+            catch (error) {
                 console.log(`Ignore cloud not registered error: "${error}"`);
             }
+
             console.log(`Registering cloud: "${environment}" with ARM endpoint: "${resourceManagerEndpointUrl}"`);
             try {
                 let baseUri = resourceManagerEndpointUrl;
@@ -59,17 +67,16 @@ async function main() {
                 let suffixStorage = baseUri.substring(baseUri.indexOf('.')+1); // storage suffix starts without .
                 let profileVersion = "2019-03-01-hybrid";
                 await executeAzCliCommand(`cloud register -n "${environment}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" --profile "${profileVersion}"`, false);
-            } catch (error) {
+            } 
+            catch (error) {
                 core.error(`Error while trying to register cloud "${environment}": "${error}"`);
             }
-            await executeAzCliCommand(`cloud set -n "${environment}"`, false);
-            console.log(`Done registering cloud: "${environment}"`);
+
+            console.log(`Done registering cloud: "${environment}"`)
         }
-           
-        //setting context to Azure Gov Cloud
-        if (environment.toLowerCase() == AzureCloudName.AzureUSGovernment|| environment.toLowerCase() ==AzureCloudName.AzureChinaCloud || environment.toLowerCase() ==AzureCloudName.AzureGermanCloud  || environment.toLowerCase() ==AzureCloudName.AzureCloud  ) {
-            await executeAzCliCommand(`cloud set --name "${environment}"`, true);       
-        } 
+    
+        await executeAzCliCommand(`cloud set -n "${environment}"`, false);
+        console.log(`Done setting cloud: "${environment}"`);
     
         isAzCLISuccess = true;
         if (enableAzPSSession) {
@@ -79,20 +86,23 @@ async function main() {
             await spnlogin.initialize();
             await spnlogin.login();
         }
-        else{
+        else {
             // login using az cli    
             await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
             await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
         }
         console.log("Login successful.");    
-    } catch (error) {
+    }
+    catch (error) {
         if (!isAzCLISuccess) {
             core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
-        } else {
+        } 
+        else {
             core.error(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
         core.setFailed(error);
-    } finally {
+    }
+    finally {
         // Reset AZURE_HTTP_USER_AGENT
         core.exportVariable('AZURE_HTTP_USER_AGENT', prefix);
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azPSHostEnv);
