@@ -39,7 +39,7 @@ async function main() {
         }
         
        if(!Constants.AzureSupportedCloudName.includes(environment)){
-            throw new Error("Unsuppoted value is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
+            throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
        }
     
         // Attempting Az cli login
