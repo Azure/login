@@ -31,8 +31,7 @@ async function main() {
         let tenantId = secrets.getSecret("$.tenantId", false);
         let subscriptionId = secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-        let environment = core.getInput("environment");
-        environment = environment.toLowerCase();
+        let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
