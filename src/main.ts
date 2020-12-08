@@ -23,7 +23,7 @@ async function main() {
         azPath = await io.which("az", true);
         await executeAzCliCommand("--version");
         
-        let azureSupportedCloudName:string[] = ["azureusgovernment", "azurechinacloud", "azuregermancloud","azurecloud","azurestack"];
+        let azureSupportedCloudName = new Set(["azureusgovernment", "azurechinacloud", "azuregermancloud","azurecloud","azurestack"]);
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
@@ -39,7 +39,7 @@ async function main() {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         
-       if(!azureSupportedCloudName.includes(environment)){
+       if(!azureSupportedCloudName.has(environment)){
             throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
        }
     
