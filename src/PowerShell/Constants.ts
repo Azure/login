@@ -10,5 +10,4 @@ export default class Constants {
     static readonly Success: string = "Success";
     static readonly Error: string = "Error";
     static readonly AzVersion: string = "AzVersion";
-    static readonly  AzureSupportedCloudName:string[] = ["azureusgovernment", "azurechinacloud", "azuregermancloud","azurecloud","azurestack"];
 }

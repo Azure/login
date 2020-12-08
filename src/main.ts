@@ -4,7 +4,6 @@ import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
-import   Constants from './PowerShell/Constants';
 
 var azPath: string;
 var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
@@ -23,7 +22,8 @@ async function main() {
 
         azPath = await io.which("az", true);
         await executeAzCliCommand("--version");
-
+        
+        let azureSupportedCloudName:string[] = ["azureusgovernment", "azurechinacloud", "azuregermancloud","azurecloud","azurestack"];
         let creds = core.getInput('creds', { required: true });
         let secrets = new SecretParser(creds, FormatType.JSON);
         let servicePrincipalId = secrets.getSecret("$.clientId", false);
@@ -34,11 +34,12 @@ async function main() {
         let environment = core.getInput("environment");
         environment = environment.toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
+        
         if (!servicePrincipalId || !servicePrincipalKey || !tenantId || !subscriptionId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret, tenantId and subscriptionId are supplied.");
         }
         
-       if(!Constants.AzureSupportedCloudName.includes(environment)){
+       if(!azureSupportedCloudName.includes(environment)){
             throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
        }
     
