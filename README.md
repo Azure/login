@@ -16,7 +16,7 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 
 By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true.
 
-Incase user wants to switch the context to Azure US Government Cloud or Azure China Cloud then azlogin action supports it from version 1.2.This can be achieved by passing an extra environment variable with the name of the cloud which user wants to connect .The action azlogin expects 'AzureUSGovernment' for Azure US Government Cloud and 'AzureChinaCloud' for Azure China Cloud. By default it connects to Azure Public Cloud which can also be specified as 'AzureCloud' in environment variable.
+Incase user wants to switch the context to Azure US Government Cloud or Azure China Cloud then azlogin action supports it from version 1.2.This can be achieved by passing an extra environment variable with the name of the cloud which user wants to connect .The action azlogin expects 'AzureUSGovernment' or 'AzureChinaCloud' depending on the cloud which user is trying to connect. By default it connects to Azure Public Cloud which can also be specified as 'AzureCloud' in environment variable.
 
 
 This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
