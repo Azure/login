@@ -177,6 +177,8 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 
 By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
+To login into one of the Azure Government clouds, set the optional parameter environment with supported cloud names AzureUSGovernment or AzureChinaCloud. If this parameter is not specified, it takes the default value AzureCloud and connect to the Azure Public Cloud. Additionally the parameter creds takes the Azure service principal created in the particular cloud to connect (Refer to Configure deployment credentials section below for details).
+
 This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
 
 ## Sample workflow that uses Azure login action to run az cli
@@ -233,6 +235,23 @@ jobs:
         azPSVersion: '3.1.0'
         inlineScript: |
           Get-AzVM -ResourceGroupName "ActionsDemo"
+```
+
+## Sample to connect to Azure US Government cloud
+
+```
+   - name: Login to Azure US Gov Cloud with CLI 
+     uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+          environment: 'AzureUSGovernment'
+          enable-AzPSSession: false
+   - name: Login to Azure US Gov Cloud with Az Powershell
+      uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+          environment: 'AzureUSGovernment'
+          enable-AzPSSession: true
 ```
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
