@@ -13,6 +13,10 @@ inputs:
     description: 'Name of the environment. Supported values are AzureStack, AzureCloud. Default being AzureCloud'
     required: false
     default: AzureCloud
+  allow-no-subscriptions:
+    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
+    required: false
+    default: false
 branding:
   icon: 'login.svg'
   color: 'blue'
