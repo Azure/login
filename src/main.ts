@@ -139,11 +139,7 @@ async function main() {
             await spnlogin.initialize();
             await spnlogin.login();
         }
-        else {
-            // login using az cli    
-            await executeAzCliCommand(`login --service-principal -u "${servicePrincipalId}" -p "${servicePrincipalKey}" --tenant "${tenantId}"`, true);
-            await executeAzCliCommand(`account set --subscription "${subscriptionId}"`, true);
-        }
+
         console.log("Login successful.");    
     }
     catch (error) {
@@ -162,12 +158,17 @@ async function main() {
     }
 }
 
-async function executeAzCliCommand(command: string, silent?: boolean, execOptions: any = {}, args: any = []) {
+async function executeAzCliCommand(
+    command: string, 
+    silent?: boolean, 
+    execOptions: any = {}, 
+    args: any = []) {
+    
     execOptions.silent = !!silent;
     try {
         await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
     }
-    catch(error) {
+    catch (error) {
         throw new Error(error);
     }
 }
