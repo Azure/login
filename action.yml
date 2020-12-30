@@ -10,7 +10,7 @@ inputs:
     required: false
     default: false
   environment:
-    description: 'Name of the environment. Supported values are AzureStack, AzureCloud. Default being AzureCloud'
+    description: 'Name of the environment. Supported values are azurecloud, azurestack, azureusgovernment, azurechinacloud, azuregermancloud. Default being azurecloud'
     required: false
     default: AzureCloud
   allow-no-subscriptions:
