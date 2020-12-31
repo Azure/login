@@ -12,7 +12,7 @@ inputs:
   environment:
     description: 'Name of the environment. Supported values are azurecloud, azurestack, azureusgovernment, azurechinacloud, azuregermancloud. Default being azurecloud'
     required: false
-    default: AzureCloud
+    default: azurecloud
   allow-no-subscriptions:
     description: 'Set this value to true to enable support for accessing tenants without subscriptions'
     required: false
