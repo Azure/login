@@ -8,17 +8,22 @@ export default class ScriptBuilder {
     getAzPSLoginScript(scheme: string, tenantId: string, args: any): string {
         let command = `Clear-AzContext -Scope Process;
              Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue;`;
+        
         if (scheme === Constants.ServicePrincipal) {
+
             if (args.environment.toLowerCase() == "azurestack") {
                 command += `Add-AzEnvironment -Name ${args.environment} -ARMEndpoint ${args.resourceManagerEndpointUrl} | out-null;`;
             }
+            
             command += `Connect-AzAccount -ServicePrincipal -Tenant '${tenantId}' -Credential \
             (New-Object System.Management.Automation.PSCredential('${args.servicePrincipalId}',(ConvertTo-SecureString '${args.servicePrincipalKey.replace("'", "''")}' -AsPlainText -Force))) \
                 -Environment '${args.environment}' | out-null;`;
+            
             if (args.scopeLevel === Constants.Subscription && !args.allowNoSubscriptionsLogin) {
                 command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
             }
         }
+
         this.script += `try {
             $ErrorActionPreference = "Stop"
             $WarningPreference = "SilentlyContinue"
@@ -30,6 +35,7 @@ export default class ScriptBuilder {
             $output['${Constants.Error}'] = $_.exception.Message
         }
         return ConvertTo-Json $output`;
+        
         core.debug(`Azure PowerShell Login Script: ${this.script}`);
         return this.script;
     }
