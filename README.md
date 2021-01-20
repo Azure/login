@@ -146,7 +146,7 @@ The following steps describe how to create the service principal, assign the rol
         --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name}
     ```
 
-    For other usage
+    For usage with other Azure services (Storage Accounts, Active Directory, etc.)
 
     ```azurecli
     az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
