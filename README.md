@@ -2,7 +2,7 @@
 
 ## Automate your GitHub workflows using Azure Actions
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow. 
+[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
 
 With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
 
@@ -12,9 +12,9 @@ Get started today with a [free Azure account](https://azure.com/free/open-source
 
 # GitHub Action for Azure Login
 
-With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Azure CLI and Azure PowerShell scripts. You can leverage this action for the public or soverign clouds including Azure Government and Azure Stack Hub (using the `environment` parameter).  
+With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Azure CLI and Azure PowerShell scripts. You can leverage this action for the public or soverign clouds including Azure Government and Azure Stack Hub (using the `environment` parameter).
 
-By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true. 
+By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
 To login into one of the Azure Government clouds, set the optional parameter environment with supported cloud names AzureUSGovernment or AzureChinaCloud. If this parameter is not specified, it takes the default value AzureCloud and connect to the Azure Public Cloud. Additionally the parameter creds takes the Azure service principal created in the particular cloud to connect (Refer to Configure deployment credentials section below for details).
 
@@ -62,7 +62,7 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
-        enable-AzPSSession: true 
+        enable-AzPSSession: true
 
     - name: Run Az CLI script
       run: |
@@ -79,7 +79,7 @@ jobs:
 ## Sample to connect to Azure US Government cloud
 
 ```
-   - name: Login to Azure US Gov Cloud with CLI 
+   - name: Login to Azure US Gov Cloud with CLI
      uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
@@ -110,12 +110,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    
+
     - uses: azure/login@AzureStackSupport-Beta
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureStack'
-    
+
     - run: |
         az webapp list --query "[?state=='Running']"
 
@@ -131,37 +131,39 @@ The following steps describe how to create the service principal, assign the rol
 1. Open the Azure Cloud Shell at [https://shell.azure.com](https://shell.azure.com). You can alternately use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you've installed it locally. (For more information on Cloud Shell, see the [Cloud Shell Overview](https://docs.microsoft.com/azure/cloud-shell/overview).)
 
     1.1 **(Required ONLY when environment is Azure Stack Hub)** Run the following command to set the SQL Management endpoint to 'not supported'
-      ```bash  
+      ```bash
 
-      az cloud update -n {environmentName} --endpoint-sql-management https://notsupported 
+      az cloud update -n {environmentName} --endpoint-sql-management https://notsupported
 
       ```
-  
+
 2. Use the [az ad sp create-for-rbac](https://docs.microsoft.com/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac) command to create a service principal and assign a Contributor role:
+
+    For web apps (also more secure)
 
     ```azurecli
     az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
         --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name}
     ```
 
-    Replace the following:
-      * `{sp-name}` with a suitable name for your service principal, such as the name of the app itself. The name must be unique within your organization.
-      * `{subscription-id}` with the subscription you want to use
-      * `{resource-group}` the resource group containing the web app.
-      * `{app-name}` with the name of the web app.
+    For other usage
 
-    This command invokes Azure Active Directory (via the `ad` part of the command) to create a service principal (via `sp`) specifically for [Role-Based Access Control (RBAC)](https://docs.microsoft.com/azure/role-based-access-control/overview) (via `create-for-rbac`).
-
-    The `--role` argument specifies the permissions to grant to the service principal at the specified `--scope`. In this case, you grant the built-in [Contributor](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor) role at the scope of the web app in the specified resource group in the specified subscription.
-
-    If desired, you can omit the part of the scope starting with `/providers/...` to grant the service principal the Contributor role for the entire resource group:
-
-    ```azurecli  
+    ```azurecli
     az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
         --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}
     ```
 
-    For security purposes, however, it's always preferable to grant permissions at the most restrictive scope possible.
+    Replace the following:
+      * `{sp-name}` with a suitable name for your service principal, such as the name of the app itself. The name must be unique within your organization.
+      * `{subscription-id}` with the subscription ID you want to use (found in Subscriptions in portal)
+      * `{resource-group}` the resource group containing the web app.
+      * [optional] `{app-name}` if you wish to have a tighter & more secure scope, use the first option and replace this with the name of the web app.
+
+    More info can be found [here](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac).
+
+    This command invokes Azure Active Directory (via the `ad` part of the command) to create a service principal (via `sp`) specifically for [Role-Based Access Control (RBAC)](https://docs.microsoft.com/azure/role-based-access-control/overview) (via `create-for-rbac`).
+
+    The `--role` argument specifies the permissions to grant to the service principal at the specified `--scope`. In this case, you grant the built-in [Contributor](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor) role at the scope of the web app in the specified resource group in the specified subscription. If desired, you can omit the part of the scope starting with `/providers/...` to grant the service principal the Contributor role for the entire resource group. For security purposes, however, it's always preferable to grant permissions at the most restrictive scope possible.
 
 3. When complete, the `az ad sp create-for-rbac` command displays JSON output in the following form (which is specified by the `--sdk-auth` argument):
 
