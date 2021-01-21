@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     
-    - uses: azure/login@AzureStackSupport-Beta
+    - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureStack'
