@@ -23,6 +23,14 @@ inputs:
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
     default: false
+  environment:
+    description: 'Name of the environment. Supported values are azurecloud, azurestack, azureusgovernment, azurechinacloud, azuregermancloud. Default being azurecloud'
+    required: false
+    default: AzureCloud
+  allow-no-subscriptions:
+    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
+    required: false
+    default: false
 branding:
   icon: 'login.svg'
   color: 'blue'

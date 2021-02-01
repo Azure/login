@@ -6,19 +6,31 @@ import ScriptBuilder from './Utilities/ScriptBuilder';
 import Constants from './Constants';
 
 export class ServicePrincipalLogin implements IAzurePowerShellSession {
-    static readonly environment: string = Constants.AzureCloud;
     static readonly scopeLevel: string = Constants.Subscription;
     static readonly scheme: string = Constants.ServicePrincipal;
+    environment: string;
     servicePrincipalId: string;
     servicePrincipalKey: string;
     tenantId: string;
     subscriptionId: string;
+    resourceManagerEndpointUrl: string;
+    allowNoSubscriptionsLogin: boolean;
 
-    constructor(servicePrincipalId: string, servicePrincipalKey: string, tenantId: string, subscriptionId: string) {
+    constructor(servicePrincipalId: string, 
+        servicePrincipalKey: string, 
+        tenantId: string, 
+        subscriptionId: string,
+        allowNoSubscriptionsLogin: boolean,
+        environment: string,
+        resourceManagerEndpointUrl: string) {
+        
         this.servicePrincipalId = servicePrincipalId;
         this.servicePrincipalKey = servicePrincipalKey;
         this.tenantId = tenantId;
         this.subscriptionId = subscriptionId;
+        this.environment = environment;
+        this.resourceManagerEndpointUrl = resourceManagerEndpointUrl;
+        this.allowNoSubscriptionsLogin = allowNoSubscriptionsLogin;
     }
 
     async initialize() {
@@ -41,8 +53,10 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             servicePrincipalId: this.servicePrincipalId,
             servicePrincipalKey: this.servicePrincipalKey,
             subscriptionId: this.subscriptionId,
-            environment: ServicePrincipalLogin.environment,
-            scopeLevel: ServicePrincipalLogin.scopeLevel
+            environment: this.environment,
+            scopeLevel: ServicePrincipalLogin.scopeLevel,
+            allowNoSubscriptionsLogin: this.allowNoSubscriptionsLogin,
+            resourceManagerEndpointUrl: this.resourceManagerEndpointUrl
         }
         const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
         await PowerShellToolRunner.init();
