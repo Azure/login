@@ -4,7 +4,19 @@ description: 'Authenticate to Azure and run your Az CLI or Az�
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
-    required: true
+    required: false
+  creds_client_id:
+    description: 'overrides the client_id in above specified creds if provided'
+    required: false
+  creds_client_secret:
+    description: 'overrides the client_secret in above specified creds if provided'
+    required: false
+  creds_subscription_id:
+    description: 'overrides the subscription_id in above specified creds if provided'
+    required: false
+  creds_tenant_id:
+    description: 'overrides the tenant_id in above specified creds if provided'
+    required: false
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
