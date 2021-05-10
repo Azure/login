@@ -17,6 +17,9 @@ inputs:
   creds_tenant_id:
     description: 'overrides the tenant_id in above specified creds if provided'
     required: false
+  creds_resource_manager_endpoint_url:
+    description: 'overrides the resource_manager_endpoint_url in above specified creds if provided'
+    required: false
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false

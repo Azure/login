@@ -45,7 +45,7 @@ async function main() {
         let servicePrincipalKey = core.getInput('creds_client_secret', { required: false }) ? core.getInput('creds_client_secret', { required: false}) : secrets.getSecret("$.clientSecret", false);
         let tenantId = core.getInput('creds_tenant_id', { required: false }) ? core.getInput('creds_tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
         let subscriptionId = core.getInput('creds_subscription_id', { required: false }) ? core.getInput('creds_subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
-        let resourceManagerEndpointUrl = creds ? secrets.getSecret("$.resourceManagerEndpointUrl", false) : "https://management.azure.com/";
+        let resourceManagerEndpointUrl = core.getInput('creds_resource_manager_endpoint_url', { required: false }) ? core.getInput('creds_resource_manager_endpoint_url', { required: false }) : secrets.getSecret("$.resourceManagerEndpointUrl", false);
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
