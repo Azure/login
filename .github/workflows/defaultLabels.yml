@@ -1,0 +1,45 @@
+name: setting-default-labels
+
+# Controls when the action will run. 
+on:
+  schedule:
+  - cron: "0 0/3 * * *"
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/stale@v3
+        name: Default issue label as need-to-triage 
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'This issue is marked need-to-triage for generating issues report.'
+          stale-issue-label: 'need-to-triage'
+          days-before-stale: 0
+          days-before-close: -1
+          operations-per-run: 100
+          
+      - uses: actions/stale@v3
+        name: Setting issue as idle
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'This issue is idle because it has been open for 14 days with no activity.'
+          stale-issue-label: 'idle'
+          days-before-stale: 14
+          days-before-close: -1
+          operations-per-run: 100
+          exempt-issue-labels: 'backlog'
+          
+      - uses: actions/stale@v3
+        name: Setting PR as idle
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-pr-message: 'This PR is idle because it has been open for 14 days with no activity.'
+          stale-pr-label: 'idle'
+          days-before-stale: 14
+          days-before-close: -1
+          operations-per-run: 100
