@@ -13,15 +13,15 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/stale@v3
-        name: Default issue label as need-to-triage 
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: 'This issue is marked need-to-triage for generating issues report.'
-          stale-issue-label: 'need-to-triage'
-          days-before-stale: 0
-          days-before-close: -1
-          operations-per-run: 100
+#       - uses: actions/stale@v3
+#         name: Default issue label as need-to-triage 
+#         with:
+#           repo-token: ${{ secrets.GITHUB_TOKEN }}
+#           stale-issue-message: 'This issue is marked need-to-triage for generating issues report.'
+#           stale-issue-label: 'need-to-triage'
+#           days-before-stale: 0
+#           days-before-close: -1
+#           operations-per-run: 100
           
       - uses: actions/stale@v3
         name: Setting issue as idle
