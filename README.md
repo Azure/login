@@ -191,6 +191,7 @@ However, a simple workaround for users who need this option can be:
     with:
       creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 ```
+In a similar way, any additional parameter can be addded to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
 ## Support for using `allow-no-subscriptions` flag with az login
 
 Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
