@@ -180,6 +180,26 @@ The following steps describe how to create the service principal, assign the rol
 
 4. In your repository, use **Add secret** to create a new secret named `AZURE_CREDENTIALS` (as shown in the example workflow), or using whatever name is in your workflow file.
 
+NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this 
+
+         {"clientId": "<GUID>",
+          "clientSecret": "<GUID>",
+          "subscriptionId": "<GUID>",
+          "tenantId": "<GUID>",
+          (...)}
+
+   instead of  
+
+        {
+            "clientId": "<GUID>",
+            "clientSecret": "<GUID>",
+            "subscriptionId": "<GUID>",
+            "tenantId": "<GUID>",
+            (...)
+        }
+
+   to prevent unnecessary masking of `{ } ` in your logs which are in dictionary form.
+     
 5. Paste the entire JSON object produced by the `az ad sp create-for-rbac` command as the secret value and save the secret.
 
 NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
