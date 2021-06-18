@@ -1,3 +1,4 @@
+name: "Auto-Labelling Issues"
 on:
   issues:
     types: [opened, edited]
@@ -5,14 +6,14 @@ on:
 jobs:
   auto_label:
     runs-on: ubuntu-latest
-    name: Automatic Github Issue Labeller
+    name: Auto-Labelling Issues
     steps:
     - name: Label Step
       uses: larrylawl/Auto-Github-Issue-Labeller@main
       with:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         REPOSITORY: ${{github.repository}}
-        DELTA: "1"
+        DELTA: "7"
         CONFIDENCE: "2"
         FEATURE: "enhancement"
         BUG: "bug"
