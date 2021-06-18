@@ -9,7 +9,7 @@ jobs:
     name: Auto-Labelling Issues
     steps:
     - name: Label Step
-      uses: larrylawl/Auto-Github-Issue-Labeller@main
+      uses: larrylawl/Auto-Github-Issue-Labeller@v1.0
       with:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         REPOSITORY: ${{github.repository}}
@@ -18,4 +18,4 @@ jobs:
         FEATURE: "enhancement"
         BUG: "bug"
         DOCS: "documentation"
-        VERSION: "v1.0"
+        
