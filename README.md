@@ -180,6 +180,26 @@ The following steps describe how to create the service principal, assign the rol
 
 4. In your repository, use **Add secret** to create a new secret named `AZURE_CREDENTIALS` (as shown in the example workflow), or using whatever name is in your workflow file.
 
+NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this 
+
+         {"clientId": "<GUID>",
+          "clientSecret": "<GUID>",
+          "subscriptionId": "<GUID>",
+          "tenantId": "<GUID>",
+          (...)}
+
+   instead of  
+
+        {
+            "clientId": "<GUID>",
+            "clientSecret": "<GUID>",
+            "subscriptionId": "<GUID>",
+            "tenantId": "<GUID>",
+            (...)
+        }
+
+   to prevent unnecessary masking of `{ } ` in your logs which are in dictionary form.
+     
 5. Paste the entire JSON object produced by the `az ad sp create-for-rbac` command as the secret value and save the secret.
 
 NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
@@ -214,7 +234,19 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         allow-no-subscriptions: true
 ```
+## Az logout and security hardening
 
+This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
+```
+- name: Azure CLI script
+  uses: azure/CLI@v1
+  with:
+    azcliversion: 2.0.72
+    inlineScript: |
+      az logout
+      az cache purge
+      az account clear
+```
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com. 
