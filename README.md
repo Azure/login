@@ -204,6 +204,14 @@ NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this
 
 NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
 
+NOTE: Currently there is no support for passing in the Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundled in a single JSON object (creds).
+However, a simple workaround for users who need this option can be:
+```yaml
+  - uses: Azure/login@v1.1
+    with:
+      creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+```
+In a similar way, any additional parameter can be addded to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
 ## Support for using `allow-no-subscriptions` flag with az login
 
 Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
