@@ -1,0 +1,21 @@
+name: "Auto-Labelling Issues"
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  auto_label:
+    runs-on: ubuntu-latest
+    name: Auto-Labelling Issues
+    steps:
+    - name: Label Step
+      uses: larrylawl/Auto-Github-Issue-Labeller@v1.0
+      with:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        REPOSITORY: ${{github.repository}}
+        DELTA: "7"
+        CONFIDENCE: "2"
+        FEATURE: "enhancement"
+        BUG: "bug"
+        DOCS: "documentation"
+        
