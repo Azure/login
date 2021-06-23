@@ -1,0 +1,60 @@
+name: pr-test
+
+on:
+  pull_request_target:
+    types: [labeled, opened]
+    branches:
+      - master
+      - 'releases/*'
+
+jobs:
+    deploy:
+      if: contains(github.event.pull_request.labels.*.name, 'safe to run test')
+      runs-on: windows-latest
+      steps:
+      - name: Checkout from PR branch  
+        uses: actions/checkout@v2
+
+      - name: Building latest changes
+        run: |
+          npm install --prod
+          
+      - name: 'Az CLI login with subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - run: |
+          az account show
+          
+      - name: 'Az CLI login without subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_NO_SUB }}
+          allow-no-subscriptions: true
+          
+      - run: |
+          az account show
+          
+      - name: 'Azure PowerShell login with subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
+          
+      - name: 'Azure PowerShell login without subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
+          enable-AzPSSession: true
+          allow-no-subscriptions: true
+        
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
