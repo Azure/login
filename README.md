@@ -1,5 +1,5 @@
 # GitHub Actions for deploying to Azure
-# testing for pr-check
+# testing for pr-check.
 ## Automate your GitHub workflows using Azure Actions
 
 [GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
