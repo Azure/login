@@ -27,7 +27,7 @@ jobs:
          run: npm run build
          
        - name: 'Az CLI login with subscription'
-         uses: azure/login@v1
+         uses: ./
          with:
             creds: ${{ secrets.AZURE_CREDENTIALS }}
           
@@ -36,7 +36,7 @@ jobs:
   #          az webapp list
 
        - name: 'Az CLI login without subscription'
-         uses: azure/login@v1
+         uses: ./
          with:
            creds: ${{ secrets.AZURE_CREDENTIALS_NO_SUB }}
          allow-no-subscriptions: true
@@ -45,7 +45,7 @@ jobs:
            az account show
 
        - name: 'Azure PowerShell login with subscription'
-         uses: azure/login@v1
+         uses: ./
          with:
            creds: ${{ secrets.AZURE_CREDENTIALS }}
            enable-AzPSSession: true
@@ -56,7 +56,7 @@ jobs:
            azPSVersion: "latest"
 
        - name: 'Azure PowerShell login without subscription'
-         uses: azure/login@v1
+         uses: ./
          with:
            creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
            enable-AzPSSession: true
