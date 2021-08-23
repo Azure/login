@@ -12,7 +12,7 @@ jobs:
      runs-on: windows-latest
      steps:
        - name: Checkout from PR branch  
-          uses: actions/checkout@v2
+         uses: actions/checkout@v2
 
          # Using 12.x version as an example
        - name: Set Node.js 12.x for GitHub Action
@@ -39,7 +39,7 @@ jobs:
          uses: ./
          with:
            creds: ${{ secrets.AZURE_CREDENTIALS_NO_SUB }}
-         allow-no-subscriptions: true
+           allow-no-subscriptions: true
 
        - run: |
            az account show
@@ -62,9 +62,9 @@ jobs:
            enable-AzPSSession: true
            allow-no-subscriptions: true
 
-      - uses: azure/powershell@v1
-        with:
-          inlineScript: "Get-AzContext"
-          azPSVersion: "latest"
+       - uses: azure/powershell@v1
+         with:
+           inlineScript: "Get-AzContext"
+           azPSVersion: "latest"
           
       
