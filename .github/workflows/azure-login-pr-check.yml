@@ -1,7 +1,7 @@
 name: pr-check
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - master
       - 'releases/*'
@@ -13,6 +13,8 @@ jobs:
      steps:
        - name: Checkout from PR branch  
          uses: actions/checkout@v2
+         with: 
+          ref: ${{ github.event.client_payload.frombranch }}
 
          # Using 12.x version as an example
        - name: Set Node.js 12.x for GitHub Action
