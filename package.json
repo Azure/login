@@ -21,6 +21,8 @@
     "@actions/core": "^1.2.6",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
-    "actions-secret-parser": "^1.0.2"
+    "actions-secret-parser": "^1.0.2",
+    "underscore": "^1.13.1",
+    "xmldom": "^0.6.0"
   }
 }
