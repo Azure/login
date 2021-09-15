@@ -78,19 +78,19 @@ jobs:
 
 ## Sample to connect to Azure US Government cloud
 
-```
-   - name: Login to Azure US Gov Cloud with CLI
-     uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
-          environment: 'AzureUSGovernment'
-          enable-AzPSSession: false
-   - name: Login to Azure US Gov Cloud with Az Powershell
+```yaml
+    - name: Login to Azure US Gov Cloud with CLI
       uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
-          environment: 'AzureUSGovernment'
-          enable-AzPSSession: true
+      with:
+        creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+        environment: 'AzureUSGovernment'
+        enable-AzPSSession: false
+    - name: Login to Azure US Gov Cloud with Az Powershell
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+        environment: 'AzureUSGovernment'
+        enable-AzPSSession: true
 ```
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
