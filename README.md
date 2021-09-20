@@ -171,7 +171,7 @@ The following steps describe how to create the service principal, assign the rol
     ```json
     {
       "clientId": "<GUID>",
-      "clientSecret": "<GUID>",
+      "clientSecret": "<CLIENT_SECRET_VALUE>",
       "subscriptionId": "<GUID>",
       "tenantId": "<GUID>",
       (...)
@@ -183,7 +183,7 @@ The following steps describe how to create the service principal, assign the rol
 NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this 
 
          {"clientId": "<GUID>",
-          "clientSecret": "<GUID>",
+          "clientSecret": "<CLIENT_SECRET_VALUE>",
           "subscriptionId": "<GUID>",
           "tenantId": "<GUID>",
           (...)}
@@ -192,7 +192,7 @@ NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this
 
         {
             "clientId": "<GUID>",
-            "clientSecret": "<GUID>",
+            "clientSecret": "<CLIENT_SECRET_VALUE>",
             "subscriptionId": "<GUID>",
             "tenantId": "<GUID>",
             (...)
@@ -212,6 +212,18 @@ However, a simple workaround for users who need this option can be:
       creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 ```
 In a similar way, any additional parameter can be addded to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
+
+NOTE: If you want to hand craft your JSON object instead of using the output from the CLI command (for example, after using the UI to create the App Registration and Role assignment) the following fields are required:
+```json
+{
+  "clientId": "<GUID>",
+"tenantId": "<GUID>",
+"clientSecret": "<CLIENT_SECRET_VALUE>",
+"subscriptionId": "<GUID>",
+"resourceManagerEndpointUrl": "<URL>}
+```
+The resourceManagerEndpointUrl will be `https://management.azure.com/` if you are using the public azure cloud.
+
 ## Support for using `allow-no-subscriptions` flag with az login
 
 Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
