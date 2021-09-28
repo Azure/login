@@ -108,7 +108,7 @@ async function main() {
             let args = [
                 "--allow-no-subscriptions",
                 "--service-principal",
-                "-u", servicePrincipalId,
+                "--username", servicePrincipalId,
                 // "-p", servicePrincipalKey,
                 "--federated-token", idToken,
                 "--tenant", tenantId
