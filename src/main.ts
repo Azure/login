@@ -20,7 +20,7 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        
+        console.log(azPath)
         const idToken = await core.getIDToken() 
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
