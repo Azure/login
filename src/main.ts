@@ -21,6 +21,7 @@ async function main() {
 
         azPath = await io.which("az", true);
         
+        const idToken = await core.getIDToken() 
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
             "azurechinacloud", 
@@ -106,7 +107,8 @@ async function main() {
                 "--allow-no-subscriptions",
                 "--service-principal",
                 "-u", servicePrincipalId,
-                "-p", servicePrincipalKey,
+                // "-p", servicePrincipalKey,
+                "--federated-token", idToken,
                 "--tenant", tenantId
             ];
             await executeAzCliCommand(`login`, true, {}, args);
@@ -115,7 +117,8 @@ async function main() {
             let args = [
                 "--service-principal",
                 "-u", servicePrincipalId,
-                "-p", servicePrincipalKey,
+                // "-p", servicePrincipalKey,
+                "--federated-token", idToken,
                 "--tenant", tenantId
             ];
             await executeAzCliCommand(`login`, true, {}, args);

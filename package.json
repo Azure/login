@@ -18,7 +18,7 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6",
+    "@actions/core": "1.6.0-beta.0",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
     "actions-secret-parser": "^1.0.2",
