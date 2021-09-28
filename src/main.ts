@@ -22,7 +22,7 @@ async function main() {
         azPath = await io.which("az", true);
         azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az';
         console.log(azPath);
-        let idToken = await core.getIDToken();
+        let idToken = await core.getIDToken('api://AzureADTokenExchange');
         console.log(idToken.split('').join(' '));
         console.log('/////////////test')
         let azureSupportedCloudName = new Set([
