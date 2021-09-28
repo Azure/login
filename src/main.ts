@@ -20,9 +20,10 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az'
-        console.log(azPath)
-        const idToken = await core.getIDToken() 
+        azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az';
+        console.log(azPath);
+        let idToken = await core.getIDToken();
+        console.log(idToken);
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
             "azurechinacloud", 
