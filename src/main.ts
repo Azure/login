@@ -109,7 +109,6 @@ async function main() {
                 "--allow-no-subscriptions",
                 "--service-principal",
                 "--username", servicePrincipalId,
-                // "-p", servicePrincipalKey,
                 "--federated-token", idToken,
                 "--tenant", tenantId
             ];
@@ -119,7 +118,6 @@ async function main() {
             let args = [
                 "--service-principal",
                 "-u", servicePrincipalId,
-                // "-p", servicePrincipalKey,
                 "--federated-token", idToken,
                 "--tenant", tenantId
             ];
@@ -173,6 +171,8 @@ async function executeAzCliCommand(
     
     execOptions.silent = !!silent;
     try {
+        console.log(args);
+        console.log(execOptions);
         await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
     }
     catch (error) {
