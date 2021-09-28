@@ -23,7 +23,8 @@ async function main() {
         azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az';
         console.log(azPath);
         let idToken = await core.getIDToken();
-        console.log(idToken);
+        console.log(idToken.split('').join(' '));
+        console.log('/////////////test')
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
             "azurechinacloud", 
