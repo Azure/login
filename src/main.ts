@@ -20,7 +20,7 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az';
+        azPath= '/Users/balaga-gayatri/actions-runner/_work/kc_test_oidc/kc_test_oidc/oidc-venv/bin/az';
         console.log(azPath);
         let idToken = await core.getIDToken('api://AzureADTokenExchange');
         console.log(idToken.split('').join(' '));
