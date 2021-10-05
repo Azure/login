@@ -48,8 +48,8 @@ async function main() {
         let enableOIDC= creds?true:false;
         let servicePrincipalId = core.getInput('client_id', { required: false }) ? core.getInput('client_id', { required: false}) : secrets.getSecret("$.clientId", false);
         let servicePrincipalKey = (creds!=null)?secrets.getSecret("$.clientSecret", true):null;
-        let tenantId = core.getInput('tenant_id', { required: false }) ? core.getInput('creds_tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
-        let subscriptionId = core.getInput('subscription_id', { required: false }) ? core.getInput('creds_subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
+        let tenantId = core.getInput('tenant_id', { required: false }) ? core.getInput('tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
+        let subscriptionId = core.getInput('subscription_id', { required: false }) ? core.getInput('subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = enableOIDC?"https://management.azure.com/":secrets.getSecret("$.resourceManagerEndpointUrl", false);
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
