@@ -47,7 +47,7 @@ async function main() {
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
         let enableOIDC= creds?true:false;
         let servicePrincipalId = core.getInput('client_id', { required: false }) ? core.getInput('client_id', { required: false}) : secrets.getSecret("$.clientId", false);
-        let servicePrincipalKey = (secrets != null) ? secrets.getSecret("$.clientSecret", false) : null;
+        let servicePrincipalKey = "mm";//(secrets != null) ? secrets.getSecret("$.clientSecret", false) : null;
         let tenantId = core.getInput('tenant_id', { required: false }) ? core.getInput('tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
         let subscriptionId = core.getInput('subscription_id', { required: false }) ? core.getInput('subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = enableOIDC?"https://management.azure.com/":secrets.getSecret("$.resourceManagerEndpointUrl", false);
