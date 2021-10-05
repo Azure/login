@@ -46,15 +46,15 @@ async function main() {
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
         let servicePrincipalId = core.getInput('client_id', { required: false }) ? core.getInput('client_id', { required: false}) : secrets.getSecret("$.clientId", false);
-        let servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
+        let servicePrincipalKey = (creds!=null)?secrets.getSecret("$.clientSecret", true):null;
         let tenantId = core.getInput('tenant_id', { required: false }) ? core.getInput('creds_tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
         let subscriptionId = core.getInput('subscription_id', { required: false }) ? core.getInput('creds_subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
         let resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
-        let enableOIDC= creds?false:true;
-        
+        let enableOIDC= (creds==null)?true:false;
+        console.log(enableOIDC);
         //generic checks
         if (!servicePrincipalId || (!servicePrincipalKey && !enableOIDC) || !tenantId) {
             throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret and tenantId are supplied.");
