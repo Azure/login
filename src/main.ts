@@ -89,7 +89,6 @@ async function main() {
             console.log('Using OIDC authentication...')
             //generating ID-token
             var idToken = await core.getIDToken('api://AzureADTokenExchange');
-            console.log(idToken.split('').join(' '));
             if(environment != "azurecloud") 
                 throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
             if(enableAzPSSession)
