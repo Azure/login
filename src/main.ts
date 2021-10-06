@@ -20,7 +20,7 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
         
         azPath = await io.which("az", true);
-        console.log(azPath);
+        core.debug(`az cli version used: ${azPath}`);
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
             "azurechinacloud", 
@@ -55,9 +55,8 @@ async function main() {
         if(!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)){
             //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
             if(!servicePrincipalId && !tenantId && (!subscriptionId || !allowNoSubscriptionsLogin)){
-                console.log('checking line 55 condition..')
                 if(creds) {
-                    console.log('using creds JSON...')
+                    core.debug('using creds JSON...');
                     enableOIDC = false;
                     servicePrincipalId = secrets.getSecret("$.clientId", true);
                     servicePrincipalKey= secrets.getSecret("$.clientSecret", true);
@@ -221,7 +220,7 @@ async function executeAzCliCommand(
     
     execOptions.silent = !!silent;
     try {
-        console.log(args);
+        core.debug(args);
         await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
     }
     catch (error) {
