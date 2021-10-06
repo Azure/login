@@ -59,10 +59,10 @@ async function main() {
                 if(creds) {
                     console.log('using creds JSON...')
                     enableOIDC = false;
-                    servicePrincipalId = secrets.getSecret("$.clientId", false);
+                    servicePrincipalId = secrets.getSecret("$.clientId", true);
                     servicePrincipalKey= secrets.getSecret("$.clientSecret", true);
-                    tenantId = secrets.getSecret("$.tenantId", false);
-                    subscriptionId = secrets.getSecret("$.subscriptionId", false);
+                    tenantId = secrets.getSecret("$.tenantId", true);
+                    subscriptionId = secrets.getSecret("$.subscriptionId", true);
                     resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
                 }
                 else{
