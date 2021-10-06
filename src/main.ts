@@ -51,8 +51,9 @@ async function main() {
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC= true;
-        // If any few of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
+        // If any of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
         if(!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)){
+            //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
             if(!servicePrincipalId && !tenantId && !(subscriptionId || allowNoSubscriptionsLogin)){
                 console.log('checking line 55 condition..')
                 if(creds) {
@@ -68,11 +69,10 @@ async function main() {
                     throw new Error("Credentials are not passed for Login action."); 
                 }           
             }
+            //If any few of the individual credentials are missing
             else
                 throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set."); 
-        }
-        //If none of the individual credentials (clent_id, tenat_id, subscription_id) are passed in workflow inputs, checking for creds object.
-        
+        }        
         //generic checks 
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
