@@ -222,7 +222,6 @@ async function executeAzCliCommand(
     execOptions.silent = !!silent;
     try {
         console.log(args);
-        console.log(execOptions);
         await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
     }
     catch (error) {
