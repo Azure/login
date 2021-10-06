@@ -45,12 +45,26 @@ async function main() {
     
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
-        let enableOIDC= creds?true:false;
-        let servicePrincipalId = core.getInput('client_id', { required: false }) ? core.getInput('client_id', { required: false}) : secrets.getSecret("$.clientId", false);
-        let servicePrincipalKey = "mm";//(secrets != null) ? secrets.getSecret("$.clientSecret", false) : null;
-        let tenantId = core.getInput('tenant_id', { required: false }) ? core.getInput('tenant_id', { required: false }) : secrets.getSecret("$.tenantId", false);
-        let subscriptionId = core.getInput('subscription_id', { required: false }) ? core.getInput('subscription_id', { required: false }) : secrets.getSecret("$.subscriptionId", false);
-        let resourceManagerEndpointUrl = enableOIDC?"https://management.azure.com/":secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        var servicePrincipalId = null;
+        var servicePrincipalKey = null;
+        var tenantId = null;
+        var subscriptionId = null;
+        var resourceManagerEndpointUrl = null;
+        var enableOIDC= false;
+        if(creds){
+            servicePrincipalId = secrets.getSecret("$.clientId", false);
+            servicePrincipalKey= secrets.getSecret("$.clientSecret", false);
+            tenantId = secrets.getSecret("$.tenantId", false);
+            subscriptionId = secrets.getSecret("$.subscriptionId", false);
+            resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        }
+        else {
+            enableOIDC = true;
+            servicePrincipalId = core.getInput('client_id', { required: false });
+            tenantId = core.getInput('tenant_id', { required: false });
+            subscriptionId = core.getInput('subscription_id', { required: false });
+            resourceManagerEndpointUrl="https://management.azure.com/";
+        }
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
