@@ -54,7 +54,7 @@ async function main() {
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
         if(!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)){
             //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
-            if(!servicePrincipalId && !tenantId && !(subscriptionId || allowNoSubscriptionsLogin)){
+            if(!servicePrincipalId && !tenantId && (!subscriptionId || !allowNoSubscriptionsLogin)){
                 console.log('checking line 55 condition..')
                 if(creds) {
                     console.log('using creds JSON...')
