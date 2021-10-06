@@ -20,11 +20,11 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        // azPath= '/Users/balaga-gayatri/actions-runner/_work/azure-login-action-tests/azure-login-action-tests/oidc-venv/bin/az';
         console.log(azPath);
         let idToken = await core.getIDToken('api://AzureADTokenExchange');
-        console.log(idToken.split('').join(' '));
-        console.log('/////////////test')
+
+        // console.log(idToken.split('').join(' '));
+        // console.log('/////////////test')
         let azureSupportedCloudName = new Set([
             "azureusgovernment", 
             "azurechinacloud", 
@@ -45,47 +45,47 @@ async function main() {
     
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
-        var servicePrincipalId = null;
-        var servicePrincipalKey = null;
-        var tenantId = null;
-        var subscriptionId = null;
-        var resourceManagerEndpointUrl = null;
-        var enableOIDC= false;
-        if(!creds){
-            enableOIDC = true;
-            servicePrincipalId = core.getInput('client_id', { required: false });
-            tenantId = core.getInput('tenant_id', { required: false });
-            subscriptionId = core.getInput('subscription_id', { required: false });
-            resourceManagerEndpointUrl="https://management.azure.com/";
-        }
-        else {
-            servicePrincipalId = secrets.getSecret("$.clientId", false);
-            servicePrincipalKey= secrets.getSecret("$.clientSecret", false);
-            tenantId = secrets.getSecret("$.tenantId", false);
-            subscriptionId = secrets.getSecret("$.subscriptionId", false);
-            resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-        }
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
-        
-        console.log(enableOIDC);
-        //generic checks
-        if (!servicePrincipalId || (!servicePrincipalKey && !enableOIDC) || !tenantId) {
-            throw new Error("Not all values are present in the creds object. Ensure clientId, clientSecret and tenantId are supplied.");
+        //Check for the credentials in individual parameters in the workflow.
+        var servicePrincipalId = core.getInput('client_id', { required: false });;
+        var servicePrincipalKey = null;
+        var tenantId = core.getInput('tenant_id', { required: false });
+        var subscriptionId = core.getInput('subscription_id', { required: false });
+        var resourceManagerEndpointUrl = "https://management.azure.com/";
+        var enableOIDC= true;
+        //If individual credentials (clent_id, tenat_id, subscription_id) are not passed in workflow inputs, checking for creds object.
+        if(!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)) ){
+            if(creds) {
+                enableOIDC = false;
+                servicePrincipalId = secrets.getSecret("$.clientId", false);
+                servicePrincipalKey= secrets.getSecret("$.clientSecret", true);
+                tenantId = secrets.getSecret("$.tenantId", false);
+                subscriptionId = secrets.getSecret("$.subscriptionId", false);
+                resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+            }
+            else{
+                throw new Error("Credentials are not passed for Login action."); 
+            }           
+        }
+        //generic checks 
+        //servicePrincipalKey is only required in non-oidc scenario.
+        if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
+            throw new Error("Not all values are present in the credentials. Ensure clientId, clientSecret and tenantId are supplied.");
         }
         if (!subscriptionId && !allowNoSubscriptionsLogin) {
-            throw new Error("Not all values are present in the creds object. Ensure subscriptionId is supplied.");
+            throw new Error("Not all values are present in the credentials. Ensure subscriptionId is supplied.");
         }
-        
         if (!azureSupportedCloudName.has(environment)){
             throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
         }
         // OIDC specific checks
         if(enableOIDC){
-            if((environment != "azurecloud") && (enableOIDC) )
+            console.log('Using OIDC...')
+            if(environment != "azurecloud") 
                 throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-            if(enableAzPSSession && enableOIDC)
+            if(enableAzPSSession)
                 throw new Error(`Powershell login is not supported with OIDC.`);
         }
 
