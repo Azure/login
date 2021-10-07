@@ -74,6 +74,7 @@ async function main() {
             else
                 throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
+        
         //generic checks 
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
