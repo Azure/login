@@ -44,6 +44,7 @@ async function main() {
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
+        
         //Check for the credentials in individual parameters in the workflow.
         var servicePrincipalId = core.getInput('client-id', { required: false });;
         var servicePrincipalKey = null;
@@ -51,6 +52,7 @@ async function main() {
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC = true;
+
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
         if (!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)) {
             //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
@@ -95,7 +97,7 @@ async function main() {
                 if (enableAzPSSession)
                     throw new Error(`Powershell login is not supported with OIDC.`);
             } else {
-                throw new Error("Could not ID token for authentication.");
+                throw new Error("Could not get ID token for authentication.");
             }
         }
 
