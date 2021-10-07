@@ -18,12 +18,12 @@ async function main() {
         let azurePSHostEnv = (!!azPSHostEnv ? `${azPSHostEnv}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
         core.exportVariable('AZURE_HTTP_USER_AGENT', userAgentString);
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
-        
+
         azPath = await io.which("az", true);
         core.debug(`az cli version used: ${azPath}`);
         let azureSupportedCloudName = new Set([
-            "azureusgovernment", 
-            "azurechinacloud", 
+            "azureusgovernment",
+            "azurechinacloud",
             "azuregermancloud",
             "azurecloud",
             "azurestack"]);
@@ -38,7 +38,7 @@ async function main() {
         };
         await executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
-    
+
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
         let environment = core.getInput("environment").toLowerCase();
@@ -50,28 +50,28 @@ async function main() {
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
-        var enableOIDC= true;
+        var enableOIDC = true;
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
-        if(!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)){
+        if (!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)) {
             //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
-            if(!servicePrincipalId && !tenantId && (!subscriptionId || !allowNoSubscriptionsLogin)){
-                if(creds) {
+            if (!servicePrincipalId && !tenantId && (!subscriptionId || !allowNoSubscriptionsLogin)) {
+                if (creds) {
                     core.debug('using creds JSON...');
                     enableOIDC = false;
                     servicePrincipalId = secrets.getSecret("$.clientId", true);
-                    servicePrincipalKey= secrets.getSecret("$.clientSecret", true);
+                    servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
                     tenantId = secrets.getSecret("$.tenantId", true);
                     subscriptionId = secrets.getSecret("$.subscriptionId", true);
                     resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
                 }
-                else{
-                    throw new Error("Credentials are not passed for Login action."); 
-                }           
+                else {
+                    throw new Error("Credentials are not passed for Login action.");
+                }
             }
             //If any few of the individual credentials are missing
             else
-                throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set."); 
-        }        
+                throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
+        }
         //generic checks 
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
@@ -80,19 +80,25 @@ async function main() {
         if (!subscriptionId && !allowNoSubscriptionsLogin) {
             throw new Error("Not all values are present in the credentials. Ensure subscriptionId is supplied.");
         }
-        if (!azureSupportedCloudName.has(environment)){
+        if (!azureSupportedCloudName.has(environment)) {
             throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
         }
+
         // OIDC specific checks
-        if(enableOIDC){
+        if (enableOIDC) {
             console.log('Using OIDC authentication...')
             //generating ID-token
             var idToken = await core.getIDToken('api://AzureADTokenExchange');
-            if(environment != "azurecloud") 
-                throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-            if(enableAzPSSession)
-                throw new Error(`Powershell login is not supported with OIDC.`);
+            if (!!idToken) {
+                if (environment != "azurecloud")
+                    throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
+                if (enableAzPSSession)
+                    throw new Error(`Powershell login is not supported with OIDC.`);
+            } else {
+                throw new Error("Could not ID token for authentication.");
+            }
         }
+
         // Attempting Az cli login
         if (environment == "azurestack") {
             if (!resourceManagerEndpointUrl) {
@@ -112,27 +118,27 @@ async function main() {
             try {
                 let baseUri = resourceManagerEndpointUrl;
                 if (baseUri.endsWith('/')) {
-                    baseUri = baseUri.substring(0, baseUri.length-1); // need to remove trailing / from resourceManagerEndpointUrl to correctly derive suffixes below
+                    baseUri = baseUri.substring(0, baseUri.length - 1); // need to remove trailing / from resourceManagerEndpointUrl to correctly derive suffixes below
                 }
                 let suffixKeyvault = ".vault" + baseUri.substring(baseUri.indexOf('.')); // keyvault suffix starts with .
-                let suffixStorage = baseUri.substring(baseUri.indexOf('.')+1); // storage suffix starts without .
+                let suffixStorage = baseUri.substring(baseUri.indexOf('.') + 1); // storage suffix starts without .
                 let profileVersion = "2019-03-01-hybrid";
                 await executeAzCliCommand(`cloud register -n "${environment}" --endpoint-resource-manager "${resourceManagerEndpointUrl}" --suffix-keyvault-dns "${suffixKeyvault}" --suffix-storage-endpoint "${suffixStorage}" --profile "${profileVersion}"`, false);
-            } 
+            }
             catch (error) {
                 core.error(`Error while trying to register cloud "${environment}": "${error}"`);
             }
 
             console.log(`Done registering cloud: "${environment}"`)
         }
-    
+
         await executeAzCliCommand(`cloud set -n "${environment}"`, false);
         console.log(`Done setting cloud: "${environment}"`);
 
         // Attempting Az cli login
         if (allowNoSubscriptionsLogin) {
             var args = [];
-            if(enableOIDC){
+            if (enableOIDC) {
                 args = [
                     "--allow-no-subscriptions",
                     "--service-principal",
@@ -154,7 +160,7 @@ async function main() {
         }
         else {
             var args = []
-            if(enableOIDC) {
+            if (enableOIDC) {
                 args = [
                     "--service-principal",
                     "-u", servicePrincipalId,
@@ -183,23 +189,23 @@ async function main() {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
             const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(
-                servicePrincipalId, 
-                servicePrincipalKey, 
-                tenantId, 
-                subscriptionId, 
+                servicePrincipalId,
+                servicePrincipalKey,
+                tenantId,
+                subscriptionId,
                 allowNoSubscriptionsLogin,
-                environment, 
+                environment,
                 resourceManagerEndpointUrl);
             await spnlogin.initialize();
             await spnlogin.login();
         }
 
-        console.log("Login successful.");    
+        console.log("Login successful.");
     }
     catch (error) {
         if (!isAzCLISuccess) {
             core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
-        } 
+        }
         else {
             core.error(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
@@ -213,15 +219,15 @@ async function main() {
 }
 
 async function executeAzCliCommand(
-    command: string, 
-    silent?: boolean, 
-    execOptions: any = {}, 
+    command: string,
+    silent?: boolean,
+    execOptions: any = {},
     args: any = []) {
-    
+
     execOptions.silent = !!silent;
     try {
         core.debug(args);
-        await exec.exec(`"${azPath}" ${command}`, args,  execOptions); 
+        await exec.exec(`"${azPath}" ${command}`, args, execOptions);
     }
     catch (error) {
         throw new Error(error);
