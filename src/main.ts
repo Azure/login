@@ -139,45 +139,28 @@ async function main() {
         console.log(`Done setting cloud: "${environment}"`);
 
         // Attempting Az cli login
+        var commonArgs = ["--service-principal", 
+                          "-u", servicePrincipalId,
+                          "--tenant", tenantId
+                         ];
         if (allowNoSubscriptionsLogin) {
-            var args = [];
             if (enableOIDC) {
-                args = [
-                    "--allow-no-subscriptions",
-                    "--service-principal",
-                    "-u", servicePrincipalId,
-                    "--federated-token", idToken,
-                    "--tenant", tenantId
-                ];
+                args = commonArgs.concat("--allow-no-subscriptions",
+                                         "--federated-token", idToken);
             }
             else {
-                args = [
-                    "--allow-no-subscriptions",
-                    "--service-principal",
-                    "-u", servicePrincipalId,
-                    "-p", servicePrincipalKey,
-                    "--tenant", tenantId
-                ];
+                args = commonArgs.concat("--allow-no-subscriptions",
+                                         "-p", servicePrincipalKey);
             }
             await executeAzCliCommand(`login`, true, {}, args);
         }
         else {
             var args = []
             if (enableOIDC) {
-                args = [
-                    "--service-principal",
-                    "-u", servicePrincipalId,
-                    "--federated-token", idToken,
-                    "--tenant", tenantId
-                ];
+                args = commonArgs.concat("--federated-token", idToken);
             }
             else {
-                args = [
-                    "--service-principal",
-                    "-u", servicePrincipalId,
-                    "-p", servicePrincipalKey,
-                    "--tenant", tenantId
-                ];
+                args = commonArgs.concat("-p", servicePrincipalKey);
             }
             await executeAzCliCommand(`login`, true, {}, args);
             args = [
