@@ -212,7 +212,6 @@ async function executeAzCliCommand(
 
     execOptions.silent = !!silent;
     try {
-        core.debug(args);
         await exec.exec(`"${azPath}" ${command}`, args, execOptions);
     }
     catch (error) {
