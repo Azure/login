@@ -53,28 +53,27 @@ async function main() {
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC = true;
 
-        // If any of the individual credentials (clent_id, tenat_id, subscription_id) are  missing
-        if (!servicePrincipalId || !tenantId || !(subscriptionId || allowNoSubscriptionsLogin)) {
-            //If all of the individual credentials (clent_id, tenat_id, subscription_id) are missing in workflow inputs, checking for creds object.
-            if (!servicePrincipalId && !tenantId && (!subscriptionId || !allowNoSubscriptionsLogin)) {
-                if (creds) {
-                    core.debug('using creds JSON...');
-                    enableOIDC = false;
-                    servicePrincipalId = secrets.getSecret("$.clientId", true);
-                    servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
-                    tenantId = secrets.getSecret("$.tenantId", true);
-                    subscriptionId = secrets.getSecret("$.subscriptionId", true);
-                    resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-                }
-                else {
-                    throw new Error("Credentials are not passed for Login action.");
-                }
-            }
-            //If any few of the individual credentials are missing
-            else
+        // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
+        if (servicePrincipalId || tenantId || subscriptionId) {
+    
+            //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
+            if(!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
                 throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
-        
+        else{
+            if (creds) {
+                core.debug('using creds JSON...');
+                enableOIDC = false;
+                servicePrincipalId = secrets.getSecret("$.clientId", true);
+                servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
+                tenantId = secrets.getSecret("$.tenantId", true);
+                subscriptionId = secrets.getSecet("$.subscriptionId", true);
+                resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+            }
+            else {
+                throw new Error("Credentials are not passed for Login action.");
+            }
+        }
         //generic checks 
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
@@ -97,7 +96,8 @@ async function main() {
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
                 if (enableAzPSSession)
                     throw new Error(`Powershell login is not supported with OIDC.`);
-            } else {
+            } 
+            else {
                 throw new Error("Could not get ID token for authentication.");
             }
         }
@@ -144,32 +144,23 @@ async function main() {
                           "--tenant", tenantId
                          ];
         if (allowNoSubscriptionsLogin) {
-            if (enableOIDC) {
-                args = commonArgs.concat("--allow-no-subscriptions",
-                                         "--federated-token", idToken);
-            }
-            else {
-                args = commonArgs.concat("--allow-no-subscriptions",
-                                         "-p", servicePrincipalKey);
-            }
-            await executeAzCliCommand(`login`, true, {}, args);
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+        if (enableOIDC) {
+            commonArgs = commonArgs.concat("--federated-token", idToken);
         }
         else {
-            var args = []
-            if (enableOIDC) {
-                args = commonArgs.concat("--federated-token", idToken);
-            }
-            else {
-                args = commonArgs.concat("-p", servicePrincipalKey);
-            }
-            await executeAzCliCommand(`login`, true, {}, args);
-            args = [
+            commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+        }
+        await executeAzCliCommand(`login`, true, {}, commonArgs);
+        
+        if(!allowNoSubscriptionsLogin){
+            var args = [
                 "--subscription",
                 subscriptionId
             ];
             await executeAzCliCommand(`account set`, true, {}, args);
         }
-
         isAzCLISuccess = true;
         if (enableAzPSSession) {
             // Attempting Az PS login
