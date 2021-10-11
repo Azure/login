@@ -67,7 +67,7 @@ async function main() {
                 servicePrincipalId = secrets.getSecret("$.clientId", true);
                 servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
                 tenantId = secrets.getSecret("$.tenantId", true);
-                subscriptionId = secrets.getSecet("$.subscriptionId", true);
+                subscriptionId = secrets.getSecret("$.subscriptionId", true);
                 resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
             }
             else {
@@ -200,7 +200,7 @@ async function executeAzCliCommand(
     silent?: boolean,
     execOptions: any = {},
     args: any = []) {
-
+    core.debug(args);
     execOptions.silent = !!silent;
     try {
         await exec.exec(`"${azPath}" ${command}`, args, execOptions);
