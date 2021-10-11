@@ -83,8 +83,7 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}
-#         allow-no-subscriptions: true
-        
+  
       - name: 'Run az commands'
         run: |
           az account show
