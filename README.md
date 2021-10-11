@@ -76,8 +76,7 @@ jobs:
            pip install -q --extra-index-url https://azurecliedge.blob.core.windows.net/federated-token/simple/ azure-cli
            echo "***************installed cli beta*******************" 
            echo "$CWD/oidc-venv/bin" >> $GITHUB_PATH
-           #echo "/Users/balaga-gayatri/oidc-venv/bin" >> $GITHUB_PATH
-           
+  
       - name: 'Az CLI login'
         uses: azure/login@oidc-support
         with:
