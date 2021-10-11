@@ -6,13 +6,13 @@ inputs:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: false
   client-id:
-    description: 'ClientId of the Azure Service principal created.'
+    description: 'ClientId of the Azure Service principal associated with OIDC Federated credential '
     required: false
   tenant-id:
-    description: 'TenantId of the Azure Service principal created.'
+    description: 'TenantId of the Azure Service principal associated with OIDC Federated credential.'
     required: false
   subscription-id:
-    description: 'Azure subscriptionId'
+    description: 'Azure subscriptionId scoped to the service principal with associated OIDC Federated credential'
     required: false
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
