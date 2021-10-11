@@ -169,22 +169,23 @@ jobs:
 ```
 Refer to the [Azure Stack Hub Login Action Tutorial](https://docs.microsoft.com/en-us/azure-stack/user/ci-cd-github-action-login-cli?view=azs-2008) for more detailed instructions.
 
-## Configure OIDC federated credentials:
-
-To login using **Open ID Connect (OIDC) based federated identity credentials**, in the workflow, set the values of `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential.  
-
-Follow <this> guidance, to create a new service principal and then to create a Federated credential in Azure portal needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal. Configure the Federated Credential with appropriate values of the GitHub Org, Repo and Environments based on the context used in the GitHub deployment workflows targeting Azure.
-
-Note: Currently OIDC login is supported only with Azure CLI for public clouds. Support for Azure PowerShell and for other clouds like Government clouds, Azure Stacks would be added soon. 
-  
-  
 ## Configure deployment credentials:
 
-Azure login Action depends on a [secret](https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets) named `AZURE_CREDENTIALS` in your repository. The value of this secret is expected to be a JSON object that represents a service principal (an identifer for an application or process) that authenticates the workflow with Azure.
+  
+### Configure OIDC federated credentials:
 
+  To login using **Open ID Connect (OIDC) based federated identity credentials**, in the workflow, set the values of `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential as individual repository secrets.  
+
+  Follow <this> guidance, to create a new service principal and then to create a Federated credential in Azure portal needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal. Configure the Federated Credential with appropriate values of the GitHub Org, Repo and Environments based on the context used in the GitHub deployment workflows targeting Azure.
+
+  Note: Currently OIDC login is supported only with Azure CLI for public clouds. Support for Azure PowerShell and for other clouds like Government clouds, Azure Stacks would be added soon. Inorder to login in that case you need to use the approach as shown below for configuring credentials for using non-OIDC login.
+
+### Configure non-OIDC credentials:
+ 
+If the credentials are supplied as as a single JSON object secret then the login action will use non-OIDC approach. Azure login Action in this case depends on a [secret](https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets) named `AZURE_CREDENTIALS` in your repository. The value of this secret is expected to be a JSON object that represents a service principal (an identifer for an application or process) that authenticates the workflow with Azure.
+  
 To function correctly, this service principal must be assigned the [Contributor]((https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor)) role for the web app or the resource group that contains the web app.
-
-The following steps describe how to create the service principal, assign the role, and create a secret in your repository with the resulting credentials.
+The following steps describe how to create the service principal, assign the role, and create a single secret in your repository with the resulting credentials.
 
 1. Open the Azure Cloud Shell at [https://shell.azure.com](https://shell.azure.com). You can alternately use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you've installed it locally. (For more information on Cloud Shell, see the [Cloud Shell Overview](https://docs.microsoft.com/azure/cloud-shell/overview).)
 
