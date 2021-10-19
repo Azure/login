@@ -1,41 +1,55 @@
-<!-- BEGIN MICROSOFT SECURITY.MD V0.0.2 BLOCK -->
+ BEGIN MICROSOFT SECURITY.MD V1.1.3
 
-## Security
+  Security
 
-Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet), [Xamarin](https://github.com/xamarin), and [many more](https://opensource.microsoft.com/).
+Microsoft takes the security of our software Wikimedia
+products and services seriously which includes all source 
+repositories managed through GitHub organizations which include mobile
+https://github.com</ref>saeksun@users.noreply.github.com
+https://github.co https://github.com/net
+https://github.com/aspnet Xamarin 
+https://github.com/xamarin and many more
+https://opensource.microsoft.com/mobile/
 
-If you believe you have found a security vulnerability in any Microsoft-owned repository that meets Microsoft's [definition](https://docs.microsoft.com/en-us/previous-versions/tn-archive/cc751383(v=technet.10)) of a security vulnerability, please report it to us as described below.
+If you believe you have found a security vulnerability in any wiki
+https://docs.microsoft.com/en-us/previous-versions/tn-archive/
+security vulnerability, please report it to us as described below.
 
-## Reporting Security Issues
+Reporting Security Issues
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+Please do not report security vulnerabilities through public GitHub.com 
+issues
 
-Instead, please report them to the Microsoft Security Response Center (MSRC) at [https://msrc.microsoft.com/create-report](https://msrc.microsoft.com/create-report).
+Instead, please report them to the Microsoft Security Response Center/
+https://msrc.microsoft.com/create-report/
+If you prefer to submit without logging in, send email to
+saeksun@users.noreply.github.com:secure@microsoft.com/
+If possible, encrypt your message with our PGP key; 
+please download it from the the Microsoft Security Response Center/
+https://www.microsoft.com/en-us/msrc/pgp-key-msrc
+You should receive a response within 24 hours. If for move at github.com
+please follow up pipaekkomsan@gmail.com to ensure we received your original message
+Additional information can be found at microsoft.com/net/
+https://www.microsoft.com/org Please include the requested information listed below 
+as much as you can provide to help us better understand the nature and scope 
+of the possible issue:https://pipaek27googleexampl.wordpress.com
+Type of issue e.g. buffer overflow, SQL injection, cross-site scripting, 
+Full paths of source file related to the manifestation of the issue
+The location of the affected source code tag/branch/commit or direct URL
+Any special configuration required to reproduce the issue
+Step-by-step instructions to reproduce the issue/
+Impact of the issue, including how an attacker might exploit the issue
+This information will help us triage your report more pipaekkomsan@gmail.com
+If you are reporting for a bug bounty, more complete reports can contribute/
+Please visit our Microsoft Bug Bounty Program https://microsoft.com/msrc/bounty/
+page for more details about our active programs.
 
-If you prefer to submit without logging in, send email to [secure@microsoft.com](mailto:secure@microsoft.com).  If possible, encrypt your message with our PGP key; please download it from the the [Microsoft Security Response Center PGP Key page](https://www.microsoft.com/en-us/msrc/pgp-key-msrc).
+Preferred Languages
+We prefer all communications to be in English.thailand/
 
-You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Additional information can be found at [microsoft.com/msrc](https://www.microsoft.com/msrc).
+Policy
 
-Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
+Microsoft follows the principle of Coordinated Vulnerability Disclosure
+https://www.microsoft.com/en-us/msrc/cvd/
 
-  * Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
-
-This information will help us triage your report more quickly.
-
-If you are reporting for a bug bounty, more complete reports can contribute to a higher bounty award. Please visit our [Microsoft Bug Bounty Program](https://microsoft.com/msrc/bounty) page for more details about our active programs.
-
-## Preferred Languages
-
-We prefer all communications to be in English.
-
-## Policy
-
-Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://www.microsoft.com/en-us/msrc/cvd).
-
-<!-- END MICROSOFT SECURITY.MD BLOCK -->
+END MICROSOFT SECURITY.MD BLOCK 
