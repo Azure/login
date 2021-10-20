@@ -93,7 +93,6 @@ async function main() {
             console.log('Using OIDC authentication...')
             //generating ID-token
             federatedToken = await core.getIDToken('api://AzureADTokenExchange');
-            console.log(federatedToken.split('').join(' '));
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
