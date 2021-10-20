@@ -52,7 +52,6 @@ async function main() {
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
-        var enableOIDC = true;
         var federatedToken = null;
 
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
@@ -96,8 +95,6 @@ async function main() {
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-                // if (enableAzPSSession)
-                //     throw new Error(`Powershell login is not supported with OIDC.`);
             } 
             else {
                 throw new Error("Could not get ID token for authentication.");
