@@ -16,7 +16,7 @@ export default class ScriptBuilder {
             }
             // Separate command script for OIDC and non-OIDC
             if(!!args.federatedToken) {
-                command += `Connect-AzAccount -ServicePrincipal -ApplicationId '${args.servicePrincipalId}' -Tenant '${tenantId}'  -FederatedToken (ConvertTo-SecureString '${args.federatedToken.replace("'", "''")}' -AsPlainText -Force) \
+                command += `Connect-AzAccount -ServicePrincipal -ApplicationId '${args.servicePrincipalId}' -Tenant '${tenantId}'  -FederatedToken (ConvertTo-SecureString '${args.federatedToken}' -AsPlainText -Force) \
                     -Environment '${args.environment}' | out-null;`;
             }
             else {
