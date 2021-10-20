@@ -2,7 +2,6 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
-import { AnyARecord } from 'dns';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
 
 var azPath: string;
