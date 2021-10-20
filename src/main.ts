@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
+import { AnyARecord } from 'dns';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
 
 var azPath: string;
@@ -52,6 +53,7 @@ async function main() {
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC = true;
+        var federatedToken = null;
 
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
         if (servicePrincipalId || tenantId || subscriptionId) {
@@ -90,13 +92,13 @@ async function main() {
         if (enableOIDC) {
             console.log('Using OIDC authentication...')
             //generating ID-token
-            var idToken = await core.getIDToken('api://AzureADTokenExchange');
-            console.log(idToken.split('').join(' '));
-            if (!!idToken) {
+            federatedToken = await core.getIDToken('api://AzureADTokenExchange');
+            console.log(federatedToken.split('').join(' '));
+            if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-                if (enableAzPSSession)
-                    throw new Error(`Powershell login is not supported with OIDC.`);
+                // if (enableAzPSSession)
+                //     throw new Error(`Powershell login is not supported with OIDC.`);
             } 
             else {
                 throw new Error("Could not get ID token for authentication.");
@@ -148,7 +150,7 @@ async function main() {
             commonArgs = commonArgs.concat("--allow-no-subscriptions");
         }
         if (enableOIDC) {
-            commonArgs = commonArgs.concat("--federated-token", idToken);
+            commonArgs = commonArgs.concat("--federated-token", federatedToken);
         }
         else {
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
@@ -166,14 +168,17 @@ async function main() {
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            const spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(
+            var spnlogin:ServicePrincipalLogin;
+        
+            spnlogin = new ServicePrincipalLogin(
                 servicePrincipalId,
                 servicePrincipalKey,
+                federatedToken,
                 tenantId,
                 subscriptionId,
                 allowNoSubscriptionsLogin,
                 environment,
-                resourceManagerEndpointUrl);
+                resourceManagerEndpointUrl); 
             await spnlogin.initialize();
             await spnlogin.login();
         }
