@@ -15,7 +15,7 @@ export default class ScriptBuilder {
                 command += `Add-AzEnvironment -Name ${args.environment} -ARMEndpoint ${args.resourceManagerEndpointUrl} | out-null;`;
             }
             // Separate command script for OIDC and non-OIDC
-            if(!!args.federatedToken) {
+            if (!!args.federatedToken) {
                 command += `Connect-AzAccount -ServicePrincipal -ApplicationId '${args.servicePrincipalId}' -Tenant '${tenantId}' -FederatedToken '${args.federatedToken}'  \
                     -Environment '${args.environment}' | out-null;`;
             }

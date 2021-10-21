@@ -51,16 +51,17 @@ async function main() {
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
         var resourceManagerEndpointUrl = "https://management.azure.com/";
+        var enableOIDC = true;
         var federatedToken = null;
 
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
         if (servicePrincipalId || tenantId || subscriptionId) {
-    
+
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
-            if(!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
+            if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
                 throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
-        else{
+        else {
             if (creds) {
                 core.debug('using creds JSON...');
                 enableOIDC = false;
@@ -94,7 +95,7 @@ async function main() {
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-            } 
+            }
             else {
                 throw new Error("Could not get ID token for authentication.");
             }
@@ -137,10 +138,10 @@ async function main() {
         console.log(`Done setting cloud: "${environment}"`);
 
         // Attempting Az cli login
-        var commonArgs = ["--service-principal", 
-                          "-u", servicePrincipalId,
-                          "--tenant", tenantId
-                         ];
+        var commonArgs = ["--service-principal",
+            "-u", servicePrincipalId,
+            "--tenant", tenantId
+        ];
         if (allowNoSubscriptionsLogin) {
             commonArgs = commonArgs.concat("--allow-no-subscriptions");
         }
@@ -151,8 +152,8 @@ async function main() {
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
         }
         await executeAzCliCommand(`login`, true, {}, commonArgs);
-        
-        if(!allowNoSubscriptionsLogin){
+
+        if (!allowNoSubscriptionsLogin) {
             var args = [
                 "--subscription",
                 subscriptionId
@@ -163,8 +164,8 @@ async function main() {
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            var spnlogin:ServicePrincipalLogin;
-        
+            var spnlogin: ServicePrincipalLogin;
+
             spnlogin = new ServicePrincipalLogin(
                 servicePrincipalId,
                 servicePrincipalKey,
@@ -173,7 +174,7 @@ async function main() {
                 subscriptionId,
                 allowNoSubscriptionsLogin,
                 environment,
-                resourceManagerEndpointUrl); 
+                resourceManagerEndpointUrl);
             await spnlogin.initialize();
             await spnlogin.login();
         }
