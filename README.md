@@ -14,9 +14,9 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 - To login into one of the Azure Government clouds, set the optional parameter environment with supported cloud names AzureUSGovernment or AzureChinaCloud. If this parameter is not specified, it takes the default value AzureCloud and connect to the Azure Public Cloud. Additionally the parameter creds takes the Azure service principal created in the particular cloud to connect (Refer to Configure deployment credentials section below for details).
 
 - The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. Other is to use Azure Service Principal with Federated Identity Credentials that use OpenID connect (OIDC) method of authentication. 
-- To login using Azure Service Principal with a secret, follow [this]() guidance.
+- To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
-   1. Follow [this]() guidance to create a Federated Credential associated with your AD App (Service Principal)
+   1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal)
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at job level or workflow level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
    3. Within the Job deploying to Azure, add Azure/login action with OIDC support and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
 
