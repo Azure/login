@@ -23,7 +23,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 
 Note: 
    - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
-   - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
+   - GitHub runners will soon be updated with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include scripts to download the same during workflow execution. 
    - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
 
 
@@ -273,7 +273,7 @@ For a more detailed overview, see more guidance around [Azure Federated Credenti
 #### Microsoft Graph
 
 1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
-1. reate a federated identity credential
+1. Create a federated identity credential
 
     Run the following command to [create a new federated identity credential](/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
     * specific environment
