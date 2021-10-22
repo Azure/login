@@ -109,7 +109,7 @@ jobs:
            echo "$CWD/oidc-venv/bin" >> $GITHUB_PATH   
   
       - name: 'Az CLI login'
-        uses: azure/login@releases/v1
+        uses: azure/login@v1.4.0
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -160,7 +160,7 @@ jobs:
                Install-Module -Name Az.Accounts -Force -AllowClobber -Repository PSGallery
   
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
-          uses: azure/login@releases/v1
+          uses: azure/login@v1.4.0
           with:
             client-id: ${{ secrets.AZURE_CLIENTID }}
             tenant-id: ${{ secrets.AZURE_TENANTID }}
