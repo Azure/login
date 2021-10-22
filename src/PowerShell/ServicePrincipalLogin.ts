@@ -15,17 +15,17 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
     subscriptionId: string;
     resourceManagerEndpointUrl: string;
     allowNoSubscriptionsLogin: boolean;
-    federatedToken:string;
+    federatedToken: string;
 
-    constructor(servicePrincipalId: string, 
-        servicePrincipalKey: string, 
+    constructor(servicePrincipalId: string,
+        servicePrincipalKey: string,
         federatedToken: string,
-        tenantId: string, 
+        tenantId: string,
         subscriptionId: string,
         allowNoSubscriptionsLogin: boolean,
         environment: string,
         resourceManagerEndpointUrl: string) {
-        
+
         this.servicePrincipalId = servicePrincipalId;
         this.servicePrincipalKey = servicePrincipalKey;
         this.federatedToken = federatedToken;
