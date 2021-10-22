@@ -157,7 +157,7 @@ jobs:
         - name: Installing Az.accounts for powershell
           shell: pwsh
           run: |
-              Install-Module -Name Az.Accounts -Repository PSGallery
+               Install-Module -Name Az.Accounts -Force -AllowClobber -Repository PSGallery
   
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
           uses: azure/login@releases/v1
