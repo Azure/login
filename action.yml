@@ -4,7 +4,16 @@ description: 'Authenticate to Azure and run your Az CLI or Az�
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
-    required: true
+    required: false
+  client-id:
+    description: 'ClientId of the Azure Service principal created.'
+    required: false
+  tenant-id:
+    description: 'TenantId of the Azure Service principal created.'
+    required: false
+  subscription-id:
+    description: 'Azure subscriptionId'
+    required: false
   enable-AzPSSession: 
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
@@ -12,7 +21,7 @@ inputs:
   environment:
     description: 'Name of the environment. Supported values are azurecloud, azurestack, azureusgovernment, azurechinacloud, azuregermancloud. Default being azurecloud'
     required: false
-    default: AzureCloud
+    default: azurecloud
   allow-no-subscriptions:
     description: 'Set this value to true to enable support for accessing tenants without subscriptions'
     required: false
