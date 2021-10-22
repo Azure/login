@@ -11,7 +11,7 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true. 
 
-- To login into one of the Azure Government clouds, set the optional parameter environment with supported cloud names AzureUSGovernment or AzureChinaCloud. If this parameter is not specified, it takes the default value AzureCloud and connect to the Azure Public Cloud. Additionally the parameter creds takes the Azure service principal created in the particular cloud to connect (Refer to Configure deployment credentials section below for details).
+- To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to [this](#configure-a-service-principal-with-a-secret)  section below for details).
 
 - The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. Other is to use Azure Service Principal with Federated Identity Credentials that use OpenID connect (OIDC) method of authentication. 
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
