@@ -59,7 +59,7 @@ async function main() {
 
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
             if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
-                throw new Error("Few credentials are missing.ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
+                throw new Error("Few credentials are missing. ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
         else {
             if (creds) {
