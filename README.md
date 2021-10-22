@@ -153,13 +153,10 @@ jobs:
               echo "installed cli beta" 
               echo "$CWD\oidc-venv\Scripts" >> $env:GITHUB_PATH
 
-        - name: Installing preview Az.accounts for powershell
+        - name: Installing Az.accounts for powershell
           shell: pwsh
           run: |
-            cd ../../oidc-venv
-            Invoke-WebRequest -Uri https://azposhpreview.blob.core.windows.net/public/Az.Accounts.2.6.0.nupkg -outfile "Az.Accounts.2.6.0.nupkg"
-            Register-PSRepository -Name LocalPSRepo -SourceLocation "$(pwd)" -ScriptSourceLocation "$(pwd)" -InstallationPolicy Trusted
-            Install-Module Az.Accounts -Repository LocalPSRepo
+               Install-Module Az.Accounts -Repository LocalPSRepo
   
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
           uses: 'azure/login@releases/v1'
