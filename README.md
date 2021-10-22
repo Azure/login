@@ -157,7 +157,7 @@ jobs:
         - name: Installing Az.accounts for powershell
           shell: pwsh
           run: |
-               Install-Module Az.Accounts -Repository LocalPSRepo
+              Install-Module -Name Az.Accounts -Repository PSGallery
   
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
           uses: azure/login@releases/v1
@@ -284,7 +284,41 @@ For a more detailed overview, see more guidance around [Azure Federated Credenti
         ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
+## Support for using `allow-no-subscriptions` flag with az login
 
+Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginWithNoSubscriptions
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        allow-no-subscriptions: true
+```
+## Az logout and security hardening
+
+This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
+```
+- name: Azure CLI script
+  uses: azure/CLI@v1
+  with:
+    azcliversion: 2.0.72
+    inlineScript: |
+      az logout
+      az cache purge
+      az account clear
+```
 
 # Contributing
 
