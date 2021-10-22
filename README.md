@@ -16,11 +16,9 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 - The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. Other is to use Azure Service Principal with Federated Identity Credentials that use OpenID connect (OIDC) method of authentication. 
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
-   1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal)
-   2. In your GitHub workflow, Set `permissions:` with `id-token: write` at job level or workflow level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
-   3. Within the Job deploying to Azure, add Azure/login action with OIDC support and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
-
-Follow <this> guidance, to create a new service principal and then to create a Federated credential in Azure portal needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal. Configure the Federated Credential with appropriate values of the GitHub Org, Repo and Environments based on the context used in the GitHub deployment workflows targeting Azure.
+   1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
+   2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
 
 Note: Currently OIDC login is supported for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
 
