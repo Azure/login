@@ -159,7 +159,7 @@ jobs:
                Install-Module Az.Accounts -Repository LocalPSRepo
   
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
-          uses: 'azure/login@releases/v1'
+          uses: azure/login@releases/v1
           with:
             client-id: ${{ secrets.AZURE_CLIENTID }}
             tenant-id: ${{ secrets.AZURE_TENANTID }}
