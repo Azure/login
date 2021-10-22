@@ -14,7 +14,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 
 - To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to [this](#configure-a-service-principal-with-a-secret)  section below for details).
 
-- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. Other is to use Azure Service Principal with Federated Identity Credentials that use OpenID connect (OIDC) method of authentication. 
+- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure Service Principal with a Federated Identity Credential. 
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
    1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
