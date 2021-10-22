@@ -7,7 +7,8 @@
 With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
 
 # GitHub Action for Azure Login
-With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
+
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true. 
 
@@ -22,7 +23,6 @@ With the Azure login Action, you can automate your workflow to do an Azure login
 
 Note: Currently OIDC login is supported for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
 
-This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
 
 ## Sample workflow that uses Azure login action to run az cli
 
