@@ -171,7 +171,7 @@ jobs:
           with:
              inlineScript: |
                Get-AzResourceGroup
-               azPSVersion: "latest"
+             azPSVersion: "latest"
 
 ```
 
