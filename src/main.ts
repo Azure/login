@@ -215,11 +215,8 @@ async function executeAzCliCommand(
 async function jwtParser(federatedToken) {
 
     let tokenPayload= federatedToken.split('.')[1];
-    console.log(tokenPayload);
     let bufferObj = Buffer.from(tokenPayload, "base64");
-    console.log(bufferObj);
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
-    console.log(decodedPayload);
     return [decodedPayload['iss'],decodedPayload['sub']];
 }
 main();
