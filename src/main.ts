@@ -217,7 +217,7 @@ async function jwtParser(federatedToken) {
 
     let tokenPayload= federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");
-    let decodedPayload = bufferObj.toString("utf8");
+    let decodedPayload = JSON.stringify(bufferObj.toString("utf8"));
     return [decodedPayload["iss"],decodedPayload["sub"]];
 }
 main();
