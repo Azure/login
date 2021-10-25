@@ -2,27 +2,35 @@
 
 ## Automate your GitHub workflows using Azure Actions
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
+[GitHub Actions](https://help.github.com/en/articles/about-github-actions)  gives you the flexibility to build an automated software development lifecycle workflow. 
 
-With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
-
-NOTE: you must have write permissions to the repository in question. If you're using a sample repository from Microsoft, be sure to first fork the repository to your own GitHub account.
-
-Get started today with a [free Azure account](https://azure.com/free/open-source).
+With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
 
 # GitHub Action for Azure Login
 
-With the Azure login Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Azure CLI and Azure PowerShell scripts. You can leverage this action for the public or soverign clouds including Azure Government and Azure Stack Hub (using the `environment` parameter).
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
 
-By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
+- By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true. 
 
-To login into one of the Azure Government clouds, set the optional parameter environment with supported cloud names AzureUSGovernment or AzureChinaCloud. If this parameter is not specified, it takes the default value AzureCloud and connect to the Azure Public Cloud. Additionally the parameter creds takes the Azure service principal created in the particular cloud to connect (Refer to Configure deployment credentials section below for details).
+- To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to [this](#configure-a-service-principal-with-a-secret)  section below for details).
 
-This repository contains GitHub Action for [Azure Login](https://github.com/Azure/login/blob/master/action.yml).
+- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure Service Principal with a Federated Identity Credential. 
+- To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
+- To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
+   1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
+   2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
+
+Note: 
+   - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
+   - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
+   - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
+
 
 ## Sample workflow that uses Azure login action to run az cli
 
 ```yaml
+
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -34,47 +42,141 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-
+    
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+    
     - run: |
         az webapp list --query "[?state=='Running']"
+
 ```
 
 ## Sample workflow that uses Azure login action to run Azure PowerShell
 
 ```yaml
+
 # File: .github/workflows/workflow.yml
 
 on: [push]
 
-name: AzurePowerShellSample
+name: AzurePowerShellLoginSample
 
 jobs:
 
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-
+    
     - name: Login via Az module
       uses: azure/login@v1
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
-        enable-AzPSSession: true
-
-    - name: Run Az CLI script
-      run: |
-        az webapp list --query "[?state=='Running']"
-
-    - name: Run Azure PowerShell script
-      uses: azure/powershell@v1
-      with:
-        azPSVersion: '3.1.0'
-        inlineScript: |
-          Get-AzVM -ResourceGroupName "ActionsDemo"
+        enable-AzPSSession: true 
+     
+     - run: |
+        Get-AzVM -ResourceGroupName "ResourceGroup11"
+        
 ```
+## Sample workflow that uses Azure login action using OIDC to run az cli (Linux)
+
+```yaml
+# File: .github/workflows/OIDC_workflow.yml
+
+name: Run Azure Login with OIDC
+on: [push]
+
+permissions:
+      id-token: write
+      
+jobs: 
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+        
+      # ubuntu Az CLI installation 
+      - name: Install CLI-beta
+        run: |
+           cd ../..
+           CWD="$(pwd)"
+           python3 -m venv oidc-venv
+           . oidc-venv/bin/activate
+           echo "activated environment" 
+           python3 -m pip install --upgrade pip
+           echo "started installing cli beta" 
+           pip install -q --extra-index-url https://azcliprod.blob.core.windows.net/beta/simple/ azure-cli
+           echo "installed cli beta"    
+           echo "$CWD/oidc-venv/bin" >> $GITHUB_PATH   
+  
+      - name: 'Az CLI login'
+        uses: azure/login@v1.4.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}
+  
+      - name: 'Run az commands'
+        run: |
+          az account show
+          az group list
+          pwd 
+```
+This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
+
+## Sample workflow that uses Azure login action using OIDC to run az PowerShell (Windows)
+
+```yaml
+# File: .github/workflows/OIDC_workflow.yml
+
+name: Run Azure Login with OIDC
+on: [push]
+
+permissions:
+      id-token: write
+      
+jobs: 
+  Windows-latest:
+      runs-on: windows-latest
+      steps:
+
+        # windows Az CLI installation 
+        - name: Install CLI-beta
+          run: |
+              cd ../..
+              $CWD = Convert-Path .
+              echo $CWD
+              python --version
+              python -m venv oidc-venv
+              . .\oidc-venv\Scripts\Activate.ps1
+              python -m pip install -q --upgrade pip
+              echo "started installing cli beta" 
+              pip install -q --extra-index-url https://azcliprod.blob.core.windows.net/beta/simple/ azure-cli
+              echo "installed cli beta" 
+              echo "$CWD\oidc-venv\Scripts" >> $env:GITHUB_PATH
+
+        - name: Installing Az.accounts for powershell
+          shell: pwsh
+          run: |
+               Install-Module -Name Az.Accounts -Force -AllowClobber -Repository PSGallery
+  
+        - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
+          uses: azure/login@v1.4.0
+          with:
+            client-id: ${{ secrets.AZURE_CLIENTID }}
+            tenant-id: ${{ secrets.AZURE_TENANTID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
+            enable-AzPSSession: true
+
+        - name: 'Get RG with powershell action'
+          uses: azure/powershell@v1
+          with:
+             inlineScript: |
+               Get-AzResourceGroup
+             azPSVersion: "latest"
+
+```
+
+Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
 
 ## Sample to connect to Azure US Government cloud
 
@@ -122,111 +224,69 @@ jobs:
 Refer to the [Azure Stack Hub Login Action Tutorial](https://docs.microsoft.com/en-us/azure-stack/user/ci-cd-github-action-login-cli?view=azs-2008) for more detailed instructions.
 
 ## Configure deployment credentials:
+  
+### Configure a service principal with a secret:
 
-The previous sample workflows depend on a [secrets](https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets) named `AZURE_CREDENTIALS` in your repository. The value of this secret is expected to be a JSON object that represents a service principal (an identifer for an application or process) that authenticates the workflow with Azure.
+For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
 
-To function correctly, this service principal must be assigned the [Contributor]((https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor)) role for the web app or the resource group that contains the web app.
 
-The following steps describe how to create the service principal, assign the role, and create a secret in your repository with the resulting credentials.
+Follow the steps to configure Azure Service Principal with a secret:
+  * Define a new secret under your repository settings, Add secret menu
+  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+```bash  
 
-1. Open the Azure Cloud Shell at [https://shell.azure.com](https://shell.azure.com). You can alternately use the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) if you've installed it locally. (For more information on Cloud Shell, see the [Cloud Shell Overview](https://docs.microsoft.com/azure/cloud-shell/overview).)
+   az ad sp create-for-rbac --name "myApp" --role contributor \
+                            --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
+                            --sdk-auth
+                            
+  # Replace {subscription-id}, {resource-group} with the subscription, resource group details
 
-    1.1 **(Required ONLY when environment is Azure Stack Hub)** Run the following command to set the SQL Management endpoint to 'not supported'
-      ```bash
+  # The command should output a JSON object similar to this:
 
-      az cloud update -n {environmentName} --endpoint-sql-management https://notsupported
-
-      ```
-
-2. Use the [az ad sp create-for-rbac](https://docs.microsoft.com/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac) command to create a service principal and assign a Contributor role:
-
-    For web apps (also more secure)
-
-    ```azurecli
-    az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
-        --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}/providers/Microsoft.Web/sites/{app-name}
-    ```
-
-    For usage with other Azure services (Storage Accounts, Active Directory, etc.)
-
-    ```azurecli
-    az ad sp create-for-rbac --name "{sp-name}" --sdk-auth --role contributor \
-        --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group}
-    ```
-
-    Replace the following:
-      * `{sp-name}` with a suitable name for your service principal, such as the name of the app itself. The name must be unique within your organization.
-      * `{subscription-id}` with the subscription ID you want to use (found in Subscriptions in portal)
-      * `{resource-group}` the resource group containing the web app.
-      * [optional] `{app-name}` if you wish to have a tighter & more secure scope, use the first option and replace this with the name of the web app.
-
-    More info can be found [here](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az_ad_sp_create_for_rbac).
-
-    This command invokes Azure Active Directory (via the `ad` part of the command) to create a service principal (via `sp`) specifically for [Role-Based Access Control (RBAC)](https://docs.microsoft.com/azure/role-based-access-control/overview) (via `create-for-rbac`).
-
-    The `--role` argument specifies the permissions to grant to the service principal at the specified `--scope`. In this case, you grant the built-in [Contributor](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor) role at the scope of the web app in the specified resource group in the specified subscription. If desired, you can omit the part of the scope starting with `/providers/...` to grant the service principal the Contributor role for the entire resource group. For security purposes, however, it's always preferable to grant permissions at the most restrictive scope possible.
-
-3. When complete, the `az ad sp create-for-rbac` command displays JSON output in the following form (which is specified by the `--sdk-auth` argument):
-
-    ```json
-    {
-      "clientId": "<GUID>",
-      "clientSecret": "<CLIENT_SECRET_VALUE>",
-      "subscriptionId": "<GUID>",
-      "tenantId": "<GUID>",
-      (...)
-    }
-    ```
-
-4. In your repository, use **Add secret** to create a new secret named `AZURE_CREDENTIALS` (as shown in the example workflow), or using whatever name is in your workflow file.
-
-NOTE: While adding secret `AZURE_CREDENTIALS` make sure to add like this 
-
-         {"clientId": "<GUID>",
-          "clientSecret": "<CLIENT_SECRET_VALUE>",
-          "subscriptionId": "<GUID>",
-          "tenantId": "<GUID>",
-          (...)}
-
-   instead of  
-
-        {
-            "clientId": "<GUID>",
-            "clientSecret": "<CLIENT_SECRET_VALUE>",
-            "subscriptionId": "<GUID>",
-            "tenantId": "<GUID>",
-            (...)
-        }
-
-   to prevent unnecessary masking of `{ } ` in your logs which are in dictionary form.
-     
-5. Paste the entire JSON object produced by the `az ad sp create-for-rbac` command as the secret value and save the secret.
-
-NOTE: to manage service principals created with `az ad sp create-for-rbac`, visit the [Azure portal](https://portal.azure.com), navigate to your Azure Active Directory, then select **Manage** > **App registrations** on the left-hand menu. Your service principal should appear in the list. Select a principal to navigate to its properties. You can also manage role assignments using the [az role assignment](https://docs.microsoft.com/cli/azure/role/assignment?view=azure-cli-latest) command.
-
-NOTE: Currently there is no support for passing in the Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundled in a single JSON object (creds).
-However, a simple workaround for users who need this option can be:
-```yaml
-  - uses: Azure/login@v1.1
-    with:
-      creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+  {
+    "clientId": "<GUID>",
+    "clientSecret": "<GUID>",
+    "subscriptionId": "<GUID>",
+    "tenantId": "<GUID>",
+    (...)
+  }
+  
 ```
-In a similar way, any additional parameter can be addded to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
+  * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
 
-NOTE: If you want to hand craft your JSON object instead of using the output from the CLI command (for example, after using the UI to create the App Registration and Role assignment) the following fields are required:
-```json
-{
-  "clientId": "<GUID>",
-"tenantId": "<GUID>",
-"clientSecret": "<CLIENT_SECRET_VALUE>",
-"subscriptionId": "<GUID>",
-"resourceManagerEndpointUrl": "<URL>}
-```
-The resourceManagerEndpointUrl will be `https://management.azure.com/` if you are using the public azure cloud.
+### Configure a service principal with a Federated Credential to use OIDC based authentication:
 
+
+You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
+
+#### Azure portal
+1. Go to **Certificates and secrets**.  In the **Federated credentials** tab, select **Add credential**.  
+1. The **Add a credential** blade opens.
+1. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
+1. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal) 
+1. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance](). 
+1. Add a **Name** for the federated credential.
+1. Click **Add** to configure the federated credential.
+
+For a more detailed overview, see more guidance around [Azure Federated Credentials](). 
+
+#### Microsoft Graph
+
+1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
+1. reate a federated identity credential
+
+    Run the following command to [create a new federated identity credential](/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
+    * specific environment
+    * pull_request events
+    * specific branch
+    * specific tag
+
+        ```azurecli
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        ```
 ## Support for using `allow-no-subscriptions` flag with az login
 
-Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -259,12 +319,17 @@ This action doesn't implement ```az logout``` by default at the end of execution
       az cache purge
       az account clear
 ```
+
 # Contributing
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com. 
+This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
 
-For detailed developer guidelines, visit [developer guidelines for azure actions](https://github.com/Azure/actions/blob/main/docs/developer-guildelines.md).
+When you submit a pull request, a CLA bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
-
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
