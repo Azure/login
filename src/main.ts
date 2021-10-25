@@ -185,7 +185,6 @@ async function main() {
     }
     catch (error) {
         if (!isAzCLISuccess) {
-            core.error("CLI error:" + error);
             core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
         }
         else {
@@ -210,14 +209,17 @@ async function executeAzCliCommand(
         await exec.exec(`"${azPath}" ${command}`, args, execOptions);
     }
     catch (error) {
-        throw new Error(error);
+        throw new Error("CLI error:" + error);
     }
 }
 async function jwtParser(federatedToken) {
 
     let tokenPayload= federatedToken.split('.')[1];
+    console.log(tokenPayload);
     let bufferObj = Buffer.from(tokenPayload, "base64");
+    console.log(bufferObj);
     let decodedPayload = JSON.stringify(bufferObj.toString("utf8"));
+    console.log(decodedPayload);
     return [decodedPayload["iss"],decodedPayload["sub"]];
 }
 main();
