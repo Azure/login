@@ -99,6 +99,8 @@ async function main() {
             else {
                 throw new Error("Could not get ID token for authentication.");
             }
+            let [issuer,subjectClaim] = await jwtParser(federatedToken);
+            console.log("Federated token details: \n issuer- "+ issuer + " \n subject claim - " + subjectClaim);
         }
 
         // Attempting Az cli login
@@ -183,6 +185,7 @@ async function main() {
     }
     catch (error) {
         if (!isAzCLISuccess) {
+            core.error("CLI error:" + error);
             core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
         }
         else {
@@ -210,5 +213,11 @@ async function executeAzCliCommand(
         throw new Error(error);
     }
 }
+async function jwtParser(federatedToken) {
 
+    let tokenPayload= federatedToken.split('.')[1];
+    let bufferObj = Buffer.from(tokenPayload, "base64");
+    let decodedPayload = bufferObj.toString("utf8");
+    return [decodedPayload["iss"],decodedPayload["sub"]];
+}
 main();
