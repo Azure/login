@@ -480,7 +480,11 @@ function parse (args, opts) {
         a.shift() // nuke the old key.
         x = x.concat(a)
 
-        setKey(argv, x, value)
+        // populate alias only if is not already an alias of the full key
+        // (already populated above)
+        if (!(flags.aliases[key] || []).includes(x.join('.'))) {
+          setKey(argv, x, value)
+        }
       })
     }
 

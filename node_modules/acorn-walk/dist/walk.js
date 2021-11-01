@@ -2,7 +2,7 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
   (global = global || self, factory((global.acorn = global.acorn || {}, global.acorn.walk = {})));
-}(this, (function (exports) { 'use strict';
+}(this, function (exports) { 'use strict';
 
   // AST walker module for Mozilla Parser API compatible trees
 
@@ -34,7 +34,7 @@
   // An ancestor walk keeps an array of ancestor nodes (including the
   // current node) and passes them to the callback as third parameter
   // (and also as state parameter when no other state is present).
-  function ancestor(node, visitors, baseVisitor, state, override) {
+  function ancestor(node, visitors, baseVisitor, state) {
     var ancestors = [];
     if (!baseVisitor) { baseVisitor = base
     ; }(function c(node, st, override) {
@@ -44,7 +44,7 @@
       baseVisitor[type](node, st, c);
       if (found) { found(node, st || ancestors, ancestors); }
       if (isNew) { ancestors.pop(); }
-    })(node, state, override);
+    })(node, state);
   }
 
   // A recursive walk is one where your functions override the default
@@ -200,7 +200,7 @@
   };
   base.Statement = skipThrough;
   base.EmptyStatement = ignore;
-  base.ExpressionStatement = base.ParenthesizedExpression = base.ChainExpression =
+  base.ExpressionStatement = base.ParenthesizedExpression =
     function (node, st, c) { return c(node.expression, st, "Expression"); };
   base.IfStatement = function (node, st, c) {
     c(node.test, st, "Expression");
@@ -405,8 +405,6 @@
     if (node.source) { c(node.source, st, "Expression"); }
   };
   base.ExportAllDeclaration = function (node, st, c) {
-    if (node.exported)
-      { c(node.exported, st); }
     c(node.source, st, "Expression");
   };
   base.ImportDeclaration = function (node, st, c) {
@@ -418,10 +416,7 @@
     }
     c(node.source, st, "Expression");
   };
-  base.ImportExpression = function (node, st, c) {
-    c(node.source, st, "Expression");
-  };
-  base.ImportSpecifier = base.ImportDefaultSpecifier = base.ImportNamespaceSpecifier = base.Identifier = base.Literal = ignore;
+  base.ImportSpecifier = base.ImportDefaultSpecifier = base.ImportNamespaceSpecifier = base.Identifier = base.Literal = base.Import = ignore;
 
   base.TaggedTemplateExpression = function (node, st, c) {
     c(node.tag, st, "Expression");
@@ -460,4 +455,4 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
