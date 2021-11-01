@@ -65,6 +65,13 @@ describe('valueType', () => {
 
     expect(output).toEqual(parsers.TYPES.LENGTH);
   });
+
+  it('returns calc from calc(100px * 2)', () => {
+    let input = 'calc(100px * 2)';
+    let output = parsers.valueType(input);
+
+    expect(output).toEqual(parsers.TYPES.CALC);
+  });
 });
 describe('parseInteger', () => {
   it.todo('test');

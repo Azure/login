@@ -1,6 +1,6 @@
 {
   "name": "login",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main.js",
   "scripts": {
@@ -12,8 +12,8 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/node": "^12.7.11",
-    "jest": "^25.2.4",
-    "jest-circus": "^25.2.7",
+    "jest": "^27.3.1",
+    "jest-circus": "^27.3.1",
     "ts-jest": "^25.3.0",
     "typescript": "^3.6.3"
   },
@@ -21,6 +21,7 @@
     "@actions/core": "1.6.0",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
-    "actions-secret-parser": "^1.0.2"
+    "actions-secret-parser": "^1.0.2",
+    "package-lock": "^1.0.3"
   }
 }

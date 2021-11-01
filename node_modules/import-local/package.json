@@ -1,6 +1,6 @@
 {
 	"name": "import-local",
-	"version": "3.0.2",
+	"version": "3.0.3",
 	"description": "Let a globally installed package use a locally installed version of itself if available",
 	"license": "MIT",
 	"repository": "sindresorhus/import-local",

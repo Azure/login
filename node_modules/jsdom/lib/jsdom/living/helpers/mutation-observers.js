@@ -72,7 +72,7 @@ function queueMutationRecord(
   }
 
   for (const [observer, mappedOldValue] of interestedObservers.entries()) {
-    const record = MutationRecord.createImpl([], {
+    const record = MutationRecord.createImpl(target._globalObject, [], {
       type,
       target,
       attributeName: name,
@@ -152,25 +152,28 @@ function notifyMutationObservers() {
       node._registeredObserverList = node._registeredObserverList.filter(registeredObserver => {
         return registeredObserver.source !== mo;
       });
+    }
 
-      if (records.length) {
-        try {
-          mo._callback(
-            records.map(idlUtils.wrapperForImpl),
-            idlUtils.wrapperForImpl(mo)
-          );
-        } catch (e) {
-          const { target } = records[0];
-          const window = target._ownerDocument._defaultView;
+    if (records.length > 0) {
+      try {
+        const moWrapper = idlUtils.wrapperForImpl(mo);
+        mo._callback.call(
+          moWrapper,
+          records.map(idlUtils.wrapperForImpl),
+          moWrapper
+        );
+      } catch (e) {
+        const { target } = records[0];
+        const window = target._ownerDocument._defaultView;
 
-          reportException(window, e);
-        }
+        reportException(window, e);
       }
     }
   }
 
   for (const slot of signalList) {
     const slotChangeEvent = Event.createImpl(
+      slot._globalObject,
       [
         "slotchange",
         { bubbles: true }

@@ -1,29 +1,30 @@
 "use strict";
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 
 const reportException = require("../helpers/runtime-script-errors");
 const idlUtils = require("../generated/utils");
+const { nodeRoot } = require("../helpers/node");
 const {
-  isNode, isShadowRoot, isSlotable, getRoot, getEventTargetParent,
+  isNode, isShadowRoot, isSlotable, getEventTargetParent,
   isShadowInclusiveAncestor, retarget
 } = require("../helpers/shadow-dom");
 
-const Event = require("../generated/Event").interface;
 const MouseEvent = require("../generated/MouseEvent");
 
+const EVENT_PHASE = {
+  NONE: 0,
+  CAPTURING_PHASE: 1,
+  AT_TARGET: 2,
+  BUBBLING_PHASE: 3
+};
+
 class EventTargetImpl {
-  constructor() {
+  constructor(globalObject) {
+    this._globalObject = globalObject;
     this._eventListeners = Object.create(null);
   }
 
   addEventListener(type, callback, options) {
-    // webidl2js currently can't handle neither optional arguments nor callback interfaces
-    if (callback === undefined || callback === null) {
-      callback = null;
-    } else if (typeof callback !== "object" && typeof callback !== "function") {
-      throw new TypeError("Only undefined, null, an object, or a function are allowed for the callback parameter");
-    }
-
     options = normalizeEventHandlerOptions(options, ["capture", "once", "passive"]);
 
     if (callback === null) {
@@ -36,7 +37,10 @@ class EventTargetImpl {
 
     for (let i = 0; i < this._eventListeners[type].length; ++i) {
       const listener = this._eventListeners[type][i];
-      if (listener.options.capture === options.capture && listener.callback === callback) {
+      if (
+        listener.callback.objectReference === callback.objectReference &&
+        listener.options.capture === options.capture
+      ) {
         return;
       }
     }
@@ -48,12 +52,6 @@ class EventTargetImpl {
   }
 
   removeEventListener(type, callback, options) {
-    if (callback === undefined || callback === null) {
-      callback = null;
-    } else if (typeof callback !== "object" && typeof callback !== "function") {
-      throw new TypeError("Only undefined, null, an object, or a function are allowed for the callback parameter");
-    }
-
     options = normalizeEventHandlerOptions(options, ["capture"]);
 
     if (callback === null) {
@@ -67,7 +65,10 @@ class EventTargetImpl {
 
     for (let i = 0; i < this._eventListeners[type].length; ++i) {
       const listener = this._eventListeners[type][i];
-      if (listener.callback === callback && listener.options.capture === options.capture) {
+      if (
+        listener.callback.objectReference === callback.objectReference &&
+        listener.options.capture === options.capture
+      ) {
         this._eventListeners[type].splice(i, 1);
         break;
       }
@@ -76,10 +77,16 @@ class EventTargetImpl {
 
   dispatchEvent(eventImpl) {
     if (eventImpl._dispatchFlag || !eventImpl._initializedFlag) {
-      throw new DOMException("Tried to dispatch an uninitialized event", "InvalidStateError");
+      throw DOMException.create(this._globalObject, [
+        "Tried to dispatch an uninitialized event",
+        "InvalidStateError"
+      ]);
     }
-    if (eventImpl.eventPhase !== Event.NONE) {
-      throw new DOMException("Tried to dispatch a dispatching event", "InvalidStateError");
+    if (eventImpl.eventPhase !== EVENT_PHASE.NONE) {
+      throw DOMException.create(this._globalObject, [
+        "Tried to dispatch a dispatching event",
+        "InvalidStateError"
+      ]);
     }
 
     eventImpl.isTrusted = false;
@@ -129,7 +136,7 @@ class EventTargetImpl {
 
           slotable = null;
 
-          const parentRoot = getRoot(parent);
+          const parentRoot = nodeRoot(parent);
           if (isShadowRoot(parentRoot) && parentRoot.mode === "closed") {
             slotInClosedTree = true;
           }
@@ -142,7 +149,7 @@ class EventTargetImpl {
         relatedTarget = retarget(eventImpl.relatedTarget, parent);
 
         if (
-          (isNode(parent) && isShadowInclusiveAncestor(getRoot(targetImpl), parent)) ||
+          (isNode(parent) && isShadowInclusiveAncestor(nodeRoot(targetImpl), parent)) ||
           idlUtils.wrapperForImpl(parent).constructor.name === "Window"
         ) {
           if (isActivationEvent && eventImpl.bubbles && activationTarget === null &&
@@ -179,8 +186,8 @@ class EventTargetImpl {
       const clearTargetsStruct = eventImpl._path[clearTargetsStructIndex];
 
       clearTargets =
-          (isNode(clearTargetsStruct.target) && isShadowRoot(getRoot(clearTargetsStruct.target))) ||
-          (isNode(clearTargetsStruct.relatedTarget) && isShadowRoot(getRoot(clearTargetsStruct.relatedTarget)));
+          (isNode(clearTargetsStruct.target) && isShadowRoot(nodeRoot(clearTargetsStruct.target))) ||
+          (isNode(clearTargetsStruct.relatedTarget) && isShadowRoot(nodeRoot(clearTargetsStruct.relatedTarget)));
 
       if (activationTarget !== null && activationTarget._legacyPreActivationBehavior) {
         activationTarget._legacyPreActivationBehavior();
@@ -190,9 +197,9 @@ class EventTargetImpl {
         const struct = eventImpl._path[i];
 
         if (struct.target !== null) {
-          eventImpl.eventPhase = Event.AT_TARGET;
+          eventImpl.eventPhase = EVENT_PHASE.AT_TARGET;
         } else {
-          eventImpl.eventPhase = Event.CAPTURING_PHASE;
+          eventImpl.eventPhase = EVENT_PHASE.CAPTURING_PHASE;
         }
 
         invokeEventListeners(struct, eventImpl, "capturing");
@@ -202,20 +209,20 @@ class EventTargetImpl {
         const struct = eventImpl._path[i];
 
         if (struct.target !== null) {
-          eventImpl.eventPhase = Event.AT_TARGET;
+          eventImpl.eventPhase = EVENT_PHASE.AT_TARGET;
         } else {
           if (!eventImpl.bubbles) {
             continue;
           }
 
-          eventImpl.eventPhase = Event.BUBBLING_PHASE;
+          eventImpl.eventPhase = EVENT_PHASE.BUBBLING_PHASE;
         }
 
         invokeEventListeners(struct, eventImpl, "bubbling");
       }
     }
 
-    eventImpl.eventPhase = Event.NONE;
+    eventImpl.eventPhase = EVENT_PHASE.NONE;
 
     eventImpl.currentTarget = null;
     eventImpl._path = [];
@@ -230,7 +237,7 @@ class EventTargetImpl {
 
     if (activationTarget !== null) {
       if (!eventImpl._canceledFlag) {
-        activationTarget._activationBehavior();
+        activationTarget._activationBehavior(eventImpl);
       } else if (activationTarget._legacyCanceledActivationBehavior) {
         activationTarget._legacyCanceledActivationBehavior();
       }
@@ -264,11 +271,11 @@ function invokeEventListeners(struct, eventImpl, phase) {
   eventImpl.currentTarget = idlUtils.wrapperForImpl(struct.item);
 
   const listeners = struct.item._eventListeners;
-  innerInvokeEventListeners(eventImpl, listeners, phase, struct);
+  innerInvokeEventListeners(eventImpl, listeners, phase, struct.itemInShadowTree);
 }
 
 // https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke
-function innerInvokeEventListeners(eventImpl, listeners, phase) {
+function innerInvokeEventListeners(eventImpl, listeners, phase, itemInShadowTree) {
   let found = false;
 
   const { type, target } = eventImpl;
@@ -303,31 +310,33 @@ function innerInvokeEventListeners(eventImpl, listeners, phase) {
       listeners[type].splice(listeners[type].indexOf(listener), 1);
     }
 
+    let window = null;
+    if (wrapper && wrapper._document) {
+      // Triggered by Window
+      window = wrapper;
+    } else if (target._ownerDocument) {
+      // Triggered by most webidl2js'ed instances
+      window = target._ownerDocument._defaultView;
+    } else if (wrapper._ownerDocument) {
+      // Currently triggered by some non-webidl2js things
+      window = wrapper._ownerDocument._defaultView;
+    }
+
+    let currentEvent;
+    if (window) {
+      currentEvent = window._currentEvent;
+      if (!itemInShadowTree) {
+        window._currentEvent = eventImpl;
+      }
+    }
+
     if (passive) {
       eventImpl._inPassiveListenerFlag = true;
     }
 
     try {
-      if (typeof listener.callback === "object") {
-        if (typeof listener.callback.handleEvent === "function") {
-          listener.callback.handleEvent(idlUtils.wrapperForImpl(eventImpl));
-        }
-      } else {
-        listener.callback.call(eventImpl.currentTarget, idlUtils.wrapperForImpl(eventImpl));
-      }
+      listener.callback.call(eventImpl.currentTarget, eventImpl);
     } catch (e) {
-      let window = null;
-      if (wrapper && wrapper._document) {
-        // Triggered by Window
-        window = wrapper;
-      } else if (target._ownerDocument) {
-        // Triggered by most webidl2js'ed instances
-        window = target._ownerDocument._defaultView;
-      } else if (wrapper._ownerDocument) {
-        // Currently triggered by XHR and some other non-webidl2js things
-        window = wrapper._ownerDocument._defaultView;
-      }
-
       if (window) {
         reportException(window, e);
       }
@@ -335,6 +344,10 @@ function innerInvokeEventListeners(eventImpl, listeners, phase) {
     }
 
     eventImpl._inPassiveListenerFlag = false;
+
+    if (window) {
+      window._currentEvent = currentEvent;
+    }
 
     if (eventImpl._stopImmediatePropagationFlag) {
       return found;
@@ -375,7 +388,7 @@ function normalizeEventHandlerOptions(options, defaultBoolKeys) {
 
 // https://dom.spec.whatwg.org/#concept-event-path-append
 function appendToEventPath(eventImpl, target, targetOverride, relatedTarget, touchTargets, slotInClosedTree) {
-  const itemInShadowTree = isNode(target) && isShadowRoot(getRoot(target));
+  const itemInShadowTree = isNode(target) && isShadowRoot(nodeRoot(target));
   const rootOfClosedTree = isShadowRoot(target) && target.mode === "closed";
 
   eventImpl._path.push({

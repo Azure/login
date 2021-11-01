@@ -52,4 +52,25 @@ describe("function-name", function() {
             functionName(fn);
         });
     });
+
+    it("should not fail when toString is undefined", function() {
+        refute.exception(function() {
+            functionName(Object.create(null));
+        });
+    });
+
+    it("should not fail when toString throws", function() {
+        refute.exception(function() {
+            var fn;
+            try {
+                // eslint-disable-next-line no-eval
+                fn = eval("(function*() {})")().constructor;
+            } catch (e) {
+                // env doesn't support generators
+                return;
+            }
+
+            functionName(fn);
+        });
+    });
 });

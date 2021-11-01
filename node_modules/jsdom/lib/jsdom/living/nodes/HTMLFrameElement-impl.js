@@ -1,14 +1,13 @@
 "use strict";
 
-const DOMException = require("domexception");
 const MIMEType = require("whatwg-mimetype");
 const whatwgEncoding = require("whatwg-encoding");
 const { parseURL, serializeURL } = require("whatwg-url");
 const sniffHTMLEncoding = require("html-encoding-sniffer");
 
-const { evaluateJavaScriptURL } = require("../window/navigation");
+const window = require("../../browser/Window");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
-const { reflectURLAttribute } = require("../../utils");
+const { evaluateJavaScriptURL } = require("../window/navigation");
 const { parseIntoDocument } = require("../../browser/parser");
 const { documentBaseURL } = require("../helpers/document-base-url");
 const { fireAnEvent } = require("../helpers/events");
@@ -61,8 +60,10 @@ function fetchFrame(serializedURL, frame, document, contentDoc) {
     try {
       parseIntoDocument(html, contentDoc);
     } catch (error) {
+      const { DOMException } = contentDoc._globalObject;
+
       if (
-        error instanceof DOMException &&
+        error.constructor.name === "DOMException" &&
         error.code === DOMException.SYNTAX_ERR &&
         contentDoc._parsingMode === "xml"
       ) {
@@ -124,10 +125,10 @@ function loadFrame(frame, attaching) {
   }
   const serializedURL = serializeURL(url);
 
-  // This is not great, but prevents a require cycle during webidl2js generation
-  const wnd = new parentDoc._defaultView.constructor({
+  const wnd = window.createWindow({
     parsingMode: "html",
-    url: url.scheme === "javascript" || serializedURL === "about:blank" ? parentDoc.URL : serializedURL,
+    url: url.scheme === "javascript" ? parentDoc.URL : serializedURL,
+    parentOrigin: parentDoc._origin,
     resourceLoader: parentDoc._defaultView._resourceLoader,
     referrer: parentDoc.URL,
     cookieJar: parentDoc._cookieJar,
@@ -146,7 +147,7 @@ function loadFrame(frame, attaching) {
   contentWindow._frameElement = frame;
   contentWindow._virtualConsole = parent._virtualConsole;
 
-  if (parentDoc.origin === contentDoc.origin) {
+  if (parentDoc._origin === contentDoc._origin) {
     contentWindow._currentOriginData.windowsInSameOrigin.push(contentWindow);
   }
 
@@ -186,22 +187,22 @@ function loadFrame(frame, attaching) {
 }
 
 function refreshAccessors(document) {
-  const window = document._defaultView;
+  const { _defaultView } = document;
 
-  if (!window) {
+  if (!_defaultView) {
     return;
   }
 
   const frames = document.querySelectorAll("iframe,frame");
 
   // delete accessors for all frames
-  for (let i = 0; i < window._length; ++i) {
-    delete window[i];
+  for (let i = 0; i < _defaultView._length; ++i) {
+    delete _defaultView[i];
   }
 
-  window._length = frames.length;
+  _defaultView._length = frames.length;
   Array.prototype.forEach.call(frames, (frame, i) => {
-    Object.defineProperty(window, i, {
+    Object.defineProperty(_defaultView, i, {
       configurable: true,
       enumerable: true,
       get() {
@@ -212,8 +213,8 @@ function refreshAccessors(document) {
 }
 
 class HTMLFrameElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
     this._contentDocument = null;
   }
   _attrModified(name, value, oldVal) {
@@ -252,22 +253,6 @@ class HTMLFrameElementImpl extends HTMLElementImpl {
 
   get contentWindow() {
     return this.contentDocument ? this.contentDocument._defaultView : null;
-  }
-
-  get src() {
-    return reflectURLAttribute(this, "src");
-  }
-
-  set src(value) {
-    this.setAttributeNS(null, "src", value);
-  }
-
-  get longDesc() {
-    return reflectURLAttribute(this, "longdesc");
-  }
-
-  set longDesc(value) {
-    this.setAttributeNS(null, "longdesc", value);
   }
 }
 

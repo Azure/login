@@ -7,16 +7,18 @@ const DefaultConstraintValidationImpl =
 const ValidityState = require("../generated/ValidityState");
 const { mixin } = require("../../utils");
 
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 const { cloningSteps } = require("../helpers/internal-constants");
-const { normalizeToCRLF, getLabelsForLabelable, formOwner } = require("../helpers/form-controls");
+const { isDisabled, getLabelsForLabelable, formOwner } = require("../helpers/form-controls");
 const { childTextContent } = require("../helpers/text");
 const { fireAnEvent } = require("../helpers/events");
 
 class HTMLTextAreaElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
+    this._selectionStart = this._selectionEnd = 0;
+    this._selectionDirection = "none";
     this._rawValue = "";
     this._dirtyValue = false;
 
@@ -36,8 +38,11 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
 
   // https://html.spec.whatwg.org/multipage/form-elements.html#textarea-wrapping-transformation
   _getValue() {
-    // Hard-wrapping omitted, for now.
-    return normalizeToCRLF(this._rawValue);
+    const apiValue = this._getAPIValue();
+    const wrap = this.getAttributeNS(null, "wrap");
+    return wrap === "hard" ?
+      textareaWrappingTransformation(apiValue, this.cols) :
+      apiValue;
   }
 
   _childTextContentChangeSteps() {
@@ -69,12 +74,15 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
   }
 
   set value(val) {
+    // https://html.spec.whatwg.org/multipage/form-elements.html#dom-textarea-value
+    const oldAPIValue = this._getAPIValue();
     this._rawValue = val;
     this._dirtyValue = true;
 
-    this._selectionStart = 0;
-    this._selectionEnd = 0;
-    this._selectionDirection = "none";
+    if (oldAPIValue !== this._getAPIValue()) {
+      this._selectionStart = this._selectionEnd = this._getValueLength();
+      this._selectionDirection = "none";
+    }
   }
 
   get textLength() {
@@ -136,7 +144,7 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
       start = this._selectionStart;
       end = this._selectionEnd;
     } else if (start > end) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
 
     start = Math.min(start, this._getValueLength());
@@ -184,7 +192,7 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
 
   set cols(value) {
     if (value <= 0) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
     this.setAttributeNS(null, "cols", String(value));
   }
@@ -198,7 +206,7 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
 
   set rows(value) {
     if (value <= 0) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
     this.setAttributeNS(null, "rows", String(value));
   }
@@ -207,11 +215,20 @@ class HTMLTextAreaElementImpl extends HTMLElementImpl {
     return this.hasAttributeNS(null, "readonly");
   }
 
+  get _mutable() {
+    return !isDisabled(this) && !this.hasAttributeNS(null, "readonly");
+  }
+
   // https://html.spec.whatwg.org/multipage/form-elements.html#attr-textarea-required
   get validity() {
     if (!this._validity) {
-      this._validity = ValidityState.createImpl(this, {
-        valueMissing: () => this.hasAttributeNS(null, "required") && this.value === ""
+      const state = {
+        valueMissing: () => this.hasAttributeNS(null, "required") && this._mutable && this.value === ""
+      };
+
+      this._validity = ValidityState.createImpl(this._globalObject, [], {
+        element: this,
+        state
       });
     }
     return this._validity;
@@ -228,3 +245,28 @@ mixin(HTMLTextAreaElementImpl.prototype, DefaultConstraintValidationImpl.prototy
 module.exports = {
   implementation: HTMLTextAreaElementImpl
 };
+
+function textareaWrappingTransformation(text, cols) {
+  let lineStart = 0;
+  let lineEnd = text.indexOf("\n");
+  if (lineEnd === -1) {
+    lineEnd = text.length;
+  }
+
+  while (lineStart < text.length) {
+    const lineLength = lineEnd - lineStart;
+    if (lineLength > cols) {
+      // split the line
+      lineEnd = lineStart + cols;
+      text = text.slice(0, lineEnd) + "\n" + text.slice(lineEnd);
+    }
+    // move to next line
+    lineStart = lineEnd + 1; // step over the newline
+    lineEnd = text.indexOf("\n", lineStart);
+    if (lineEnd === -1) {
+      lineEnd = text.length;
+    }
+  }
+
+  return text;
+}

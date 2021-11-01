@@ -3,7 +3,8 @@ const path = require("path");
 const whatwgURL = require("whatwg-url");
 const { domSymbolTree } = require("./living/helpers/internal-constants");
 const SYMBOL_TREE_POSITION = require("symbol-tree").TreePosition;
-const { parseURLToResultingURLRecord } = require("./living/helpers/document-base-url");
+
+exports.hasWeakRefs = typeof WeakRef === "function";
 
 exports.toFileUrl = function (fileName) {
   // Beyond just the `path.resolve`, this is mostly for the benefit of Windows,
@@ -81,9 +82,9 @@ exports.memoizeQuery = function memoizeQuery(fn) {
 
   const type = memoizeQueryTypeCounter++;
 
-  return function () {
+  return function (...args) {
     if (!this._memoizedQueries) {
-      return fn.apply(this, arguments);
+      return fn.apply(this, args);
     }
 
     if (!this._memoizedQueries[type]) {
@@ -91,32 +92,19 @@ exports.memoizeQuery = function memoizeQuery(fn) {
     }
 
     let key;
-    if (arguments.length === 1 && typeof arguments[0] === "string") {
-      key = arguments[0];
-    } else if (arguments.length === 2 && typeof arguments[0] === "string" && typeof arguments[1] === "string") {
-      key = arguments[0] + "::" + arguments[1];
+    if (args.length === 1 && typeof args[0] === "string") {
+      key = args[0];
+    } else if (args.length === 2 && typeof args[0] === "string" && typeof args[1] === "string") {
+      key = args[0] + "::" + args[1];
     } else {
-      return fn.apply(this, arguments);
+      return fn.apply(this, args);
     }
 
     if (!(key in this._memoizedQueries[type])) {
-      this._memoizedQueries[type][key] = fn.apply(this, arguments);
+      this._memoizedQueries[type][key] = fn.apply(this, args);
     }
     return this._memoizedQueries[type][key];
   };
-};
-
-exports.reflectURLAttribute = (elementImpl, contentAttributeName) => {
-  const attributeValue = elementImpl.getAttributeNS(null, contentAttributeName);
-  if (attributeValue === null || attributeValue === "") {
-    return "";
-  }
-
-  const urlRecord = parseURLToResultingURLRecord(attributeValue, elementImpl._ownerDocument);
-  if (urlRecord === null) {
-    return attributeValue;
-  }
-  return whatwgURL.serializeURL(urlRecord);
 };
 
 function isValidAbsoluteURL(str) {

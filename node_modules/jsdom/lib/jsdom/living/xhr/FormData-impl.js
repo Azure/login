@@ -1,13 +1,14 @@
 "use strict";
 const idlUtils = require("../generated/utils");
 const { closest } = require("../helpers/traversal");
-const { isDisabled, isSubmittable, isButton, normalizeToCRLF } = require("../helpers/form-controls");
+const { isDisabled, isSubmittable, isButton } = require("../helpers/form-controls");
 const Blob = require("../generated/Blob.js");
 const File = require("../generated/File.js");
 const conversions = require("webidl-conversions");
 
 exports.implementation = class FormDataImpl {
-  constructor(args) {
+  constructor(globalObject, args) {
+    this._globalObject = globalObject;
     this._entries = [];
 
     if (args[0] !== undefined) {
@@ -63,7 +64,7 @@ function createAnEntry(name, value, filename) {
 
   if (Blob.isImpl(value) && !File.isImpl(value)) {
     const oldValue = value;
-    value = File.createImpl([
+    value = File.createImpl(value._globalObject, [
       [],
       "blob",
       { type: oldValue.type }
@@ -74,7 +75,7 @@ function createAnEntry(name, value, filename) {
 
   if (File.isImpl(value) && filename !== undefined) {
     const oldValue = value;
-    value = File.createImpl([
+    value = File.createImpl(value._globalObject, [
       [],
       filename,
       // spec makes no mention of `lastModified`; assume it is inherited
@@ -137,15 +138,13 @@ function constructTheEntryList(form, submitter) {
       appendAnEntry(entryList, name, value);
     } else if (field.type === "file") {
       if (field.files.length === 0) {
-        const value = File.createImpl([[], "", { type: "application/octet-stream" }]);
+        const value = File.createImpl(form._globalObject, [[], "", { type: "application/octet-stream" }]);
         appendAnEntry(entryList, name, value);
       } else {
         for (let i = 0; i < field.files.length; ++i) {
           appendAnEntry(entryList, name, field.files.item(i));
         }
       }
-    } /* skip plugins. TODO: _charset_ */ else if (field.localName === "textarea") {
-      appendAnEntry(entryList, name, field._getValue(), true);
     } else {
       appendAnEntry(entryList, name, field._getValue());
     }
@@ -162,12 +161,9 @@ function constructTheEntryList(form, submitter) {
   return entryList;
 }
 
-function appendAnEntry(entryList, name, value, preventLineBreakNormalization = false) {
-  name = conversions.USVString(normalizeToCRLF(name));
+function appendAnEntry(entryList, name, value) {
+  name = conversions.USVString(name);
   if (!File.isImpl(value)) {
-    if (!preventLineBreakNormalization) {
-      value = normalizeToCRLF(value);
-    }
     value = conversions.USVString(value);
   }
   const entry = createAnEntry(name, value);

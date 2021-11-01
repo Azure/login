@@ -1,28 +1,30 @@
 "use strict";
 
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 
 const EventTargetImpl = require("../events/EventTarget-impl").implementation;
 const { simultaneousIterators } = require("../../utils");
 const NODE_TYPE = require("../node-type");
 const NODE_DOCUMENT_POSITION = require("../node-document-position");
-const NodeList = require("../generated/NodeList");
 const { clone, locateNamespacePrefix, locateNamespace } = require("../node");
-const attributes = require("../attributes");
+const { setAnExistingAttributeValue } = require("../attributes");
 
+const NodeList = require("../generated/NodeList");
+
+const { nodeRoot, nodeLength } = require("../helpers/node");
 const { domSymbolTree } = require("../helpers/internal-constants");
 const { documentBaseURLSerialized } = require("../helpers/document-base-url");
 const { queueTreeMutationRecord } = require("../helpers/mutation-observers");
+const { enqueueCECallbackReaction, tryUpgradeElement } = require("../helpers/custom-elements");
 const {
-  isShadowRoot, getRoot, shadowIncludingRoot, assignSlot, assignSlotableForTree, assignSlotable,
-  signalSlotChange, isSlot
+  isShadowRoot, shadowIncludingRoot, assignSlot, assignSlotableForTree, assignSlotable, signalSlotChange, isSlot,
+  shadowIncludingInclusiveDescendantsIterator, shadowIncludingDescendantsIterator
 } = require("../helpers/shadow-dom");
 
 function isObsoleteNodeType(node) {
   return node.nodeType === NODE_TYPE.ENTITY_NODE ||
     node.nodeType === NODE_TYPE.ENTITY_REFERENCE_NODE ||
     node.nodeType === NODE_TYPE.NOTATION_NODE ||
-  //  node.nodeType === NODE_TYPE.ATTRIBUTE_NODE ||  // this is missing how do we handle?
     node.nodeType === NODE_TYPE.CDATA_SECTION_NODE;
 }
 
@@ -44,6 +46,11 @@ function nodeEquals(a, b) {
         return false;
       }
       break;
+    case NODE_TYPE.ATTRIBUTE_NODE:
+      if (a._namespace !== b._namespace || a._localName !== b._localName || a._value !== b._value) {
+        return false;
+      }
+      break;
     case NODE_TYPE.PROCESSING_INSTRUCTION_NODE:
       if (a._target !== b._target || a._data !== b._data) {
         return false;
@@ -57,7 +64,7 @@ function nodeEquals(a, b) {
       break;
   }
 
-  if (a.nodeType === NODE_TYPE.ELEMENT_NODE && !attributes.attributeListsEqual(a, b)) {
+  if (a.nodeType === NODE_TYPE.ELEMENT_NODE && !attributeListsEqual(a, b)) {
     return false;
   }
 
@@ -75,6 +82,29 @@ function nodeEquals(a, b) {
   return true;
 }
 
+// Needed by https://dom.spec.whatwg.org/#concept-node-equals
+function attributeListsEqual(elementA, elementB) {
+  const listA = elementA._attributeList;
+  const listB = elementB._attributeList;
+
+  const lengthA = listA.length;
+  const lengthB = listB.length;
+
+  if (lengthA !== lengthB) {
+    return false;
+  }
+
+  for (let i = 0; i < lengthA; ++i) {
+    const attrA = listA[i];
+
+    if (!listB.some(attrB => nodeEquals(attrA, attrB))) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // https://dom.spec.whatwg.org/#concept-tree-host-including-inclusive-ancestor
 function isHostInclusiveAncestor(nodeImplA, nodeImplB) {
   for (const ancestor of domSymbolTree.ancestorsIterator(nodeImplB)) {
@@ -83,7 +113,7 @@ function isHostInclusiveAncestor(nodeImplA, nodeImplB) {
     }
   }
 
-  const rootImplB = getRoot(nodeImplB);
+  const rootImplB = nodeRoot(nodeImplB);
   if (rootImplB._host) {
     return isHostInclusiveAncestor(nodeImplA, rootImplB._host);
   }
@@ -92,8 +122,8 @@ function isHostInclusiveAncestor(nodeImplA, nodeImplB) {
 }
 
 class NodeImpl extends EventTargetImpl {
-  constructor(args, privateData) {
-    super();
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     domSymbolTree.initialize(this);
 
@@ -104,6 +134,7 @@ class NodeImpl extends EventTargetImpl {
     this._version = 0;
     this._memoizedQueries = {};
     this._registeredObserverList = [];
+    this._referencedRanges = new Set();
   }
 
   _getTheParent() {
@@ -119,13 +150,15 @@ class NodeImpl extends EventTargetImpl {
   }
 
   getRootNode(options) {
-    return options.composed ? shadowIncludingRoot(this) : getRoot(this);
+    return options.composed ? shadowIncludingRoot(this) : nodeRoot(this);
   }
 
   get nodeName() {
     switch (this.nodeType) {
       case NODE_TYPE.ELEMENT_NODE:
         return this.tagName;
+      case NODE_TYPE.ATTRIBUTE_NODE:
+        return this._qualifiedName;
       case NODE_TYPE.TEXT_NODE:
         return "#text";
       case NODE_TYPE.CDATA_SECTION_NODE:
@@ -167,7 +200,7 @@ class NodeImpl extends EventTargetImpl {
 
   get childNodes() {
     if (!this._childNodesList) {
-      this._childNodesList = NodeList.createImpl([], {
+      this._childNodesList = NodeList.createImpl(this._globalObject, [], {
         element: this,
         query: () => domSymbolTree.childrenToArray(this)
       });
@@ -255,28 +288,71 @@ class NodeImpl extends EventTargetImpl {
     return domSymbolTree.hasChildren(this);
   }
 
+  // https://dom.spec.whatwg.org/#dom-node-normalize
   normalize() {
-    for (const child of domSymbolTree.childrenIterator(this)) {
-      if (child.normalize) {
-        child.normalize();
-      }
-
-      // Normalize should only transform Text nodes, and nothing else.
-      if (child.nodeType !== NODE_TYPE.TEXT_NODE) {
+    // It is important to use a treeToArray instead of a treeToIterator here, because the
+    // treeToIterator doesn't support tree mutation in the middle of the traversal.
+    for (const node of domSymbolTree.treeToArray(this)) {
+      const parentNode = domSymbolTree.parent(node);
+      if (parentNode === null || node.nodeType !== NODE_TYPE.TEXT_NODE) {
         continue;
       }
 
-      if (child.nodeValue === "") {
-        this._remove(child);
+      let length = nodeLength(node);
+
+      if (length === 0) {
+        parentNode._remove(node);
         continue;
       }
 
-      const prevChild = domSymbolTree.previousSibling(child);
+      const continuousExclusiveTextNodes = [];
 
-      if (prevChild && prevChild.nodeType === NODE_TYPE.TEXT_NODE) {
-        // merge text nodes
-        prevChild.appendData(child.nodeValue);
-        this._remove(child);
+      for (const currentNode of domSymbolTree.previousSiblingsIterator(node)) {
+        if (currentNode.nodeType !== NODE_TYPE.TEXT_NODE) {
+          break;
+        }
+
+        continuousExclusiveTextNodes.unshift(currentNode);
+      }
+      for (const currentNode of domSymbolTree.nextSiblingsIterator(node)) {
+        if (currentNode.nodeType !== NODE_TYPE.TEXT_NODE) {
+          break;
+        }
+
+        continuousExclusiveTextNodes.push(currentNode);
+      }
+
+      const data = continuousExclusiveTextNodes.reduce((d, n) => d + n._data, "");
+      node.replaceData(length, 0, data);
+
+      let currentNode = domSymbolTree.nextSibling(node);
+      while (currentNode && currentNode.nodeType !== NODE_TYPE.TEXT_NODE) {
+        const currentNodeParent = domSymbolTree.parent(currentNode);
+        const currentNodeIndex = domSymbolTree.index(currentNode);
+
+        for (const range of node._referencedRanges) {
+          const { _start, _end } = range;
+
+          if (_start.node === currentNode) {
+            range._setLiveRangeStart(node, _start.offset + length);
+          }
+          if (_end.node === currentNode) {
+            range._setLiveRangeEnd(node, _end.offset + length);
+          }
+          if (_start.node === currentNodeParent && _start.offset === currentNodeIndex) {
+            range._setLiveRangeStart(node, length);
+          }
+          if (_end.node === currentNodeParent && _end.offset === currentNodeIndex) {
+            range._setLiveRangeStart(node, length);
+          }
+        }
+
+        length += nodeLength(currentNode);
+        currentNode = domSymbolTree.nextSibling(currentNode);
+      }
+
+      for (const continuousExclusiveTextNode of continuousExclusiveTextNodes) {
+        parentNode._remove(continuousExclusiveTextNode);
       }
     }
   }
@@ -290,15 +366,43 @@ class NodeImpl extends EventTargetImpl {
     return documentBaseURLSerialized(this._ownerDocument);
   }
 
-  compareDocumentPosition(otherImpl) {
-    // Let reference be the context object.
-    const reference = this;
+  compareDocumentPosition(other) {
+    // Let node1 be other and node2 be the context object.
+    let node1 = other;
+    let node2 = this;
 
-    if (isObsoleteNodeType(reference) || isObsoleteNodeType(otherImpl)) {
+    if (isObsoleteNodeType(node2) || isObsoleteNodeType(node1)) {
       throw new Error("Obsolete node type");
     }
 
-    const result = domSymbolTree.compareTreePosition(reference, otherImpl);
+    let attr1 = null;
+    let attr2 = null;
+
+    if (node1.nodeType === NODE_TYPE.ATTRIBUTE_NODE) {
+      attr1 = node1;
+      node1 = attr1._element;
+    }
+
+    if (node2.nodeType === NODE_TYPE.ATTRIBUTE_NODE) {
+      attr2 = node2;
+      node2 = attr2._element;
+
+      if (attr1 !== null && node1 !== null && node2 === node1) {
+        for (const attr of node2._attributeList) {
+          if (nodeEquals(attr, attr1)) {
+            return NODE_DOCUMENT_POSITION.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC |
+              NODE_DOCUMENT_POSITION.DOCUMENT_POSITION_PRECEDING;
+          }
+
+          if (nodeEquals(attr, attr2)) {
+            return NODE_DOCUMENT_POSITION.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC |
+              NODE_DOCUMENT_POSITION.DOCUMENT_POSITION_FOLLOWING;
+          }
+        }
+      }
+    }
+
+    const result = domSymbolTree.compareTreePosition(node2, node1);
 
     // “If other and reference are not in the same tree, return the result of adding DOCUMENT_POSITION_DISCONNECTED,
     //  DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC, and either DOCUMENT_POSITION_PRECEDING or
@@ -387,7 +491,7 @@ class NodeImpl extends EventTargetImpl {
 
   cloneNode(deep) {
     if (isShadowRoot(this)) {
-      throw new DOMException("ShadowRoot nodes are not clonable.", "NotSupportedError");
+      throw DOMException.create(this._globalObject, ["ShadowRoot nodes are not clonable.", "NotSupportedError"]);
     }
 
     deep = Boolean(deep);
@@ -419,7 +523,7 @@ class NodeImpl extends EventTargetImpl {
 
     switch (this.nodeType) {
       case NODE_TYPE.ATTRIBUTE_NODE: {
-        attributes.setAnExistingAttributeValue(this, value);
+        setAnExistingAttributeValue(this, value);
         break;
       }
       case NODE_TYPE.TEXT_NODE:
@@ -432,6 +536,7 @@ class NodeImpl extends EventTargetImpl {
     }
   }
 
+  // https://dom.spec.whatwg.org/#dom-node-textcontent
   get textContent() {
     switch (this.nodeType) {
       case NODE_TYPE.DOCUMENT_FRAGMENT_NODE:
@@ -461,14 +566,18 @@ class NodeImpl extends EventTargetImpl {
       }
     }
   }
-
   set textContent(value) {
+    if (value === null) {
+      value = "";
+    }
+
     switch (this.nodeType) {
       case NODE_TYPE.DOCUMENT_FRAGMENT_NODE:
       case NODE_TYPE.ELEMENT_NODE: {
+        // https://dom.spec.whatwg.org/#string-replace-all
         let nodeImpl = null;
 
-        if (value !== null && value !== "") {
+        if (value !== "") {
           nodeImpl = this._ownerDocument.createTextNode(value);
         }
 
@@ -477,7 +586,7 @@ class NodeImpl extends EventTargetImpl {
       }
 
       case NODE_TYPE.ATTRIBUTE_NODE: {
-        attributes.setAnExistingAttributeValue(this, value);
+        setAnExistingAttributeValue(this, value);
         break;
       }
 
@@ -521,15 +630,24 @@ class NodeImpl extends EventTargetImpl {
       parentType !== NODE_TYPE.DOCUMENT_FRAGMENT_NODE &&
       parentType !== NODE_TYPE.ELEMENT_NODE
     ) {
-      throw new DOMException(`Node can't be inserted in a ${parentName} parent.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `Node can't be inserted in a ${parentName} parent.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (isHostInclusiveAncestor(nodeImpl, this)) {
-      throw new DOMException("The operation would yield an incorrect node tree.", "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        "The operation would yield an incorrect node tree.",
+        "HierarchyRequestError"
+      ]);
     }
 
     if (childImpl && domSymbolTree.parent(childImpl) !== this) {
-      throw new DOMException("The child can not be found in the parent.", "NotFoundError");
+      throw DOMException.create(this._globalObject, [
+        "The child can not be found in the parent.",
+        "NotFoundError"
+      ]);
     }
 
     if (
@@ -541,14 +659,20 @@ class NodeImpl extends EventTargetImpl {
       nodeType !== NODE_TYPE.PROCESSING_INSTRUCTION_NODE &&
       nodeType !== NODE_TYPE.COMMENT_NODE
     ) {
-      throw new DOMException(`${nodeName} node can't be inserted in parent node.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `${nodeName} node can't be inserted in parent node.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (
       (nodeType === NODE_TYPE.TEXT_NODE && parentType === NODE_TYPE.DOCUMENT_NODE) ||
       (nodeType === NODE_TYPE.DOCUMENT_TYPE_NODE && parentType !== NODE_TYPE.DOCUMENT_NODE)
     ) {
-      throw new DOMException(`${nodeName} node can't be inserted in ${parentName} parent.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `${nodeName} node can't be inserted in ${parentName} parent.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (parentType === NODE_TYPE.DOCUMENT_NODE) {
@@ -559,18 +683,18 @@ class NodeImpl extends EventTargetImpl {
         case NODE_TYPE.DOCUMENT_FRAGMENT_NODE: {
           const nodeChildrenElements = nodeChildren.filter(child => child.nodeType === NODE_TYPE.ELEMENT_NODE);
           if (nodeChildrenElements.length > 1) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
 
           const hasNodeTextChildren = nodeChildren.some(child => child.nodeType === NODE_TYPE.TEXT_NODE);
           if (hasNodeTextChildren) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
 
           if (
@@ -585,10 +709,10 @@ class NodeImpl extends EventTargetImpl {
               )
             )
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
         }
@@ -603,10 +727,10 @@ class NodeImpl extends EventTargetImpl {
               domSymbolTree.nextSibling(childImpl).nodeType === NODE_TYPE.DOCUMENT_TYPE_NODE
             )
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
 
@@ -620,10 +744,10 @@ class NodeImpl extends EventTargetImpl {
             ) ||
             (!childImpl && parentChildren.some(child => child.nodeType === NODE_TYPE.ELEMENT_NODE))
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
       }
@@ -648,6 +772,26 @@ class NodeImpl extends EventTargetImpl {
 
   // https://dom.spec.whatwg.org/#concept-node-insert
   _insert(nodeImpl, childImpl, suppressObservers) {
+    const count = nodeImpl.nodeType === NODE_TYPE.DOCUMENT_FRAGMENT_NODE ?
+        domSymbolTree.childrenCount(nodeImpl) :
+        1;
+
+    if (childImpl) {
+      const childIndex = domSymbolTree.index(childImpl);
+
+      for (const range of this._referencedRanges) {
+        const { _start, _end } = range;
+
+        if (_start.offset > childIndex) {
+          range._setLiveRangeStart(this, _start.offset + count);
+        }
+
+        if (_end.offset > childIndex) {
+          range._setLiveRangeEnd(this, _end.offset + count);
+        }
+      }
+    }
+
     const nodesImpl = nodeImpl.nodeType === NODE_TYPE.DOCUMENT_FRAGMENT_NODE ?
       domSymbolTree.childrenToArray(nodeImpl) :
       [nodeImpl];
@@ -688,11 +832,11 @@ class NodeImpl extends EventTargetImpl {
         this._childTextContentChangeSteps();
       }
 
-      if (isSlot(this) && this._assignedNodes.length === 0 && isShadowRoot(getRoot(this))) {
+      if (isSlot(this) && this._assignedNodes.length === 0 && isShadowRoot(nodeRoot(this))) {
         signalSlotChange(this);
       }
 
-      const root = getRoot(node);
+      const root = nodeRoot(node);
       if (isShadowRoot(root)) {
         assignSlotableForTree(root);
       }
@@ -702,6 +846,16 @@ class NodeImpl extends EventTargetImpl {
       }
 
       this._descendantAdded(this, node);
+
+      for (const inclusiveDescendant of shadowIncludingInclusiveDescendantsIterator(node)) {
+        if (inclusiveDescendant.isConnected) {
+          if (inclusiveDescendant._ceState === "custom") {
+            enqueueCECallbackReaction(inclusiveDescendant, "connectedCallback", []);
+          } else {
+            tryUpgradeElement(inclusiveDescendant);
+          }
+        }
+      }
     }
 
     if (!suppressObservers) {
@@ -725,15 +879,24 @@ class NodeImpl extends EventTargetImpl {
       parentType !== NODE_TYPE.DOCUMENT_FRAGMENT_NODE &&
       parentType !== NODE_TYPE.ELEMENT_NODE
     ) {
-      throw new DOMException(`Node can't be inserted in a ${parentName} parent.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `Node can't be inserted in a ${parentName} parent.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (isHostInclusiveAncestor(nodeImpl, this)) {
-      throw new DOMException("The operation would yield an incorrect node tree.", "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        "The operation would yield an incorrect node tree.",
+        "HierarchyRequestError"
+      ]);
     }
 
     if (childImpl && domSymbolTree.parent(childImpl) !== this) {
-      throw new DOMException("The child can not be found in the parent.", "NotFoundError");
+      throw DOMException.create(this._globalObject, [
+        "The child can not be found in the parent.",
+        "NotFoundError"
+      ]);
     }
 
     if (
@@ -745,14 +908,20 @@ class NodeImpl extends EventTargetImpl {
       nodeType !== NODE_TYPE.PROCESSING_INSTRUCTION_NODE &&
       nodeType !== NODE_TYPE.COMMENT_NODE
     ) {
-      throw new DOMException(`${nodeName} node can't be inserted in parent node.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `${nodeName} node can't be inserted in parent node.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (
       (nodeType === NODE_TYPE.TEXT_NODE && parentType === NODE_TYPE.DOCUMENT_NODE) ||
       (nodeType === NODE_TYPE.DOCUMENT_TYPE_NODE && parentType !== NODE_TYPE.DOCUMENT_NODE)
     ) {
-      throw new DOMException(`${nodeName} node can't be inserted in ${parentName} parent.`, "HierarchyRequestError");
+      throw DOMException.create(this._globalObject, [
+        `${nodeName} node can't be inserted in ${parentName} parent.`,
+        "HierarchyRequestError"
+      ]);
     }
 
     if (parentType === NODE_TYPE.DOCUMENT_NODE) {
@@ -763,18 +932,18 @@ class NodeImpl extends EventTargetImpl {
         case NODE_TYPE.DOCUMENT_FRAGMENT_NODE: {
           const nodeChildrenElements = nodeChildren.filter(child => child.nodeType === NODE_TYPE.ELEMENT_NODE);
           if (nodeChildrenElements.length > 1) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
 
           const hasNodeTextChildren = nodeChildren.some(child => child.nodeType === NODE_TYPE.TEXT_NODE);
           if (hasNodeTextChildren) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
 
 
@@ -790,10 +959,10 @@ class NodeImpl extends EventTargetImpl {
               )
             )
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
         }
@@ -807,10 +976,10 @@ class NodeImpl extends EventTargetImpl {
               domSymbolTree.nextSibling(childImpl).nodeType === NODE_TYPE.DOCUMENT_TYPE_NODE
             )
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
 
@@ -823,10 +992,10 @@ class NodeImpl extends EventTargetImpl {
               domSymbolTree.previousSibling(childImpl).nodeType === NODE_TYPE.ELEMENT_NODE
             )
           ) {
-            throw new DOMException(
+            throw DOMException.create(this._globalObject, [
               `Invalid insertion of ${nodeName} node in ${parentName} node.`,
               "HierarchyRequestError"
-            );
+            ]);
           }
           break;
       }
@@ -880,17 +1049,22 @@ class NodeImpl extends EventTargetImpl {
       this._remove(childImpl, true);
     }
 
-    if (nodeImpl) {
+    if (nodeImpl !== null) {
       this._insert(nodeImpl, null, true);
     }
 
-    queueTreeMutationRecord(this, addedNodesImpl, removedNodesImpl, null, null);
+    if (addedNodesImpl.length > 0 || removedNodesImpl.length > 0) {
+      queueTreeMutationRecord(this, addedNodesImpl, removedNodesImpl, null, null);
+    }
   }
 
   // https://dom.spec.whatwg.org/#concept-node-pre-remove
   _preRemove(childImpl) {
     if (domSymbolTree.parent(childImpl) !== this) {
-      throw new DOMException("The node to be removed is not a child of this node.", "NotFoundError");
+      throw DOMException.create(this._globalObject, [
+        "The node to be removed is not a child of this node.",
+        "NotFoundError"
+      ]);
     }
 
     this._remove(childImpl);
@@ -900,6 +1074,34 @@ class NodeImpl extends EventTargetImpl {
 
   // https://dom.spec.whatwg.org/#concept-node-remove
   _remove(nodeImpl, suppressObservers) {
+    const index = domSymbolTree.index(nodeImpl);
+
+    for (const descendant of domSymbolTree.treeIterator(nodeImpl)) {
+      for (const range of descendant._referencedRanges) {
+        const { _start, _end } = range;
+
+        if (_start.node === descendant) {
+          range._setLiveRangeStart(this, index);
+        }
+
+        if (_end.node === descendant) {
+          range._setLiveRangeEnd(this, index);
+        }
+      }
+    }
+
+    for (const range of this._referencedRanges) {
+      const { _start, _end } = range;
+
+      if (_start.node === this && _start.offset > index) {
+        range._setLiveRangeStart(this, _start.offset - 1);
+      }
+
+      if (_end.node === this && _end.offset > index) {
+        range._setLiveRangeEnd(this, _end.offset - 1);
+      }
+    }
+
     if (this._ownerDocument) {
       this._ownerDocument._runPreRemovingSteps(nodeImpl);
     }
@@ -913,7 +1115,7 @@ class NodeImpl extends EventTargetImpl {
       assignSlotable(nodeImpl._assignedSlot);
     }
 
-    if (isSlot(this) && this._assignedNodes.length === 0 && isShadowRoot(getRoot(this))) {
+    if (isSlot(this) && this._assignedNodes.length === 0 && isShadowRoot(nodeRoot(this))) {
       signalSlotChange(this);
     }
 
@@ -928,13 +1130,25 @@ class NodeImpl extends EventTargetImpl {
     }
 
     if (hasSlotDescendant) {
-      assignSlotableForTree(getRoot(this));
+      assignSlotableForTree(nodeRoot(this));
       assignSlotableForTree(nodeImpl);
     }
 
     this._modified();
     nodeImpl._detach();
     this._descendantRemoved(this, nodeImpl);
+
+    if (this.isConnected) {
+      if (nodeImpl._ceState === "custom") {
+        enqueueCECallbackReaction(nodeImpl, "disconnectedCallback", []);
+      }
+
+      for (const descendantImpl of shadowIncludingDescendantsIterator(nodeImpl)) {
+        if (descendantImpl._ceState === "custom") {
+          enqueueCECallbackReaction(descendantImpl, "disconnectedCallback", []);
+        }
+      }
+    }
 
     if (!suppressObservers) {
       queueTreeMutationRecord(this, [], [nodeImpl], oldPreviousSiblingImpl, oldNextSiblingImpl);

@@ -1,12 +1,12 @@
 {
   "name": "actions-secret-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Parse and set repository secrets",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "prepare": "npm run build"
+    "copypackage": "copy package.json lib",
+    "dist": "npm run build && npm run copypackage && cd lib && npm publish"
   },
   "keywords": [
     "secret",
@@ -30,8 +30,5 @@
     "jsonpath": "^1.0.2",
     "xmldom": "^0.1.27",
     "xpath": "0.0.27"
-  },
-  "files": [
-    "lib/**/**"
-  ]
+  }
 }

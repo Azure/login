@@ -2,6 +2,9 @@
 
 const parse5 = require("parse5");
 
+const { createElement } = require("../../living/helpers/create-element");
+const { HTML_NS } = require("../../living/helpers/namespaces");
+
 const DocumentType = require("../../living/generated/DocumentType");
 const DocumentFragment = require("../../living/generated/DocumentFragment");
 const Text = require("../../living/generated/Text");
@@ -11,46 +14,59 @@ const attributes = require("../../living/attributes");
 const nodeTypes = require("../../living/node-type");
 
 const serializationAdapter = require("../../living/domparsing/parse5-adapter-serialization");
+const {
+  customElementReactionsStack, invokeCEReactions, lookupCEDefinition
+} = require("../../living/helpers/custom-elements");
 
+// Horrible monkey-patch to implement https://github.com/inikulin/parse5/issues/237 and
+// https://github.com/inikulin/parse5/issues/285.
 const OpenElementStack = require("parse5/lib/parser/open-element-stack");
-const OpenElementStackOriginalPop = OpenElementStack.prototype.pop;
-const OpenElementStackOriginalPush = OpenElementStack.prototype.push;
+
+const openElementStackOriginalPush = OpenElementStack.prototype.push;
+OpenElementStack.prototype.push = function (...args) {
+  openElementStackOriginalPush.apply(this, args);
+  this.treeAdapter._currentElement = this.current;
+
+  const after = this.items[this.stackTop];
+  if (after._pushedOnStackOfOpenElements) {
+    after._pushedOnStackOfOpenElements();
+  }
+};
+
+const openElementStackOriginalPop = OpenElementStack.prototype.pop;
+OpenElementStack.prototype.pop = function (...args) {
+  const before = this.items[this.stackTop];
+
+  openElementStackOriginalPop.apply(this, args);
+  this.treeAdapter._currentElement = this.current;
+
+  if (before._poppedOffStackOfOpenElements) {
+    before._poppedOffStackOfOpenElements();
+  }
+};
 
 class JSDOMParse5Adapter {
-  constructor(documentImpl) {
+  constructor(documentImpl, options = {}) {
     this._documentImpl = documentImpl;
+    this._globalObject = documentImpl._globalObject;
+    this._fragment = options.fragment || false;
 
     // Since the createElement hook doesn't provide the parent element, we keep track of this using _currentElement:
-    // https://github.com/inikulin/parse5/issues/285
+    // https://github.com/inikulin/parse5/issues/285. See above horrible monkey-patch for how this is maintained.
     this._currentElement = undefined;
-
-    // Horrible monkey-patch to implement https://github.com/inikulin/parse5/issues/237
-    const adapter = this;
-    OpenElementStack.prototype.push = function (...args) {
-      OpenElementStackOriginalPush.apply(this, args);
-      adapter._currentElement = this.current;
-
-      const after = this.items[this.stackTop];
-      if (after._pushedOnStackOfOpenElements) {
-        after._pushedOnStackOfOpenElements();
-      }
-    };
-    OpenElementStack.prototype.pop = function (...args) {
-      const before = this.items[this.stackTop];
-
-      OpenElementStackOriginalPop.apply(this, args);
-      adapter._currentElement = this.current;
-
-      if (before._poppedOffStackOfOpenElements) {
-        before._poppedOffStackOfOpenElements();
-      }
-    };
   }
 
   _ownerDocument() {
-    // The _currentElement is undefined when parsing elements at the root of the document. In this case we would
-    // fallback to the global _documentImpl.
-    return this._currentElement ? this._currentElement._ownerDocument : this._documentImpl;
+    const { _currentElement } = this;
+
+    // The _currentElement is undefined when parsing elements at the root of the document.
+    if (_currentElement) {
+      return _currentElement.localName === "template" && _currentElement.namespaceURI === HTML_NS ?
+        _currentElement.content._ownerDocument :
+        _currentElement._ownerDocument;
+    }
+
+    return this._documentImpl;
   }
 
   createDocument() {
@@ -62,15 +78,37 @@ class JSDOMParse5Adapter {
   }
 
   createDocumentFragment() {
-    return DocumentFragment.createImpl([], { ownerDocument: this._currentElement._ownerDocument });
+    const ownerDocument = this._ownerDocument();
+    return DocumentFragment.createImpl(this._globalObject, [], { ownerDocument });
   }
 
+  // https://html.spec.whatwg.org/#create-an-element-for-the-token
   createElement(localName, namespace, attrs) {
     const ownerDocument = this._ownerDocument();
 
-    const element = ownerDocument._createElementWithCorrectElementInterface(localName, namespace);
-    element._namespaceURI = namespace;
+    const isAttribute = attrs.find(attr => attr.name === "is");
+    const isValue = isAttribute ? isAttribute.value : null;
+
+    const definition = lookupCEDefinition(ownerDocument, namespace, localName);
+
+    let willExecuteScript = false;
+    if (definition !== null && !this._fragment) {
+      willExecuteScript = true;
+    }
+
+    if (willExecuteScript) {
+      ownerDocument._throwOnDynamicMarkupInsertionCounter++;
+      customElementReactionsStack.push([]);
+    }
+
+    const element = createElement(ownerDocument, localName, namespace, null, isValue, willExecuteScript);
     this.adoptAttributes(element, attrs);
+
+    if (willExecuteScript) {
+      const queue = customElementReactionsStack.pop();
+      invokeCEReactions(queue);
+      ownerDocument._throwOnDynamicMarkupInsertionCounter--;
+    }
 
     if ("_parserInserted" in element) {
       element._parserInserted = true;
@@ -81,7 +119,7 @@ class JSDOMParse5Adapter {
 
   createCommentNode(data) {
     const ownerDocument = this._ownerDocument();
-    return Comment.createImpl([], { data, ownerDocument });
+    return Comment.createImpl(this._globalObject, [], { data, ownerDocument });
   }
 
   appendChild(parentNode, newNode) {
@@ -110,7 +148,7 @@ class JSDOMParse5Adapter {
 
   setDocumentType(document, name, publicId, systemId) {
     const ownerDocument = this._ownerDocument();
-    const documentType = DocumentType.createImpl([], { name, publicId, systemId, ownerDocument });
+    const documentType = DocumentType.createImpl(this._globalObject, [], { name, publicId, systemId, ownerDocument });
 
     document._append(documentType);
   }
@@ -130,7 +168,7 @@ class JSDOMParse5Adapter {
       lastChild.data += text;
     } else {
       const ownerDocument = this._ownerDocument();
-      const textNode = Text.createImpl([], { data: text, ownerDocument });
+      const textNode = Text.createImpl(this._globalObject, [], { data: text, ownerDocument });
       parentNode._append(textNode);
     }
   }
@@ -141,7 +179,7 @@ class JSDOMParse5Adapter {
       previousSibling.data += text;
     } else {
       const ownerDocument = this._ownerDocument();
-      const textNode = Text.createImpl([], { data: text, ownerDocument });
+      const textNode = Text.createImpl(this._globalObject, [], { data: text, ownerDocument });
       parentNode._append(textNode, referenceNode);
     }
   }
@@ -158,19 +196,23 @@ class JSDOMParse5Adapter {
 Object.assign(JSDOMParse5Adapter.prototype, serializationAdapter);
 
 function parseFragment(markup, contextElement) {
-  const ownerDocument = contextElement._ownerDocument;
+  const ownerDocument = contextElement.localName === "template" && contextElement.namespaceURI === HTML_NS ?
+    contextElement.content._ownerDocument :
+    contextElement._ownerDocument;
 
-  const config = Object.assign({}, ownerDocument._parseOptions, {
-    treeAdapter: new JSDOMParse5Adapter(ownerDocument)
-  });
+  const config = {
+    ...ownerDocument._parseOptions,
+    treeAdapter: new JSDOMParse5Adapter(ownerDocument, { fragment: true })
+  };
 
   return parse5.parseFragment(contextElement, markup, config);
 }
 
 function parseIntoDocument(markup, ownerDocument) {
-  const config = Object.assign({}, ownerDocument._parseOptions, {
+  const config = {
+    ...ownerDocument._parseOptions,
     treeAdapter: new JSDOMParse5Adapter(ownerDocument)
-  });
+  };
 
   return parse5.parse(markup, config);
 }

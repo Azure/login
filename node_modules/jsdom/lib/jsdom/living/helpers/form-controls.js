@@ -24,6 +24,7 @@ const { closest, firstChildWithLocalName } = require("./traversal");
 const NODE_TYPE = require("../node-type");
 const { HTML_NS } = require("./namespaces");
 
+// https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#concept-fe-disabled
 exports.isDisabled = formControl => {
   if (formControl.localName === "button" || formControl.localName === "input" || formControl.localName === "select" ||
       formControl.localName === "textarea") {
@@ -72,29 +73,63 @@ exports.isButton = formControl => {
          formControl.namespaceURI === HTML_NS;
 };
 
-exports.normalizeToCRLF = string => {
-  return string.replace(/\r([^\n])/g, "\r\n$1")
-    .replace(/\r$/, "\r\n")
-    .replace(/([^\r])\n/g, "$1\r\n")
-    .replace(/^\n/, "\r\n");
-};
-
-exports.isLabelable = node => {
-  // labelable logic defined at: https://html.spec.whatwg.org/multipage/forms.html#category-label
+// https://html.spec.whatwg.org/multipage/dom.html#interactive-content-2
+exports.isInteractiveContent = node => {
   if (node.nodeType !== NODE_TYPE.ELEMENT_NODE) {
     return false;
   }
+  if (node.namespaceURI !== HTML_NS) {
+    return false;
+  }
+  if (node.hasAttributeNS(null, "tabindex")) {
+    return true;
+  }
+  switch (node.localName) {
+    case "a":
+      return node.hasAttributeNS(null, "href");
 
-  switch (node.tagName) {
-    case "BUTTON":
-    case "METER":
-    case "OUTPUT":
-    case "PROGRESS":
-    case "SELECT":
-    case "TEXTAREA":
+    case "audio":
+    case "video":
+      return node.hasAttributeNS(null, "controls");
+
+    case "img":
+    case "object":
+      return node.hasAttributeNS(null, "usemap");
+
+    case "input":
+      return node.type !== "hidden";
+
+    case "button":
+    case "details":
+    case "embed":
+    case "iframe":
+    case "label":
+    case "select":
+    case "textarea":
+      return true;
+  }
+
+  return false;
+};
+
+// https://html.spec.whatwg.org/multipage/forms.html#category-label
+exports.isLabelable = node => {
+  if (node.nodeType !== NODE_TYPE.ELEMENT_NODE) {
+    return false;
+  }
+  if (node.namespaceURI !== HTML_NS) {
+    return false;
+  }
+  switch (node.localName) {
+    case "button":
+    case "meter":
+    case "output":
+    case "progress":
+    case "select":
+    case "textarea":
       return true;
 
-    case "INPUT":
+    case "input":
       return node.type !== "hidden";
   }
 
@@ -107,7 +142,7 @@ exports.getLabelsForLabelable = labelable => {
   }
   if (!labelable._labels) {
     const root = labelable.getRootNode({});
-    labelable._labels = NodeList.create([], {
+    labelable._labels = NodeList.create(root._globalObject, [], {
       element: root,
       query: () => {
         const nodes = [];
@@ -191,7 +226,7 @@ exports.sanitizeValueByType = (input, val) => {
       // https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):value-sanitization-algorithm
       // TODO: using parseFloatingPointNumber in addition to isValidFloatingPointNumber to pass number.html WPT.
       // Possible spec bug.
-      if (!isValidFloatingPointNumber(val) || isNaN(parseFloatingPointNumber(val))) {
+      if (!isValidFloatingPointNumber(val) || parseFloatingPointNumber(val) === null) {
         val = "";
       }
       break;
@@ -200,11 +235,15 @@ exports.sanitizeValueByType = (input, val) => {
       // https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):value-sanitization-algorithm
       // TODO: using parseFloatingPointNumber in addition to isValidFloatingPointNumber to pass number.html WPT.
       // Possible spec bug.
-      if (!isValidFloatingPointNumber(val) || isNaN(parseFloatingPointNumber(val))) {
+      if (!isValidFloatingPointNumber(val) || parseFloatingPointNumber(val) === null) {
         const minimum = input._minimum;
         const maximum = input._maximum;
         const defaultValue = maximum < minimum ? minimum : (minimum + maximum) / 2;
         val = `${defaultValue}`;
+      } else if (val < input._minimum) {
+        val = `${input._minimum}`;
+      } else if (val > input._maximum) {
+        val = `${input._maximum}`;
       }
       break;
 

@@ -12,12 +12,13 @@ const NODE_TYPE = require("../node-type");
 const HTMLCollection = require("../generated/HTMLCollection");
 const HTMLOptionsCollection = require("../generated/HTMLOptionsCollection");
 const { domSymbolTree } = require("../helpers/internal-constants");
-const { getLabelsForLabelable, formOwner } = require("../helpers/form-controls");
+const { getLabelsForLabelable, formOwner, isDisabled } = require("../helpers/form-controls");
+const { parseNonNegativeInteger } = require("../helpers/strings");
 
 class HTMLSelectElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
-    this._options = HTMLOptionsCollection.createImpl([], {
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
+    this._options = HTMLOptionsCollection.createImpl(this._globalObject, [], {
       element: this,
       query: () => {
         // Customized domSymbolTree.treeToArray() clone.
@@ -89,7 +90,7 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
       this._askedForAReset();
     }
 
-    super._descendantAdded.apply(this, arguments);
+    super._descendantAdded(parent, child);
   }
 
   _descendantRemoved(parent, child) {
@@ -97,27 +98,28 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
       this._askedForAReset();
     }
 
-    super._descendantRemoved.apply(this, arguments);
+    super._descendantRemoved(parent, child);
   }
 
-  _attrModified(name) {
+  _attrModified(name, value, oldValue) {
     if (name === "multiple" || name === "size") {
       this._askedForAReset();
     }
-    super._attrModified.apply(this, arguments);
+    super._attrModified(name, value, oldValue);
   }
 
   get _displaySize() {
     if (this.hasAttributeNS(null, "size")) {
-      const attr = this.getAttributeNS(null, "size");
-      // We don't allow hexadecimal numbers here.
-      // eslint-disable-next-line radix
-      const size = parseInt(attr, 10);
-      if (!isNaN(size) && size >= 0) {
+      const size = parseNonNegativeInteger(this.getAttributeNS(null, "size"));
+      if (size !== null) {
         return size;
       }
     }
     return this.hasAttributeNS(null, "multiple") ? 4 : 1;
+  }
+
+  get _mutable() {
+    return !isDisabled(this);
   }
 
   get options() {
@@ -125,7 +127,7 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
   }
 
   get selectedOptions() {
-    return HTMLCollection.createImpl([], {
+    return HTMLCollection.createImpl(this._globalObject, [], {
       element: this,
       query: () => domSymbolTree.treeToArray(this, {
         filter: node => node._localName === "option" && node._selectedness === true
@@ -176,6 +178,8 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
       } else {
         option._selectedness = false;
       }
+
+      option._modified();
     }
   }
 
@@ -241,7 +245,7 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
   // label option, then the element is suffering from being missing.
   get validity() {
     if (!this._validity) {
-      this._validity = ValidityState.createImpl(this, {
+      const state = {
         valueMissing: () => {
           if (!this.hasAttributeNS(null, "required")) {
             return false;
@@ -249,6 +253,11 @@ class HTMLSelectElementImpl extends HTMLElementImpl {
           const selectedOptionIndex = this.selectedIndex;
           return selectedOptionIndex < 0 || (selectedOptionIndex === 0 && this._hasPlaceholderOption);
         }
+      };
+
+      this._validity = ValidityState.createImpl(this._globalObject, [], {
+        element: this,
+        state
       });
     }
     return this._validity;

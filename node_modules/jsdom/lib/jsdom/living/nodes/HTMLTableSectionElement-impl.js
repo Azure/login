@@ -3,12 +3,12 @@
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
 const { childrenByLocalName } = require("../helpers/traversal");
 const HTMLCollection = require("../generated/HTMLCollection");
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 
 class HTMLTableSectionElementImpl extends HTMLElementImpl {
   get rows() {
     if (!this._rows) {
-      this._rows = HTMLCollection.createImpl([], {
+      this._rows = HTMLCollection.createImpl(this._globalObject, [], {
         element: this,
         query: () => childrenByLocalName(this, "tr")
       });
@@ -18,8 +18,10 @@ class HTMLTableSectionElementImpl extends HTMLElementImpl {
 
   insertRow(index) {
     if (index < -1 || index > this.rows.length) {
-      throw new DOMException("Cannot insert a row at an index that is less than -1 or greater than the number of " +
-        "existing rows", "IndexSizeError");
+      throw DOMException.create(this._globalObject, [
+        "Cannot insert a row at an index that is less than -1 or greater than the number of existing rows",
+        "IndexSizeError"
+      ]);
     }
 
     const tr = this._ownerDocument.createElement("tr");
@@ -36,7 +38,10 @@ class HTMLTableSectionElementImpl extends HTMLElementImpl {
 
   deleteRow(index) {
     if (index < -1 || index >= this.rows.length) {
-      throw new DOMException(`Cannot delete a row at index ${index}, where no row exists`, "IndexSizeError");
+      throw DOMException.create(this._globalObject, [
+        `Cannot delete a row at index ${index}, where no row exists`,
+        "IndexSizeError"
+      ]);
     }
 
     if (index === -1) {

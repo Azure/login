@@ -1,49 +1,20 @@
 "use strict";
 const conversions = require("webidl-conversions");
+const { serializeURL } = require("whatwg-url");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
-const { Canvas, reflectURLAttribute } = require("../../utils");
+const { Canvas } = require("../../utils");
+const { parseURLToResultingURLRecord } = require("../helpers/document-base-url");
 
 class HTMLImageElementImpl extends HTMLElementImpl {
+  constructor(...args) {
+    super(...args);
+    this._currentRequestState = "unavailable";
+  }
+
   _attrModified(name, value, oldVal) {
-    if (name === "src" && value !== oldVal) {
-      const document = this._ownerDocument;
-      if (Canvas) {
-        let error;
-        if (!this._image) {
-          this._image = new Canvas.Image();
-          // Install an error handler that just remembers the error. It is then
-          // thrown in the callback of resourceLoader.fetch() below.
-          this._image.onerror = function (err) {
-            error = err;
-          };
-        }
-        this._currentSrc = null;
-        if (this.hasAttributeNS(null, "src")) {
-          const resourceLoader = document._resourceLoader;
-          let request;
-
-          const onLoadImage = data => {
-            const { response } = request;
-
-            if (response && response.statusCode !== undefined && response.statusCode !== 200) {
-              throw new Error("Status code: " + response.statusCode);
-            }
-            error = null;
-            this._image.src = data;
-            if (error) {
-              throw new Error(error);
-            }
-            this._currentSrc = value;
-          };
-
-          request = resourceLoader.fetch(this.src, {
-            element: this,
-            onLoad: onLoadImage
-          });
-        } else {
-          this._image.src = "";
-        }
-      }
+    // TODO: handle crossorigin
+    if (name === "src" || ((name === "srcset" || name === "width" || name === "sizes") && value !== oldVal)) {
+      this._updateTheImageData();
     }
 
     super._attrModified(name, value, oldVal);
@@ -51,22 +22,6 @@ class HTMLImageElementImpl extends HTMLElementImpl {
 
   get _accept() {
     return "image/png,image/*;q=0.8,*/*;q=0.5";
-  }
-
-  get src() {
-    return reflectURLAttribute(this, "src");
-  }
-
-  set src(value) {
-    this.setAttributeNS(null, "src", value);
-  }
-
-  get srcset() {
-    return conversions.USVString(this.getAttributeNS(null, "srcset"));
-  }
-
-  set srcset(value) {
-    this.setAttributeNS(null, "srcset", value);
   }
 
   get height() {
@@ -100,27 +55,75 @@ class HTMLImageElementImpl extends HTMLElementImpl {
   }
 
   get complete() {
-    return Boolean(this._image && this._image.complete);
+    const srcAttributeValue = this.getAttributeNS(null, "src");
+    return srcAttributeValue === null ||
+      srcAttributeValue === "" ||
+      this._currentRequestState === "broken" ||
+      this._currentRequestState === "completely available";
   }
 
   get currentSrc() {
     return this._currentSrc || "";
   }
 
-  get lowsrc() {
-    return reflectURLAttribute(this, "lowsrc");
-  }
+  // https://html.spec.whatwg.org/multipage/images.html#updating-the-image-data
+  _updateTheImageData() {
+    const document = this._ownerDocument;
 
-  set lowsrc(value) {
-    this.setAttributeNS(null, "lowsrc", value);
-  }
+    if (!document._defaultView) {
+      return;
+    }
 
-  get longDesc() {
-    return reflectURLAttribute(this, "longdesc");
-  }
+    if (!Canvas) {
+      return;
+    }
 
-  set longDesc(value) {
-    this.setAttributeNS(null, "longdesc", value);
+    if (!this._image) {
+      this._image = new Canvas.Image();
+    }
+    this._currentSrc = null;
+    this._currentRequestState = "unavailable";
+    const srcAttributeValue = this.getAttributeNS(null, "src");
+    let urlString = null;
+    if (srcAttributeValue !== null && srcAttributeValue !== "") {
+      const urlRecord = parseURLToResultingURLRecord(srcAttributeValue, this._ownerDocument);
+      if (urlRecord === null) {
+        return;
+      }
+      urlString = serializeURL(urlRecord);
+    }
+    if (urlString !== null) {
+      const resourceLoader = document._resourceLoader;
+      let request;
+
+      const onLoadImage = data => {
+        const { response } = request;
+
+        if (response && response.statusCode !== undefined && response.statusCode !== 200) {
+          throw new Error("Status code: " + response.statusCode);
+        }
+        let error = null;
+        this._image.onerror = function (err) {
+          error = err;
+        };
+        this._image.src = data;
+        if (error) {
+          throw new Error(error);
+        }
+        this._currentSrc = srcAttributeValue;
+        this._currentRequestState = "completely available";
+      };
+
+      request = resourceLoader.fetch(urlString, {
+        element: this,
+        onLoad: onLoadImage,
+        onError: () => {
+          this._currentRequestState = "broken";
+        }
+      });
+    } else {
+      this._image.src = "";
+    }
   }
 }
 

@@ -1,9 +1,10 @@
 "use strict";
-const DOMException = require("domexception");
-const attrGenerated = require("./generated/Attr");
-const { asciiLowercase } = require("./helpers/strings");
+const DOMException = require("domexception/webidl2js-wrapper");
+
 const { HTML_NS } = require("./helpers/namespaces");
+const { asciiLowercase } = require("./helpers/strings");
 const { queueAttributeMutationRecord } = require("./helpers/mutation-observers");
+const { enqueueCECallbackReaction } = require("./helpers/custom-elements");
 
 // The following three are for https://dom.spec.whatwg.org/#concept-element-attribute-has. We don't just have a
 // predicate tester since removing that kind of flexibility gives us the potential for better future optimizations.
@@ -24,24 +25,40 @@ exports.hasAttributeByNameNS = function (element, namespace, localName) {
   });
 };
 
-exports.changeAttribute = function (element, attribute, value) {
-  // https://dom.spec.whatwg.org/#concept-element-attributes-change
-
+// https://dom.spec.whatwg.org/#concept-element-attributes-change
+exports.changeAttribute = (element, attribute, value) => {
   const { _localName, _namespace, _value } = attribute;
+
   queueAttributeMutationRecord(element, _localName, _namespace, _value);
 
-  const oldValue = attribute._value;
+  if (element._ceState === "custom") {
+    enqueueCECallbackReaction(element, "attributeChangedCallback", [
+      _localName,
+      _value,
+      value,
+      _namespace
+    ]);
+  }
+
   attribute._value = value;
 
   // Run jsdom hooks; roughly correspond to spec's "An attribute is set and an attribute is changed."
-  element._attrModified(attribute._qualifiedName, value, oldValue);
+  element._attrModified(attribute._qualifiedName, value, _value);
 };
 
+// https://dom.spec.whatwg.org/#concept-element-attributes-append
 exports.appendAttribute = function (element, attribute) {
-  // https://dom.spec.whatwg.org/#concept-element-attributes-append
-
-  const { _localName, _namespace } = attribute;
+  const { _localName, _namespace, _value } = attribute;
   queueAttributeMutationRecord(element, _localName, _namespace, null);
+
+  if (element._ceState === "custom") {
+    enqueueCECallbackReaction(element, "attributeChangedCallback", [
+      _localName,
+      null,
+      _value,
+      _namespace
+    ]);
+  }
 
   const attributeList = element._attributeList;
 
@@ -59,14 +76,24 @@ exports.appendAttribute = function (element, attribute) {
   entry.push(attribute);
 
   // Run jsdom hooks; roughly correspond to spec's "An attribute is set and an attribute is added."
-  element._attrModified(name, attribute._value, null);
+  element._attrModified(name, _value, null);
 };
 
 exports.removeAttribute = function (element, attribute) {
   // https://dom.spec.whatwg.org/#concept-element-attributes-remove
 
   const { _localName, _namespace, _value } = attribute;
+
   queueAttributeMutationRecord(element, _localName, _namespace, _value);
+
+  if (element._ceState === "custom") {
+    enqueueCECallbackReaction(element, "attributeChangedCallback", [
+      _localName,
+      _value,
+      null,
+      _namespace
+    ]);
+  }
 
   const attributeList = element._attributeList;
 
@@ -96,7 +123,17 @@ exports.replaceAttribute = function (element, oldAttr, newAttr) {
   // https://dom.spec.whatwg.org/#concept-element-attributes-replace
 
   const { _localName, _namespace, _value } = oldAttr;
+
   queueAttributeMutationRecord(element, _localName, _namespace, _value);
+
+  if (element._ceState === "custom") {
+    enqueueCECallbackReaction(element, "attributeChangedCallback", [
+      _localName,
+      _value,
+      newAttr._value,
+      _namespace
+    ]);
+  }
 
   const attributeList = element._attributeList;
 
@@ -185,7 +222,7 @@ exports.setAttribute = function (element, attr) {
   // https://dom.spec.whatwg.org/#concept-element-attributes-set
 
   if (attr._element !== null && attr._element !== element) {
-    throw new DOMException("The attribute is in use.", "InUseAttributeError");
+    throw DOMException.create(element._globalObject, ["The attribute is in use.", "InUseAttributeError"]);
   }
 
   const oldAttr = exports.getAttributeByNameNS(element, attr._namespace, attr._localName);
@@ -214,20 +251,28 @@ exports.setAttributeValue = function (element, localName, value, prefix, namespa
 
   const attribute = exports.getAttributeByNameNS(element, namespace, localName);
   if (attribute === null) {
-    const newAttribute = attrGenerated.createImpl([], { namespace, namespacePrefix: prefix, localName, value });
+    const newAttribute = element._ownerDocument._createAttribute({
+      namespace,
+      namespacePrefix: prefix,
+      localName,
+      value
+    });
     exports.appendAttribute(element, newAttribute);
+
     return;
   }
 
   exports.changeAttribute(element, attribute, value);
 };
 
+// https://dom.spec.whatwg.org/#set-an-existing-attribute-value
 exports.setAnExistingAttributeValue = (attribute, value) => {
-  if (attribute._element === null) {
+  const element = attribute._element;
+  if (element === null) {
     attribute._value = value;
+  } else {
+    exports.changeAttribute(element, attribute, value);
   }
-
-  exports.changeAttribute(attribute._element, attribute, value);
 };
 
 exports.removeAttributeByName = function (element, name) {
@@ -252,47 +297,6 @@ exports.removeAttributeByNameNS = function (element, namespace, localName) {
   }
 
   return attr;
-};
-
-exports.copyAttributeList = function (sourceElement, destElement) {
-  // Needed by https://dom.spec.whatwg.org/#concept-node-clone
-
-  for (const sourceAttr of sourceElement._attributeList) {
-    const destAttr = attrGenerated.createImpl([], {
-      namespace: sourceAttr._namespace,
-      namespacePrefix: sourceAttr._namespacePrefix,
-      localName: sourceAttr._localName,
-      value: sourceAttr._value
-    });
-
-    exports.appendAttribute(destElement, destAttr);
-  }
-};
-
-exports.attributeListsEqual = function (elementA, elementB) {
-  // Needed by https://dom.spec.whatwg.org/#concept-node-equals
-
-  const listA = elementA._attributeList;
-  const listB = elementB._attributeList;
-
-  if (listA.length !== listB.length) {
-    return false;
-  }
-
-  for (let i = 0; i < listA.length; ++i) {
-    const attrA = listA[i];
-
-    if (!listB.some(attrB => equalsA(attrB))) {
-      return false;
-    }
-
-    function equalsA(attrB) {
-      return attrA._namespace === attrB._namespace && attrA._localName === attrB._localName &&
-             attrA._value === attrB._value;
-    }
-  }
-
-  return true;
 };
 
 exports.attributeNames = function (element) {

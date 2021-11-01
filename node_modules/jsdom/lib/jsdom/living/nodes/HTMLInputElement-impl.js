@@ -1,7 +1,7 @@
 "use strict";
-const conversions = require("webidl-conversions");
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 const FileList = require("../generated/FileList");
+const Decimal = require("decimal.js");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
 const idlUtils = require("../generated/utils");
 const DefaultConstraintValidationImpl =
@@ -18,44 +18,66 @@ const {
   sanitizeValueByType
 } = require("../helpers/form-controls");
 const {
-  parseFloatingPointNumber,
   asciiCaseInsensitiveMatch,
+  asciiLowercase,
+  parseFloatingPointNumber,
   splitOnCommas
 } = require("../helpers/strings");
+const { isDate } = require("../helpers/dates-and-times");
 const {
-  parseDateString,
-  parseLocalDateAndTimeString,
-  parseMonthString,
-  parseTimeString,
-  parseWeekString
-} = require("../helpers/dates-and-times");
+  convertStringToNumberByType,
+  convertStringToDateByType,
+  serializeDateByType,
+  convertNumberToStringByType
+} = require("../helpers/number-and-date-inputs");
 
 const filesSymbol = Symbol("files");
 
-const selectAllowedTypes = new Set([
-  "text", "search", "tel", "url", "password", "email", "date", "month", "week",
-  "time", "datetime-local", "color", "file", "number"
+// https://html.spec.whatwg.org/multipage/input.html#attr-input-type
+const inputAllowedTypes = new Set([
+  "hidden", "text", "search", "tel", "url", "email", "password", "date",
+  "month", "week", "time", "datetime-local", "number", "range", "color", "checkbox", "radio",
+  "file", "submit", "image", "reset", "button"
 ]);
 
-const variableLengthSelectionAllowedTypes = new Set(["text", "search", "tel", "url", "password"]);
-
-const maxMinStepTypes = new Set(["date", "month", "week", "time", "datetime-local", "number", "range", "datetime"]);
-
 // https://html.spec.whatwg.org/multipage/input.html#concept-input-apply
-const applicableTypesForAttribute = {
-  max: maxMinStepTypes,
-  min: maxMinStepTypes,
-  step: maxMinStepTypes,
-  pattern: new Set(["text", "search", "tel", "url", "email", "password"])
+
+const variableLengthSelectionAllowedTypes = new Set(["text", "search", "url", "tel", "password"]);
+const numericTypes = new Set(["date", "month", "week", "time", "datetime-local", "number", "range"]);
+
+const applicableTypesForIDLMember = {
+  valueAsDate: new Set(["date", "month", "week", "time"]),
+  valueAsNumber: numericTypes,
+
+  select: new Set([
+    "text", "search", "url", "tel", "email", "password", "date", "month", "week",
+    "time", "datetime-local", "number", "color", "file"
+  ]),
+  selectionStart: variableLengthSelectionAllowedTypes,
+  selectionEnd: variableLengthSelectionAllowedTypes,
+  selectionDirection: variableLengthSelectionAllowedTypes,
+  setRangeText: variableLengthSelectionAllowedTypes,
+  setSelectionRange: variableLengthSelectionAllowedTypes,
+  stepDown: numericTypes,
+  stepUp: numericTypes
 };
 
-function allowSelect(type) {
-  return selectAllowedTypes.has(type.toLowerCase());
-}
+const lengthPatternSizeTypes = new Set(["text", "search", "url", "tel", "email", "password"]);
+const readonlyTypes =
+  new Set([...lengthPatternSizeTypes, "date", "month", "week", "time", "datetime-local", "number"]);
 
-function allowVariableLengthSelection(type) {
-  return variableLengthSelectionAllowedTypes.has(type.toLowerCase());
-}
+const applicableTypesForContentAttribute = {
+  list: new Set(["text", "search", "url", "tel", "email", ...numericTypes, "color"]),
+  max: numericTypes,
+  maxlength: lengthPatternSizeTypes,
+  min: numericTypes,
+  minlength: lengthPatternSizeTypes,
+  multiple: new Set(["email", "file"]),
+  pattern: lengthPatternSizeTypes,
+  readonly: readonlyTypes,
+  required: new Set([...readonlyTypes, "checkbox", "radio", "file"]),
+  step: numericTypes
+};
 
 const valueAttributeDefaultMode = new Set(["hidden", "submit", "image", "reset", "button"]);
 const valueAttributeDefaultOnMode = new Set(["checkbox", "radio"]);
@@ -73,88 +95,17 @@ function valueAttributeMode(type) {
   return "value";
 }
 
-// Necessary because Date.UTC() treats year within [0, 99] as [1900, 1999].
-function getUTCMs(year, month = 1, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0) {
-  if (year > 99 || year < 0) {
-    return Date.UTC(year, month - 1, day, hour, minute, second, millisecond);
+function getTypeFromAttribute(typeAttribute) {
+  if (typeof typeAttribute !== "string") {
+    return "text";
   }
-  const d = new Date(0);
-  d.setUTCFullYear(year);
-  d.setUTCMonth(month - 1);
-  d.setUTCDate(day);
-  d.setUTCHours(hour);
-  d.setUTCMinutes(minute);
-  d.setUTCSeconds(second, millisecond);
-  return d.valueOf();
+  const type = asciiLowercase(typeAttribute);
+  return inputAllowedTypes.has(type) ? type : "text";
 }
 
-const dayOfWeekRelMondayLUT = [-1, 0, 1, 2, 3, -3, -2];
-
-const convertStringToNumberByTypeMap = new Map([
-  [
-    // https://html.spec.whatwg.org/multipage/input.html#date-state-(type=date):concept-input-value-string-number
-    "date", input => {
-      const date = parseDateString(input);
-      if (date === null) {
-        return NaN;
-      }
-      return getUTCMs(date.year, date.month, date.day);
-    }
-  ],
-  [
-    // https://html.spec.whatwg.org/multipage/input.html#month-state-(type=month):concept-input-value-string-number
-    "month", input => {
-      const date = parseMonthString(input);
-      if (date === null) {
-        return NaN;
-      }
-      return (date.year - 1970) * 12 + (date.month - 1);
-    }
-  ],
-  [
-    // https://html.spec.whatwg.org/multipage/input.html#week-state-(type=week):concept-input-value-string-number
-    "week", input => {
-      const date = parseWeekString(input);
-      if (date === null) {
-        return NaN;
-      }
-      const dateObj = new Date(getUTCMs(date.year));
-      // An HTML week starts on Monday, while 0 represents Sunday. Account for such.
-      const dayOfWeekRelMonday = dayOfWeekRelMondayLUT[dateObj.getUTCDay()];
-      return dateObj.setUTCDate(1 + 7 * (date.week - 1) - dayOfWeekRelMonday);
-    }
-  ],
-  [
-    // https://html.spec.whatwg.org/multipage/input.html#time-state-(type=time):concept-input-value-string-number
-    "time", input => {
-      const time = parseTimeString(input);
-      if (time === null) {
-        return NaN;
-      }
-      return ((time.hour * 60 + time.minute) * 60 + time.second) * 1000 + time.millisecond;
-    }
-  ],
-  [
-    // https://html.spec.whatwg.org/multipage/input.html#local-date-and-time-state-(type=datetime-local):concept-input-value-string-number
-    "datetime-local", input => {
-      const dateAndTime = parseLocalDateAndTimeString(input);
-      if (dateAndTime === null) {
-        return NaN;
-      }
-      const { date: { year, month, day }, time: { hour, minute, second, millisecond } } = dateAndTime;
-      // Doesn't quite matter whether or not UTC is used, since the offset from 1970-01-01 local time is returned.
-      return getUTCMs(year, month, day, hour, minute, second, millisecond);
-    }
-  ],
-  // https://html.spec.whatwg.org/multipage/input.html#number-state-(type=number):concept-input-value-string-number
-  ["number", parseFloatingPointNumber],
-  // https://html.spec.whatwg.org/multipage/input.html#range-state-(type=range):concept-input-value-string-number
-  ["range", parseFloatingPointNumber]
-]);
-
 class HTMLInputElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     this._selectionStart = this._selectionEnd = 0;
     this._selectionDirection = "none";
@@ -164,6 +115,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     this._dirtyCheckedness = false;
 
     this._preCheckedRadioState = null;
+    this._legacyActivationBehaviorPreviousIndeterminateState = false;
 
     this.indeterminate = false;
 
@@ -176,7 +128,35 @@ class HTMLInputElementImpl extends HTMLElementImpl {
 
   // https://html.spec.whatwg.org/multipage/input.html#concept-input-value-string-number
   get _convertStringToNumber() {
-    return convertStringToNumberByTypeMap.get(this.type);
+    return convertStringToNumberByType[this.type];
+  }
+
+  get _convertNumberToString() {
+    return convertNumberToStringByType[this.type];
+  }
+
+  get _convertDateToString() {
+    return serializeDateByType[this.type];
+  }
+
+  get _convertStringToDate() {
+    return convertStringToDateByType[this.type];
+  }
+
+  _isStepAligned(v) {
+    return new Decimal(v).minus(this._stepBase)
+      .modulo(this._allowedValueStep)
+      .isZero();
+  }
+
+  // Returns a Decimal.
+  _stepAlign(v, roundUp) {
+    const allowedValueStep = this._allowedValueStep;
+    const stepBase = this._stepBase;
+
+    return new Decimal(v).minus(stepBase)
+      .toNearest(allowedValueStep, roundUp ? Decimal.ROUND_UP : Decimal.ROUND_DOWN)
+      .add(stepBase);
   }
 
   // For <input>, https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#concept-fe-value
@@ -188,6 +168,8 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   _legacyPreActivationBehavior() {
     if (this.type === "checkbox") {
       this.checked = !this.checked;
+      this._legacyActivationBehaviorPreviousIndeterminateState = this.indeterminate;
+      this.indeterminate = false;
     } else if (this.type === "radio") {
       this._preCheckedRadioState = this.checked;
       this.checked = true;
@@ -197,6 +179,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   _legacyCanceledActivationBehavior() {
     if (this.type === "checkbox") {
       this.checked = !this.checked;
+      this.indeterminate = this._legacyActivationBehaviorPreviousIndeterminateState;
     } else if (this.type === "radio") {
       if (this._preCheckedRadioState !== null) {
         this.checked = this._preCheckedRadioState;
@@ -206,15 +189,17 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   _activationBehavior() {
-    if (isDisabled(this)) {
+    if (!this._mutable && this.type !== "checkbox" && this.type !== "radio") {
       return;
     }
 
     const { form } = this;
 
     if (this.type === "checkbox" || (this.type === "radio" && !this._preCheckedRadioState)) {
-      fireAnEvent("input", this, undefined, { bubbles: true });
-      fireAnEvent("change", this, undefined, { bubbles: true });
+      if (this.isConnected) {
+        fireAnEvent("input", this, undefined, { bubbles: true });
+        fireAnEvent("change", this, undefined, { bubbles: true });
+      }
     } else if (form && this.type === "submit") {
       form._doSubmit();
     } else if (form && this.type === "reset") {
@@ -222,7 +207,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     }
   }
 
-  _attrModified(name) {
+  _attrModified(name, value, oldVal) {
     const wrapper = idlUtils.wrapperForImpl(this);
     if (!this._dirtyValue && name === "value") {
       this._value = sanitizeValueByType(this, wrapper.defaultValue);
@@ -240,7 +225,45 @@ class HTMLInputElementImpl extends HTMLElementImpl {
       }
     }
 
-    super._attrModified.apply(this, arguments);
+    if (name === "type") {
+      const prevType = getTypeFromAttribute(oldVal);
+      const curType = getTypeFromAttribute(value);
+      // When an input element's type attribute changes state…
+      if (prevType !== curType) {
+        const prevValueMode = valueAttributeMode(prevType);
+        const curValueMode = valueAttributeMode(curType);
+        if (prevValueMode === "value" && this._value !== "" &&
+            (curValueMode === "default" || curValueMode === "default/on")) {
+          this.setAttributeNS(null, "value", this._value);
+        } else if (prevValueMode !== "value" && curValueMode === "value") {
+          this._value = this.getAttributeNS(null, "value") || "";
+          this._dirtyValue = false;
+        } else if (prevValueMode !== "filename" && curValueMode === "filename") {
+          this._value = "";
+        }
+
+        this._signalATypeChange();
+
+        this._value = sanitizeValueByType(this, this._value);
+
+        const previouslySelectable = this._idlMemberApplies("setRangeText", prevType);
+        const nowSelectable = this._idlMemberApplies("setRangeText", curType);
+        if (!previouslySelectable && nowSelectable) {
+          this._selectionStart = 0;
+          this._selectionEnd = 0;
+          this._selectionDirection = "none";
+        }
+      }
+    }
+
+    super._attrModified(name, value, oldVal);
+  }
+
+  // https://html.spec.whatwg.org/multipage/input.html#signal-a-type-change
+  _signalATypeChange() {
+    if (this._checkedness) {
+      this._removeOtherRadioCheckedness();
+    }
   }
 
   _formReset() {
@@ -311,11 +334,15 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     return null;
   }
 
-  _isRadioGroupChecked() {
-    if (this.checked) {
+  _someInRadioGroup(name) {
+    if (this[name]) {
       return true;
     }
-    return this._otherRadioGroupElements.some(radioGroupElement => radioGroupElement.checked);
+    return this._otherRadioGroupElements.some(radioGroupElement => radioGroupElement[name]);
+  }
+
+  get _mutable() {
+    return !isDisabled(this) && !this._hasAttributeAndApplies("readonly");
   }
 
   get labels() {
@@ -370,8 +397,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
         this._dirtyValue = true;
 
         if (oldValue !== this._value) {
-          this._selectionStart = 0;
-          this._selectionEnd = 0;
+          this._selectionStart = this._selectionEnd = this._getValueLength();
           this._selectionDirection = "none";
         }
         break;
@@ -389,8 +415,10 @@ class HTMLInputElementImpl extends HTMLElementImpl {
         if (val === "") {
           this.files.length = 0;
         } else {
-          throw new DOMException("This input element accepts a filename, which may only be programmatically set to " +
-            "the empty string.", "InvalidStateError");
+          throw DOMException.create(this._globalObject, [
+            "This input element accepts a filename, which may only be programmatically set to the empty string.",
+            "InvalidStateError"
+          ]);
         }
         break;
 
@@ -399,9 +427,152 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     }
   }
 
+  // https://html.spec.whatwg.org/multipage/input.html#dom-input-valueasdate
+  get valueAsDate() {
+    if (!this._idlMemberApplies("valueAsDate")) {
+      return null;
+    }
+
+    const window = this._ownerDocument._defaultView;
+    const convertedValue = this._convertStringToDate(this._value);
+
+    if (convertedValue instanceof Date) {
+      return new window.Date(convertedValue.getTime());
+    }
+
+    return null;
+  }
+
+  set valueAsDate(v) {
+    if (!this._idlMemberApplies("valueAsDate")) {
+      throw DOMException.create(this._globalObject, [
+        "Failed to set the 'valueAsDate' property on 'HTMLInputElement': This input element does not support Date " +
+        "values.",
+        "InvalidStateError"
+      ]);
+    }
+
+    if (v !== null && !isDate(v)) {
+      throw new TypeError("Failed to set the 'valueAsDate' property on 'HTMLInputElement': The provided value is " +
+        "not a Date.");
+    }
+
+    if (v === null || isNaN(v)) {
+      this._value = "";
+    }
+
+    this._value = this._convertDateToString(v);
+  }
+
+  // https://html.spec.whatwg.org/multipage/input.html#dom-input-valueasnumber
+  get valueAsNumber() {
+    if (!this._idlMemberApplies("valueAsNumber")) {
+      return NaN;
+    }
+
+    const parsedValue = this._convertStringToNumber(this._value);
+    return parsedValue !== null ? parsedValue : NaN;
+  }
+
+  set valueAsNumber(v) {
+    if (!isFinite(v)) {
+      throw new TypeError("Failed to set infinite value as Number");
+    }
+
+    if (!this._idlMemberApplies("valueAsNumber")) {
+      throw DOMException.create(this._globalObject, [
+        "Failed to set the 'valueAsNumber' property on 'HTMLInputElement': This input element does not support " +
+        "Number values.",
+        "InvalidStateError"
+      ]);
+    }
+
+    this._value = this._convertNumberToString(v);
+  }
+
+  // https://html.spec.whatwg.org/multipage/input.html#dom-input-stepup
+  _stepUpdate(n, isUp) {
+    const methodName = isUp ? "stepUp" : "stepDown";
+    if (!this._idlMemberApplies(methodName)) {
+      throw DOMException.create(this._globalObject, [
+        `Failed to invoke '${methodName}' method on 'HTMLInputElement': ` +
+        "This input element does not support Number values.",
+        "InvalidStateError"
+      ]);
+    }
+
+    const allowedValueStep = this._allowedValueStep;
+    if (allowedValueStep === null) {
+      throw DOMException.create(this._globalObject, [
+        `Failed to invoke '${methodName}' method on 'HTMLInputElement': ` +
+        "This input element does not support value step.",
+        "InvalidStateError"
+      ]);
+    }
+
+    const min = this._minimum;
+    const max = this._maximum;
+
+    if (min !== null && max !== null) {
+      if (min > max) {
+        return;
+      }
+
+      const candidateStepValue = this._stepAlign(Decimal.add(min, allowedValueStep), /* roundUp = */ false);
+      if (candidateStepValue.lt(min) || candidateStepValue.gt(max)) {
+        return;
+      }
+    }
+
+    let value = 0;
+    try {
+      value = this.valueAsNumber;
+      if (isNaN(value)) { // Empty value is parsed as NaN.
+        value = 0;
+      }
+    } catch (error) {
+      // Step 5. Default value is 0.
+    }
+    value = new Decimal(value);
+
+    const valueBeforeStepping = value;
+
+    if (!this._isStepAligned(value)) {
+      value = this._stepAlign(value, /* roundUp = */ isUp);
+    } else {
+      let delta = Decimal.mul(n, allowedValueStep);
+      if (!isUp) {
+        delta = delta.neg();
+      }
+      value = value.add(delta);
+    }
+
+    if (min !== null && value.lt(min)) {
+      value = this._stepAlign(min, /* roundUp = */ true);
+    }
+
+    if (max !== null && value.gt(max)) {
+      value = this._stepAlign(max, /* roundUp = */ false);
+    }
+
+    if (isUp ? value.lt(valueBeforeStepping) : value.gt(valueBeforeStepping)) {
+      return;
+    }
+
+    this._value = this._convertNumberToString(value.toNumber());
+  }
+
+  stepDown(n = 1) {
+    return this._stepUpdate(n, false);
+  }
+
+  stepUp(n = 1) {
+    return this._stepUpdate(n, true);
+  }
+
   get files() {
     if (this.type === "file") {
-      this[filesSymbol] = this[filesSymbol] || FileList.createImpl();
+      this[filesSymbol] = this[filesSymbol] || FileList.createImpl(this._globalObject);
     } else {
       this[filesSymbol] = null;
     }
@@ -415,8 +586,8 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   get type() {
-    const type = this.getAttributeNS(null, "type");
-    return type ? type.toLowerCase() : "text";
+    const typeAttribute = this.getAttributeNS(null, "type");
+    return getTypeFromAttribute(typeAttribute);
   }
 
   set type(type) {
@@ -432,7 +603,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   select() {
-    if (!allowSelect(this.type)) {
+    if (!this._idlMemberApplies("select")) {
       return;
     }
 
@@ -443,7 +614,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   get selectionStart() {
-    if (!allowVariableLengthSelection(this.type)) {
+    if (!this._idlMemberApplies("selectionStart")) {
       return null;
     }
 
@@ -451,15 +622,15 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   set selectionStart(start) {
-    if (!allowVariableLengthSelection(this.type)) {
-      throw new DOMException("The object is in an invalid state.", "InvalidStateError");
+    if (!this._idlMemberApplies("selectionStart")) {
+      throw DOMException.create(this._globalObject, ["The object is in an invalid state.", "InvalidStateError"]);
     }
 
     this.setSelectionRange(start, Math.max(start, this._selectionEnd), this._selectionDirection);
   }
 
   get selectionEnd() {
-    if (!allowVariableLengthSelection(this.type)) {
+    if (!this._idlMemberApplies("selectionEnd")) {
       return null;
     }
 
@@ -467,15 +638,15 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   set selectionEnd(end) {
-    if (!allowVariableLengthSelection(this.type)) {
-      throw new DOMException("The object is in an invalid state.", "InvalidStateError");
+    if (!this._idlMemberApplies("selectionEnd")) {
+      throw DOMException.create(this._globalObject, ["The object is in an invalid state.", "InvalidStateError"]);
     }
 
     this.setSelectionRange(this._selectionStart, end, this._selectionDirection);
   }
 
   get selectionDirection() {
-    if (!allowVariableLengthSelection(this.type)) {
+    if (!this._idlMemberApplies("selectionDirection")) {
       return null;
     }
 
@@ -483,16 +654,16 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   set selectionDirection(dir) {
-    if (!allowVariableLengthSelection(this.type)) {
-      throw new DOMException("The object is in an invalid state.", "InvalidStateError");
+    if (!this._idlMemberApplies("selectionDirection")) {
+      throw DOMException.create(this._globalObject, ["The object is in an invalid state.", "InvalidStateError"]);
     }
 
     this.setSelectionRange(this._selectionStart, this._selectionEnd, dir);
   }
 
   setSelectionRange(start, end, dir) {
-    if (!allowVariableLengthSelection(this.type)) {
-      throw new DOMException("The object is in an invalid state.", "InvalidStateError");
+    if (!this._idlMemberApplies("setSelectionRange")) {
+      throw DOMException.create(this._globalObject, ["The object is in an invalid state.", "InvalidStateError"]);
     }
 
     this._selectionEnd = Math.min(end, this._getValueLength());
@@ -502,15 +673,15 @@ class HTMLInputElementImpl extends HTMLElementImpl {
   }
 
   setRangeText(repl, start, end, selectionMode = "preserve") {
-    if (!allowVariableLengthSelection(this.type)) {
-      throw new DOMException("The object is in an invalid state.", "InvalidStateError");
+    if (!this._idlMemberApplies("setRangeText")) {
+      throw DOMException.create(this._globalObject, ["The object is in an invalid state.", "InvalidStateError"]);
     }
 
     if (arguments.length < 2) {
       start = this._selectionStart;
       end = this._selectionEnd;
     } else if (start > end) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
 
     start = Math.min(start, this._getValueLength());
@@ -551,7 +722,11 @@ class HTMLInputElementImpl extends HTMLElementImpl {
 
   // https://html.spec.whatwg.org/multipage/input.html#the-list-attribute
   get list() {
-    const id = this.getAttributeNS(null, "list");
+    const id = this._getAttributeIfApplies("list");
+    if (!id) {
+      return null;
+    }
+
     const el = this.getRootNode({}).getElementById(id);
 
     if (el && el.localName === "datalist") {
@@ -561,13 +736,7 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     return null;
   }
 
-  set maxLength(value) {
-    if (value < 0) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
-    }
-    this.setAttributeNS(null, "maxlength", String(value));
-  }
-
+  // Reflected IDL attribute does not care about whether the content attribute applies.
   get maxLength() {
     if (!this.hasAttributeNS(null, "maxlength")) {
       return 524288; // stole this from chrome
@@ -575,11 +744,11 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     return parseInt(this.getAttributeNS(null, "maxlength"));
   }
 
-  set minLength(value) {
+  set maxLength(value) {
     if (value < 0) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
-    this.setAttributeNS(null, "minlength", String(value));
+    this.setAttributeNS(null, "maxlength", String(value));
   }
 
   get minLength() {
@@ -587,6 +756,13 @@ class HTMLInputElementImpl extends HTMLElementImpl {
       return 0;
     }
     return parseInt(this.getAttributeNS(null, "minlength"));
+  }
+
+  set minLength(value) {
+    if (value < 0) {
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
+    }
+    this.setAttributeNS(null, "minlength", String(value));
   }
 
   get size() {
@@ -598,27 +774,18 @@ class HTMLInputElementImpl extends HTMLElementImpl {
 
   set size(value) {
     if (value <= 0) {
-      throw new DOMException("The index is not in the allowed range.", "IndexSizeError");
+      throw DOMException.create(this._globalObject, ["The index is not in the allowed range.", "IndexSizeError"]);
     }
     this.setAttributeNS(null, "size", String(value));
-  }
-
-  get src() {
-    return conversions.USVString(this.getAttributeNS(null, "src"));
-  }
-
-  set src(value) {
-    this.setAttributeNS(null, "src", value);
   }
 
   // https://html.spec.whatwg.org/multipage/input.html#the-min-and-max-attributes
   get _minimum() {
     let min = this._defaultMinimum;
-    const attr = this.getAttributeNS(null, "min");
-    const convertStringToNumber = this._convertStringToNumber;
-    if (attr !== null && convertStringToNumber !== undefined) {
-      const parsed = convertStringToNumber(attr);
-      if (!isNaN(parsed)) {
+    const attr = this._getAttributeIfApplies("min");
+    if (attr !== null && this._convertStringToNumber !== undefined) {
+      const parsed = this._convertStringToNumber(attr);
+      if (parsed !== null) {
         min = parsed;
       }
     }
@@ -627,11 +794,10 @@ class HTMLInputElementImpl extends HTMLElementImpl {
 
   get _maximum() {
     let max = this._defaultMaximum;
-    const attr = this.getAttributeNS(null, "max");
-    const convertStringToNumber = this._convertStringToNumber;
-    if (attr !== null && convertStringToNumber !== undefined) {
-      const parsed = convertStringToNumber(attr);
-      if (!isNaN(parsed)) {
+    const attr = this._getAttributeIfApplies("max");
+    if (attr !== null && this._convertStringToNumber !== undefined) {
+      const parsed = this._convertStringToNumber(attr);
+      if (parsed !== null) {
         max = parsed;
       }
     }
@@ -652,16 +818,11 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     return null;
   }
 
-  get _parsedValue() {
-    const converter = this._convertStringToNumber;
-    if (converter !== undefined) {
-      return converter(this.value);
-    }
-    return this.value;
-  }
-
   // https://html.spec.whatwg.org/multipage/input.html#concept-input-step
   get _allowedValueStep() {
+    if (!this._contentAttributeApplies("step")) {
+      return null;
+    }
     const attr = this.getAttributeNS(null, "step");
     if (attr === null) {
       return this._defaultStep * this._stepScaleFactor;
@@ -669,8 +830,8 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     if (asciiCaseInsensitiveMatch(attr, "any")) {
       return null;
     }
-    const parsedStep = parseFloatingPointNumber(this.getAttributeNS(null, "step"));
-    if (isNaN(parsedStep) || parsedStep <= 0) {
+    const parsedStep = parseFloatingPointNumber(attr);
+    if (parsedStep === null || parsedStep <= 0) {
       return this._defaultStep * this._stepScaleFactor;
     }
     return parsedStep * this._stepScaleFactor;
@@ -702,20 +863,22 @@ class HTMLInputElementImpl extends HTMLElementImpl {
 
   // https://html.spec.whatwg.org/multipage/input.html#concept-input-min-zero
   get _stepBase() {
-    const parseAttribute = attributeName => parseFloatingPointNumber(this.getAttributeNS(null, attributeName));
-    if (this.hasAttributeNS(null, "min")) {
-      const min = parseAttribute("min");
-      if (!isNaN(min)) {
+    if (this._hasAttributeAndApplies("min")) {
+      const min = this._convertStringToNumber(this.getAttributeNS(null, "min"));
+      if (min !== null) {
         return min;
       }
     }
     if (this.hasAttributeNS(null, "value")) {
-      const value = parseAttribute("value");
-      if (!isNaN(value)) {
+      const value = this._convertStringToNumber(this.getAttributeNS(null, "value"));
+      if (value !== null) {
         return value;
       }
     }
-    return this._defaultStepBase;
+    if (this._defaultStepBase !== null) {
+      return this._defaultStepBase;
+    }
+    return 0;
   }
 
   // https://html.spec.whatwg.org/multipage/input.html#concept-input-step-default-base
@@ -724,11 +887,28 @@ class HTMLInputElementImpl extends HTMLElementImpl {
       // The start of week 1970-W01
       return -259200000;
     }
-    return 0;
+    return null;
   }
 
-  _attributeApplies(attribute) {
-    return applicableTypesForAttribute[attribute].has(this.type);
+  // https://html.spec.whatwg.org/multipage/input.html#common-input-element-attributes
+  // When an attribute doesn't apply to an input element, user agents must ignore the attribute.
+  _contentAttributeApplies(attribute) {
+    return applicableTypesForContentAttribute[attribute].has(this.type);
+  }
+
+  _hasAttributeAndApplies(attribute) {
+    return this._contentAttributeApplies(attribute) && this.hasAttributeNS(null, attribute);
+  }
+
+  _getAttributeIfApplies(attribute) {
+    if (this._contentAttributeApplies(attribute)) {
+      return this.getAttributeNS(null, attribute);
+    }
+    return null;
+  }
+
+  _idlMemberApplies(member, type = this.type) {
+    return applicableTypesForIDLMember[member].has(type);
   }
 
   _barredFromConstraintValidationSpecialization() {
@@ -737,34 +917,83 @@ class HTMLInputElementImpl extends HTMLElementImpl {
     // https://html.spec.whatwg.org/multipage/input.html#button-state-(type=button)
     const willNotValidateTypes = new Set(["hidden", "reset", "button"]);
     // https://html.spec.whatwg.org/multipage/input.html#attr-input-readonly
-    const readOnly = this.hasAttributeNS(null, "readonly");
+    const readOnly = this._hasAttributeAndApplies("readonly");
 
     // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#attr-fe-disabled
     return willNotValidateTypes.has(this.type) || readOnly;
   }
 
+  // https://html.spec.whatwg.org/multipage/input.html#concept-input-required
+  get _required() {
+    return this._hasAttributeAndApplies("required");
+  }
+
+  // https://html.spec.whatwg.org/multipage/input.html#has-a-periodic-domain
+  get _hasAPeriodicDomain() {
+    return this.type === "time";
+  }
+
+  // https://html.spec.whatwg.org/multipage/input.html#has-a-reversed-range
+  get _hasAReversedRange() {
+    return this._hasAPeriodicDomain && this._maximum < this._minimum;
+  }
+
   get validity() {
     if (!this._validity) {
-      this._validity = ValidityState.createImpl(this, {
+      // Constraint validation: When an element has a reversed range, and the result of applying
+      // the algorithm to convert a string to a number to the string given by the element's value
+      // is a number, and the number obtained from that algorithm is more than the maximum and less
+      // than the minimum, the element is simultaneously suffering from an underflow and suffering
+      // from an overflow.
+      const reversedRangeSufferingOverUnderflow = () => {
+        const parsedValue = this._convertStringToNumber(this._value);
+        return parsedValue !== null && parsedValue > this._maximum && parsedValue < this._minimum;
+      };
 
+      const state = {
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-being-missing
         valueMissing: () => {
-          if (!this.hasAttributeNS(null, "required")) {
-            return false;
+          // https://html.spec.whatwg.org/multipage/input.html#the-required-attribute
+          // Constraint validation: If the element is required, and its value IDL attribute applies
+          // and is in the mode value, and the element is mutable, and the element's value is the
+          // empty string, then the element is suffering from being missing.
+          //
+          // Note: As of today, the value IDL attribute always applies.
+          if (this._required && valueAttributeMode(this.type) === "value" && this._mutable && this._value === "") {
+            return true;
           }
-          if (this.type === "checkbox") {
+
+          switch (this.type) {
             // https://html.spec.whatwg.org/multipage/input.html#checkbox-state-(type=checkbox)
             // Constraint validation: If the element is required and its checkedness is
             // false, then the element is suffering from being missing.
-            return !this.checked;
-          } else if (this.type === "radio") {
+            case "checkbox":
+              if (this._required && !this._checkedness) {
+                return true;
+              }
+              break;
+
             // https://html.spec.whatwg.org/multipage/input.html#radio-button-state-(type=radio)
             // Constraint validation: If an element in the radio button group is required,
             // and all of the input elements in the radio button group have a checkedness
             // that is false, then the element is suffering from being missing.
-            return !this._isRadioGroupChecked();
+            case "radio":
+              if (this._someInRadioGroup("_required") && !this._someInRadioGroup("checked")) {
+                return true;
+              }
+              break;
+
+            // https://html.spec.whatwg.org/multipage/input.html#file-upload-state-(type=file)
+            // Constraint validation: If the element is required and the list of selected files is
+            // empty, then the element is suffering from being missing.
+            case "file":
+              if (this._required && this.files.length === 0) {
+                return true;
+              }
+              break;
           }
-          return this.value === "";
+
+          return false;
         },
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-being-too-long
@@ -778,32 +1007,64 @@ class HTMLInputElementImpl extends HTMLElementImpl {
         tooShort: () => false,
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-an-overflow
-        // https://html.spec.whatwg.org/multipage/input.html#attr-input-max
-        rangeOverflow: () => this._attributeApplies("max") && this._maximum !== null &&
-          this._parsedValue > this._maximum,
+        rangeOverflow: () => {
+          // https://html.spec.whatwg.org/multipage/input.html#the-min-and-max-attributes
+          if (this._hasAReversedRange) {
+            return reversedRangeSufferingOverUnderflow();
+          }
+          // Constraint validation: When the element has a maximum and does not have a reversed
+          // range, and the result of applying the algorithm to convert a string to a number to the
+          // string given by the element's value is a number, and the number obtained from that
+          // algorithm is more than the maximum, the element is suffering from an overflow.
+          if (this._maximum !== null) {
+            const parsedValue = this._convertStringToNumber(this._value);
+            if (parsedValue !== null && parsedValue > this._maximum) {
+              return true;
+            }
+          }
+          return false;
+        },
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-an-underflow
-        // https://html.spec.whatwg.org/multipage/input.html#attr-input-min
-        rangeUnderflow: () => this._attributeApplies("min") && this._minimum !== null &&
-          this._parsedValue < this._minimum,
+        rangeUnderflow: () => {
+          // https://html.spec.whatwg.org/multipage/input.html#the-min-and-max-attributes
+          if (this._hasAReversedRange) {
+            return reversedRangeSufferingOverUnderflow();
+          }
+          // Constraint validation: When the element has a minimum and does not have a reversed
+          // range, and the result of applying the algorithm to convert a string to a number to the
+          // string given by the element's value is a number, and the number obtained from that
+          // algorithm is less than the minimum, the element is suffering from an underflow.
+          if (this._minimum !== null) {
+            const parsedValue = this._convertStringToNumber(this._value);
+            if (parsedValue !== null && parsedValue < this._minimum) {
+              return true;
+            }
+          }
+          return false;
+        },
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-a-pattern-mismatch
         patternMismatch: () => {
-          if (!this.hasAttributeNS(null, "pattern") || !this._attributeApplies("pattern") || this.value === "") {
+          // https://html.spec.whatwg.org/multipage/input.html#the-pattern-attribute
+          if (this._value === "" || !this._hasAttributeAndApplies("pattern")) {
             return false;
           }
           let regExp;
           try {
             const pattern = this.getAttributeNS(null, "pattern");
-            // The pattern attribute should be matched against the entire value, not just any subset
+            // The pattern attribute should be matched against the entire value, not just any
+            // subset, so add ^ and $ anchors. But also check the validity of the regex itself
+            // first.
+            new RegExp(pattern, "u"); // eslint-disable-line no-new
             regExp = new RegExp("^(?:" + pattern + ")$", "u");
           } catch (e) {
             return false;
           }
-          if (this.type === "email" && this.hasAttributeNS(null, "multiple")) {
-            return splitOnCommas(this.value).every(value => regExp.test(value));
+          if (this._hasAttributeAndApplies("multiple")) {
+            return !splitOnCommas(this._value).every(value => regExp.test(value));
           }
-          return !regExp.test(this.value);
+          return !regExp.test(this._value);
         },
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-a-step-mismatch
@@ -813,37 +1074,40 @@ class HTMLInputElementImpl extends HTMLElementImpl {
           if (allowedValueStep === null) {
             return false;
           }
-          if (this._convertStringToNumber === undefined) {
-            return false;
-          }
-          const number = this._parsedValue;
-          if (typeof number !== "number" || isNaN(number)) {
-            return false;
-          }
-          return (number - this._stepBase) % allowedValueStep !== 0;
+          const number = this._convertStringToNumber(this._value);
+          return number !== null && !this._isStepAligned(number);
         },
 
         // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#suffering-from-a-type-mismatch
         typeMismatch: () => {
-          if (this.value === "") {
-            return false;
-          }
-          if (this.type === "email") {
-            // https://html.spec.whatwg.org/multipage/input.html#e-mail-state-(type=email)
-            // Constraint validation [multiple=false]: While the value of the element is neither the empty
-            // string nor a single valid e - mail address, the element is suffering from a type mismatch.
-
-            // Constraint validation [multiple=true]: While the value of the element is not a valid e-mail address list,
-            // the element is suffering from a type mismatch.
-            return !isValidEmailAddress(this.value, this.hasAttributeNS(null, "multiple"));
-          } else if (this.type === "url") {
+          switch (this.type) {
             // https://html.spec.whatwg.org/multipage/input.html#url-state-(type=url)
             // Constraint validation: While the value of the element is neither the empty string
             // nor a valid absolute URL, the element is suffering from a type mismatch.
-            return !isValidAbsoluteURL(this.value);
+            case "url":
+              if (this._value !== "" && !isValidAbsoluteURL(this._value)) {
+                return true;
+              }
+              break;
+
+            // https://html.spec.whatwg.org/multipage/input.html#e-mail-state-(type=email)
+            // Constraint validation [multiple=false]: While the value of the element is neither the empty
+            // string nor a single valid e - mail address, the element is suffering from a type mismatch.
+            // Constraint validation [multiple=true]: While the value of the element is not a valid e-mail address list,
+            // the element is suffering from a type mismatch.
+            case "email":
+              if (this._value !== "" && !isValidEmailAddress(this._getValue(), this.hasAttributeNS(null, "multiple"))) {
+                return true;
+              }
+              break;
           }
           return false;
         }
+      };
+
+      this._validity = ValidityState.createImpl(this._globalObject, [], {
+        element: this,
+        state
       });
     }
     return this._validity;

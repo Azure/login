@@ -1,35 +1,41 @@
 {
   "name": "whatwg-url",
-  "version": "7.1.0",
+  "version": "8.7.0",
   "description": "An implementation of the WHATWG URL Standard's URL API and parsing machinery",
-  "main": "lib/public-api.js",
+  "main": "index.js",
   "files": [
-    "lib/"
+    "index.js",
+    "webidl2js-wrapper.js",
+    "dist/"
   ],
   "author": "Sebastian Mayr <github@smayr.name>",
   "license": "MIT",
   "repository": "jsdom/whatwg-url",
   "dependencies": {
-    "lodash.sortby": "^4.7.0",
-    "tr46": "^1.0.1",
-    "webidl-conversions": "^4.0.2"
+    "lodash": "^4.7.0",
+    "tr46": "^2.1.0",
+    "webidl-conversions": "^6.1.0"
   },
   "devDependencies": {
-    "browserify": "^16.2.2",
-    "domexception": "^1.0.1",
-    "eslint": "^5.4.0",
-    "got": "^9.2.2",
-    "jest": "^23.5.0",
-    "recast": "^0.15.3",
-    "webidl2js": "^9.0.1"
+    "@domenic/eslint-config": "^1.2.0",
+    "browserify": "^17.0.0",
+    "domexception": "^2.0.1",
+    "eslint": "^7.29.0",
+    "glob": "^7.1.7",
+    "got": "^11.8.2",
+    "jest": "^27.0.5",
+    "recast": "^0.20.4",
+    "webidl2js": "^16.2.0"
+  },
+  "engines": {
+    "node": ">=10"
   },
   "scripts": {
-    "build": "node scripts/transform.js && node scripts/convert-idl.js",
     "coverage": "jest --coverage",
     "lint": "eslint .",
-    "prepublish": "node scripts/transform.js && node scripts/convert-idl.js",
-    "pretest": "node scripts/get-latest-platform-tests.js && node scripts/transform.js && node scripts/convert-idl.js",
-    "build-live-viewer": "browserify lib/public-api.js --standalone whatwgURL > live-viewer/whatwg-url.js",
+    "prepare": "node scripts/transform.js",
+    "pretest": "node scripts/get-latest-platform-tests.js && node scripts/transform.js",
+    "build-live-viewer": "browserify index.js --standalone whatwgURL > live-viewer/whatwg-url.js",
     "test": "jest"
   },
   "jest": {

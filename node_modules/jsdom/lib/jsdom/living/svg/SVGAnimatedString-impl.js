@@ -1,7 +1,7 @@
 "use strict";
 
 class SVGAnimatedStringImpl {
-  constructor(args, privateData) {
+  constructor(globalObject, args, privateData) {
     this._element = privateData.element;
     this._attribute = privateData.attribute;
     this._attributeDeprecated = privateData.attributeDeprecated; // can be undefined
@@ -20,10 +20,6 @@ class SVGAnimatedStringImpl {
     return this._element.getAttributeNS(null, this._attribute);
   }
 
-  get animVal() {
-    return this.baseVal;
-  }
-
   set baseVal(base) {
     if (!this._element.hasAttributeNS(null, this._attribute) &&
         this._attributeDeprecated !== undefined &&
@@ -32,6 +28,10 @@ class SVGAnimatedStringImpl {
     } else {
       this._element.setAttributeNS(null, this._attribute, base);
     }
+  }
+
+  get animVal() {
+    return this.baseVal;
   }
 }
 

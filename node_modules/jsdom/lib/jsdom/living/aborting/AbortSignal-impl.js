@@ -3,16 +3,23 @@
 const { setupForSimpleEventAccessors } = require("../helpers/create-event-accessor");
 const { fireAnEvent } = require("../helpers/events");
 const EventTargetImpl = require("../events/EventTarget-impl").implementation;
+const AbortSignal = require("../generated/AbortSignal");
 
 class AbortSignalImpl extends EventTargetImpl {
-  constructor(args, privateData) {
-    super();
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     // make event firing possible
-    this._ownerDocument = privateData.window.document;
+    this._ownerDocument = globalObject.document;
 
     this.aborted = false;
     this.abortAlgorithms = new Set();
+  }
+
+  static abort(globalObject) {
+    const abortSignal = AbortSignal.createImpl(globalObject, []);
+    abortSignal.aborted = true;
+    return abortSignal;
   }
 
   _signalAbort() {

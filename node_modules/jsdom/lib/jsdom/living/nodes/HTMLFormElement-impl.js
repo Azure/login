@@ -1,13 +1,14 @@
 "use strict";
 
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
+const { serializeURL } = require("whatwg-url");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
 const { domSymbolTree } = require("../helpers/internal-constants");
 const { fireAnEvent } = require("../helpers/events");
-const { isListed, isSubmittable, isSubmitButton } = require("../helpers/form-controls");
+const { formOwner, isListed, isSubmittable, isSubmitButton } = require("../helpers/form-controls");
 const HTMLCollection = require("../generated/HTMLCollection");
 const notImplemented = require("../../browser/not-implemented");
-const { reflectURLAttribute } = require("../../utils");
+const { parseURLToResultingURLRecord } = require("../helpers/document-base-url");
 
 const encTypes = new Set([
   "application/x-www-form-urlencoded",
@@ -33,7 +34,7 @@ class HTMLFormElementImpl extends HTMLElementImpl {
       }
     }
 
-    super._descendantAdded.apply(this, arguments);
+    super._descendantAdded(parent, child);
   }
 
   _descendantRemoved(parent, child) {
@@ -43,17 +44,27 @@ class HTMLFormElementImpl extends HTMLElementImpl {
       }
     }
 
-    super._descendantRemoved.apply(this, arguments);
+    super._descendantRemoved(parent, child);
+  }
+
+  _getElementNodes() {
+    return domSymbolTree.treeToArray(this.getRootNode({}), {
+      filter: node => {
+        if (!isListed(node) || (node._localName === "input" && node.type === "image")) {
+          return false;
+        }
+
+        return formOwner(node) === this;
+      }
+    });
   }
 
   // https://html.spec.whatwg.org/multipage/forms.html#dom-form-elements
   get elements() {
     // TODO: Return a HTMLFormControlsCollection
-    return HTMLCollection.createImpl([], {
-      element: this,
-      query: () => domSymbolTree.treeToArray(this, {
-        filter: node => isListed(node) && (node._localName !== "input" || node.type !== "image")
-      })
+    return HTMLCollection.createImpl(this._globalObject, [], {
+      element: this.getRootNode({}),
+      query: () => this._getElementNodes()
     });
   }
 
@@ -83,7 +94,10 @@ class HTMLFormElementImpl extends HTMLElementImpl {
         throw new TypeError("The specified element is not a submit button");
       }
       if (submitter.form !== this) {
-        throw new DOMException("The specified element is not owned by this form element", "NotFoundError");
+        throw DOMException.create(this._globalObject, [
+          "The specified element is not owned by this form element",
+          "NotFoundError"
+        ]);
       }
     }
 
@@ -151,8 +165,11 @@ class HTMLFormElementImpl extends HTMLElementImpl {
     if (attributeValue === null || attributeValue === "") {
       return this._ownerDocument.URL;
     }
-
-    return reflectURLAttribute(this, "action");
+    const urlRecord = parseURLToResultingURLRecord(attributeValue, this._ownerDocument);
+    if (urlRecord === null) {
+      return attributeValue;
+    }
+    return serializeURL(urlRecord);
   }
 
   set action(V) {
@@ -174,7 +191,7 @@ class HTMLFormElementImpl extends HTMLElementImpl {
   // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#statically-validate-the-constraints
   _staticallyValidateConstraints() {
     const controls = [];
-    for (const el of domSymbolTree.treeIterator(this)) {
+    for (const el of this.elements) {
       if (el.form === this && isSubmittable(el)) {
         controls.push(el);
       }

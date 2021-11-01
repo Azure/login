@@ -1,23 +1,22 @@
 "use strict";
 
-const { parseFragment } = require("../../browser/parser");
-const { fragmentSerialization } = require("../domparsing/serialization.js");
-const { getRoot } = require("../helpers/shadow-dom");
+const { nodeRoot } = require("../helpers/node");
 const { mixin } = require("../../utils");
 
 const DocumentFragment = require("./DocumentFragment-impl").implementation;
 const DocumentOrShadowRootImpl = require("./DocumentOrShadowRoot-impl").implementation;
+const InnerHTMLImpl = require("../domparsing/InnerHTML-impl").implementation;
 
 class ShadowRootImpl extends DocumentFragment {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     const { mode } = privateData;
     this._mode = mode;
   }
 
   _getTheParent(event) {
-    if (!event.composed && this === getRoot(event._path[0].item)) {
+    if (!event.composed && this === nodeRoot(event._path[0].item)) {
       return null;
     }
 
@@ -31,18 +30,10 @@ class ShadowRootImpl extends DocumentFragment {
   get host() {
     return this._host;
   }
-
-  // https://w3c.github.io/DOM-Parsing/#dfn-innerhtml
-  get innerHTML() {
-    return fragmentSerialization(this, { requireWellFormed: true });
-  }
-  set innerHTML(markup) {
-    const fragment = parseFragment(markup, this._host);
-    this._replaceAll(fragment);
-  }
 }
 
 mixin(ShadowRootImpl.prototype, DocumentOrShadowRootImpl.prototype);
+mixin(ShadowRootImpl.prototype, InnerHTMLImpl.prototype);
 
 module.exports = {
   implementation: ShadowRootImpl

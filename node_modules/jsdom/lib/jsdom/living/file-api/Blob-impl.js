@@ -1,5 +1,6 @@
 "use strict";
 const Blob = require("../generated/Blob");
+const { isArrayBuffer } = require("../generated/utils");
 
 function convertLineEndingsToNative(s) {
   // jsdom always pretends to be *nix, for consistency.
@@ -8,7 +9,7 @@ function convertLineEndingsToNative(s) {
 }
 
 exports.implementation = class BlobImpl {
-  constructor(args) {
+  constructor(globalObject, args) {
     const parts = args[0];
     const properties = args[1];
 
@@ -17,7 +18,7 @@ exports.implementation = class BlobImpl {
     if (parts !== undefined) {
       for (const part of parts) {
         let buffer;
-        if (part instanceof ArrayBuffer) {
+        if (isArrayBuffer(part)) {
           buffer = Buffer.from(part);
         } else if (ArrayBuffer.isView(part)) {
           buffer = Buffer.from(part.buffer, part.byteOffset, part.byteLength);
@@ -35,6 +36,7 @@ exports.implementation = class BlobImpl {
     }
 
     this._buffer = Buffer.concat(buffers);
+    this._globalObject = globalObject;
 
     this.type = properties.type;
     if (/[^\u0020-\u007E]/.test(this.type)) {
@@ -51,9 +53,7 @@ exports.implementation = class BlobImpl {
   slice(start, end, contentType) {
     const { size } = this;
 
-    let relativeStart;
-    let relativeEnd;
-    let relativeContentType;
+    let relativeStart, relativeEnd, relativeContentType;
 
     if (start === undefined) {
       relativeStart = 0;
@@ -86,7 +86,7 @@ exports.implementation = class BlobImpl {
       relativeStart + span
     );
 
-    const blob = Blob.createImpl([[], { type: relativeContentType }], {});
+    const blob = Blob.createImpl(this._globalObject, [[], { type: relativeContentType }], {});
     blob._buffer = slicedBuffer;
     return blob;
   }

@@ -1,5 +1,4 @@
 "use strict";
-const { reflectURLAttribute } = require("../../utils");
 const DOMTokenList = require("../generated/DOMTokenList");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
 const idlUtils = require("../generated/utils");
@@ -11,15 +10,15 @@ const whatwgURL = require("whatwg-url");
 // https://html.spec.whatwg.org/multipage/semantics.html#link-type-stylesheet
 
 class HTMLLinkElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     this.sheet = null;
   }
 
   get relList() {
     if (this._relList === undefined) {
-      this._relList = DOMTokenList.createImpl([], {
+      this._relList = DOMTokenList.createImpl(this._globalObject, [], {
         element: this,
         attributeLocalName: "rel",
         supportedTokens: new Set(["stylesheet"])
@@ -47,14 +46,6 @@ class HTMLLinkElementImpl extends HTMLElementImpl {
 
   get _accept() {
     return "text/css,*/*;q=0.1";
-  }
-
-  get href() {
-    return reflectURLAttribute(this, "href");
-  }
-
-  set href(value) {
-    this.setAttributeNS(null, "href", value);
   }
 }
 
@@ -106,5 +97,5 @@ function isExternalResourceLink(el) {
     return false;
   }
 
-  return Boolean(el.href);
+  return el.hasAttributeNS(null, "href");
 }

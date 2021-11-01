@@ -46,13 +46,13 @@ exports.defaultMsg = function(packageName, funcName) {
  * @returns {undefined}
  */
 exports.printWarning = function(msg) {
-    // Watch out for IE7 and below! :(
     /* istanbul ignore next */
-    if (typeof console !== "undefined") {
-        if (console.info) {
-            console.info(msg);
-        } else {
-            console.log(msg);
-        }
+    if (typeof process === "object" && process.emitWarning) {
+        // Emit Warnings in Node
+        process.emitWarning(msg);
+    } else if (console.info) {
+        console.info(msg);
+    } else {
+        console.log(msg);
     }
 };

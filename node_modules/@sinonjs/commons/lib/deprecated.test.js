@@ -19,16 +19,30 @@ describe("deprecated", function() {
     });
 
     describe("printWarning", function() {
-        describe("when `console` is defined", function() {
+        beforeEach(function() {
+            sinon.replace(process, "emitWarning", sinon.fake());
+        });
+
+        afterEach(sinon.restore);
+
+        describe("when `process.emitWarning` is defined", function() {
+            it("should call process.emitWarning with a msg", function() {
+                deprecated.printWarning(msg);
+                assert.calledOnceWith(process.emitWarning, msg);
+            });
+        });
+
+        describe("when `process.emitWarning` is undefined", function() {
             beforeEach(function() {
                 sinon.replace(console, "info", sinon.fake());
                 sinon.replace(console, "log", sinon.fake());
+                process.emitWarning = undefined;
             });
 
             afterEach(sinon.restore);
 
             describe("when `console.info` is defined", function() {
-                it("shoudl call `console.info` with a message", function() {
+                it("should call `console.info` with a message", function() {
                     deprecated.printWarning(msg);
                     assert.calledOnceWith(console.info, msg);
                 });

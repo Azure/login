@@ -1,5 +1,7 @@
 "use strict";
 const { mixin } = require("../../utils");
+const PluginArray = require("../generated/PluginArray");
+const MimeTypeArray = require("../generated/MimeTypeArray");
 const NavigatorIDImpl = require("./NavigatorID-impl").implementation;
 const NavigatorLanguageImpl = require("./NavigatorLanguage-impl").implementation;
 const NavigatorOnLineImpl = require("./NavigatorOnLine-impl").implementation;
@@ -8,9 +10,12 @@ const NavigatorPluginsImpl = require("./NavigatorPlugins-impl").implementation;
 const NavigatorConcurrentHardwareImpl = require("./NavigatorConcurrentHardware-impl").implementation;
 
 class NavigatorImpl {
-  constructor(args, privateData) {
+  constructor(globalObject, args, privateData) {
+    this._globalObject = globalObject;
     this.userAgent = privateData.userAgent;
     this.languages = Object.freeze(["en-US", "en"]);
+    this.plugins = PluginArray.create(this._globalObject);
+    this.mimeTypes = MimeTypeArray.create(this._globalObject);
   }
 }
 

@@ -1,6 +1,6 @@
 "use strict";
 const whatwgURL = require("whatwg-url");
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 const { documentBaseURL, parseURLToResultingURLRecord } = require("../helpers/document-base-url");
 const { navigate } = require("./navigation");
 
@@ -8,9 +8,11 @@ const { navigate } = require("./navigation");
 // use the document base URL. The difference matters in the case of cross-frame calls.
 
 exports.implementation = class LocationImpl {
-  constructor(args, privateData) {
+  constructor(globalObject, args, privateData) {
     this._relevantDocument = privateData.relevantDocument;
     this.url = null;
+
+    this._globalObject = globalObject;
   }
 
   get _url() {
@@ -53,7 +55,7 @@ exports.implementation = class LocationImpl {
     return this._url.scheme + ":";
   }
   set protocol(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     const possibleFailure = whatwgURL.basicURLParse(v + ":", { url: copyURL, stateOverride: "scheme start" });
     if (possibleFailure === null) {
@@ -80,7 +82,7 @@ exports.implementation = class LocationImpl {
     return whatwgURL.serializeHost(url.host) + ":" + whatwgURL.serializeInteger(url.port);
   }
   set host(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (copyURL.cannotBeABaseURL) {
       return;
@@ -99,7 +101,7 @@ exports.implementation = class LocationImpl {
     return whatwgURL.serializeHost(this._url.host);
   }
   set hostname(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (copyURL.cannotBeABaseURL) {
       return;
@@ -118,7 +120,7 @@ exports.implementation = class LocationImpl {
     return whatwgURL.serializeInteger(this._url.port);
   }
   set port(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (copyURL.host === null || copyURL.cannotBeABaseURL || copyURL.scheme === "file") {
       return;
@@ -139,7 +141,7 @@ exports.implementation = class LocationImpl {
     return "/" + url.path.join("/");
   }
   set pathname(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (copyURL.cannotBeABaseURL) {
       return;
@@ -159,7 +161,7 @@ exports.implementation = class LocationImpl {
     return "?" + this._url.query;
   }
   set search(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (v === "") {
       copyURL.query = null;
@@ -184,7 +186,7 @@ exports.implementation = class LocationImpl {
     return "#" + this._url.fragment;
   }
   set hash(v) {
-    const copyURL = Object.assign({}, this._url);
+    const copyURL = { ...this._url };
 
     if (copyURL.scheme === "javascript") {
       return;
@@ -206,8 +208,10 @@ exports.implementation = class LocationImpl {
     const parsedURL = parseURLToResultingURLRecord(url, this._relevantDocument);
 
     if (parsedURL === null) {
-      throw new DOMException(`Could not resolve the given string "${url}" relative to the ` +
-        `base URL "${this._relevantDocument.URL}"`, "SyntaxError");
+      throw DOMException.create(this._globalObject, [
+        `Could not resolve the given string "${url}" relative to the base URL "${this._relevantDocument.URL}"`,
+        "SyntaxError"
+      ]);
     }
 
     this._locationObjectNavigate(parsedURL);
@@ -218,8 +222,10 @@ exports.implementation = class LocationImpl {
     const parsedURL = parseURLToResultingURLRecord(url, this._relevantDocument);
 
     if (parsedURL === null) {
-      throw new DOMException(`Could not resolve the given string "${url}" relative to the ` +
-        `base URL "${this._relevantDocument.URL}"`, "SyntaxError");
+      throw DOMException.create(this._globalObject, [
+        `Could not resolve the given string "${url}" relative to the base URL "${this._relevantDocument.URL}"`,
+        "SyntaxError"
+      ]);
     }
 
     this._locationObjectNavigate(parsedURL, { replacement: true });

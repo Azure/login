@@ -4,11 +4,14 @@ const idlUtils = require("../generated/utils.js");
 const { HTML_NS } = require("../helpers/namespaces");
 
 exports.implementation = class HTMLCollectionImpl {
-  constructor(args, privateData) {
+  constructor(globalObject, args, privateData) {
     this._list = [];
     this._version = -1;
     this._element = privateData.element;
     this._query = privateData.query;
+
+    this._globalObject = globalObject;
+
     this._update();
   }
   get length() {

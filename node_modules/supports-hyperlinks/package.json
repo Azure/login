@@ -1,6 +1,6 @@
 {
     "name": "supports-hyperlinks",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "Detect if your terminal emulator supports hyperlinks",
     "license": "MIT",
     "repository": "jamestalmage/supports-hyperlinks",

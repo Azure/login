@@ -8,10 +8,11 @@ const HTMLOrSVGElementImpl = require("./HTMLOrSVGElement-impl").implementation;
 const { firstChildWithLocalName } = require("../helpers/traversal");
 const { isDisabled } = require("../helpers/form-controls");
 const { fireAnEvent } = require("../helpers/events");
+const { asciiLowercase } = require("../helpers/strings");
 
 class HTMLElementImpl extends ElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
     this._initHTMLOrSVGElement();
     this._initElementCSSInlineStyle();
     this._initGlobalEvents();
@@ -37,10 +38,11 @@ class HTMLElementImpl extends ElementImpl {
   // https://html.spec.whatwg.org/multipage/dom.html#the-translate-attribute
   get translate() {
     const translateAttr = this.getAttributeNS(null, "translate");
+    const translateAttrString = asciiLowercase(translateAttr || "");
 
-    if (translateAttr === "yes" || translateAttr === "") {
+    if (translateAttrString === "yes" || (translateAttr && translateAttrString === "")) {
       return true;
-    } else if (translateAttr === "no") {
+    } else if (translateAttrString === "no") {
       return false;
     }
 
@@ -86,7 +88,7 @@ class HTMLElementImpl extends ElementImpl {
   }
 
   get draggable() {
-    const attributeValue = this.getAttributeNS(null, "draggable");
+    const attributeValue = asciiLowercase(this.getAttributeNS(null, "draggable") || "");
 
     if (attributeValue === "true") {
       return true;
@@ -125,7 +127,7 @@ class HTMLElementImpl extends ElementImpl {
       this._globalEventChanged(name.substring(2));
     }
 
-    super._attrModified.apply(this, arguments);
+    super._attrModified(name, value, oldValue);
   }
 
   get offsetParent() {

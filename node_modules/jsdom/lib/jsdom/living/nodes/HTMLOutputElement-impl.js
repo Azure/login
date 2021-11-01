@@ -8,11 +8,10 @@ const { mixin } = require("../../utils");
 const { getLabelsForLabelable, formOwner } = require("../helpers/form-controls");
 
 class HTMLOutputElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
     this._labels = null;
-    this._defaultValue = "";
-    this._valueMode = "default";
+    this._defaultValueOverride = null;
 
     this._customValidityErrorMessage = "";
   }
@@ -30,17 +29,13 @@ class HTMLOutputElementImpl extends HTMLElementImpl {
   }
 
   _formReset() {
-    if (this._valueMode === "value") {
-      this.textContent = this._defaultValue;
-    }
-
-    this._defaultValue = "";
-    this._valueMode = "default";
+    this.textContent = this.defaultValue;
+    this._defaultValueOverride = null;
   }
 
   get htmlFor() {
     if (this._htmlFor === undefined) {
-      this._htmlFor = DOMTokenList.createImpl([], {
+      this._htmlFor = DOMTokenList.createImpl(this._globalObject, [], {
         element: this,
         attributeLocalName: "for"
       });
@@ -65,21 +60,24 @@ class HTMLOutputElementImpl extends HTMLElementImpl {
   }
 
   set value(val) {
-    this._valueMode = "value";
-    this._defaultValue = this.textContent;
+    this._defaultValueOverride = this.defaultValue;
     this.textContent = val;
   }
 
   get defaultValue() {
-    return this._valueMode === "default" ? this.textContent : this._defaultValue;
+    if (this._defaultValueOverride !== null) {
+      return this._defaultValueOverride;
+    }
+    return this.textContent;
   }
 
   set defaultValue(val) {
-    this._defaultValue = val;
-
-    if (this._valueMode === "default") {
+    if (this._defaultValueOverride === null) {
       this.textContent = val;
+      return;
     }
+
+    this._defaultValueOverride = val;
   }
 }
 

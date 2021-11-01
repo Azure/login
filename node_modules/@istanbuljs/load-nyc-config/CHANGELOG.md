@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/istanbuljs/load-nyc-config/compare/v1.0.0...v1.1.0) (2020-05-20)
+
+
+### Features
+
+* Create `isLoading` function ([#15](https://github.com/istanbuljs/load-nyc-config/issues/15)) ([0e58b51](https://github.com/istanbuljs/load-nyc-config/commit/0e58b516f663af7ed710ba27f2090fc28bc3fdb1))
+* Support loading ES module config from `.js` files ([#14](https://github.com/istanbuljs/load-nyc-config/issues/14)) ([b1ea369](https://github.com/istanbuljs/load-nyc-config/commit/b1ea369f1e5162133b7057c5e3fefb8085671ab3))
+
 ## [1.0.0](https://github.com/istanbuljs/load-nyc-config/compare/v1.0.0-alpha.2...v1.0.0) (2019-12-20)
 
 

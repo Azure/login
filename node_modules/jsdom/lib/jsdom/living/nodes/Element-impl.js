@@ -10,11 +10,11 @@ const attributes = require("../attributes");
 const namedPropertiesWindow = require("../named-properties-window");
 const NODE_TYPE = require("../node-type");
 const { parseFragment } = require("../../browser/parser");
+const InnerHTMLImpl = require("../domparsing/InnerHTML-impl").implementation;
 const { fragmentSerialization } = require("../domparsing/serialization");
 const { domSymbolTree } = require("../helpers/internal-constants");
-const DOMException = require("domexception");
+const DOMException = require("domexception/webidl2js-wrapper");
 const DOMTokenList = require("../generated/DOMTokenList");
-const attrGenerated = require("../generated/Attr");
 const NamedNodeMap = require("../generated/NamedNodeMap");
 const validateNames = require("../helpers/validate-names");
 const { asciiLowercase, asciiUppercase } = require("../helpers/strings");
@@ -25,7 +25,7 @@ const NonDocumentTypeChildNode = require("./NonDocumentTypeChildNode-impl").impl
 const ShadowRoot = require("../generated/ShadowRoot");
 const Text = require("../generated/Text");
 const { isValidHostElementName } = require("../helpers/shadow-dom");
-const { isValidCustomElementName } = require("../helpers/custom-elements");
+const { isValidCustomElementName, lookupCEDefinition } = require("../helpers/custom-elements");
 
 function attachId(id, elm, doc) {
   if (id && elm && doc) {
@@ -54,27 +54,33 @@ function detachId(id, elm, doc) {
 }
 
 class ElementImpl extends NodeImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     this._initSlotableMixin();
+
+    this._namespaceURI = privateData.namespace;
+    this._prefix = privateData.prefix;
+    this._localName = privateData.localName;
+    this._ceState = privateData.ceState;
+    this._ceDefinition = privateData.ceDefinition;
+    this._isValue = privateData.isValue;
+
+    this._shadowRoot = null;
+    this._ceReactionQueue = [];
 
     this.nodeType = NODE_TYPE.ELEMENT_NODE;
     this.scrollTop = 0;
     this.scrollLeft = 0;
 
-    this._namespaceURI = privateData.namespace || null;
-    this._prefix = null;
-    this._localName = privateData.localName;
-
-    this._shadowRoot = null;
-
     this._attributeList = [];
     // Used for caching.
     this._attributesByNameMap = new Map();
-    this._attributes = NamedNodeMap.createImpl([], {
+    this._attributes = NamedNodeMap.createImpl(this._globalObject, [], {
       element: this
     });
+
+    this._cachedTagName = null;
   }
 
   _attach() {
@@ -130,11 +136,17 @@ class ElementImpl extends NodeImpl {
     return this._prefix !== null ? this._prefix + ":" + this._localName : this._localName;
   }
   get tagName() {
-    let qualifiedName = this._qualifiedName;
-    if (this.namespaceURI === HTML_NS && this._ownerDocument._parsingMode === "html") {
-      qualifiedName = asciiUppercase(qualifiedName);
+    // This getter can be a hotpath in getComputedStyle.
+    // All these are invariants during the instance lifetime so we can safely cache the computed tagName.
+    // We could create it during construction but since we already identified this as potentially slow we do it lazily.
+    if (this._cachedTagName === null) {
+      if (this.namespaceURI === HTML_NS && this._ownerDocument._parsingMode === "html") {
+        this._cachedTagName = asciiUppercase(this._qualifiedName);
+      } else {
+        this._cachedTagName = this._qualifiedName;
+      }
     }
-    return qualifiedName;
+    return this._cachedTagName;
   }
 
   get attributes() {
@@ -149,7 +161,8 @@ class ElementImpl extends NodeImpl {
     // It's currently prevented by the fact that a node can't be duplicated in the same tree.
     // Then we could get rid of all the code for childNodesForSerializing.
     return fragmentSerialization({ childNodesForSerializing: [this], _ownerDocument: this._ownerDocument }, {
-      requireWellFormed: true
+      requireWellFormed: true,
+      globalObject: this._globalObject
     });
   }
   set outerHTML(markup) {
@@ -161,7 +174,10 @@ class ElementImpl extends NodeImpl {
     }
 
     if (parent.nodeType === NODE_TYPE.DOCUMENT_NODE) {
-      throw new DOMException("Modifications are not allowed for this document", "NoModificationAllowedError");
+      throw DOMException.create(this._globalObject, [
+        "Modifications are not allowed for this document",
+        "NoModificationAllowedError"
+      ]);
     }
 
     if (parent.nodeType === NODE_TYPE.DOCUMENT_FRAGMENT_NODE) {
@@ -174,24 +190,9 @@ class ElementImpl extends NodeImpl {
     contextObjectParent._replace(fragment, this);
   }
 
-  // https://w3c.github.io/DOM-Parsing/#dfn-innerhtml
-  get innerHTML() {
-    return fragmentSerialization(this, { requireWellFormed: true });
-  }
-  set innerHTML(markup) {
-    const fragment = parseFragment(markup, this);
-
-    let contextObject = this;
-    if (this.localName === "template" && this.namespaceURI === HTML_NS) {
-      contextObject = contextObject._templateContents;
-    }
-
-    contextObject._replaceAll(fragment);
-  }
-
   get classList() {
     if (this._classList === undefined) {
-      this._classList = DOMTokenList.createImpl([], {
+      this._classList = DOMTokenList.createImpl(this._globalObject, [], {
         element: this,
         attributeLocalName: "class"
       });
@@ -224,7 +225,7 @@ class ElementImpl extends NodeImpl {
   }
 
   setAttribute(name, value) {
-    validateNames.name(name);
+    validateNames.name(this._globalObject, name);
 
     if (this._namespaceURI === HTML_NS && this._ownerDocument._parsingMode === "html") {
       name = asciiLowercase(name);
@@ -233,7 +234,10 @@ class ElementImpl extends NodeImpl {
     const attribute = attributes.getAttributeByName(this, name);
 
     if (attribute === null) {
-      const newAttr = attrGenerated.createImpl([], { localName: name, value });
+      const newAttr = this._ownerDocument._createAttribute({
+        localName: name,
+        value
+      });
       attributes.appendAttribute(this, newAttr);
       return;
     }
@@ -242,7 +246,7 @@ class ElementImpl extends NodeImpl {
   }
 
   setAttributeNS(namespace, name, value) {
-    const extracted = validateNames.validateAndExtract(namespace, name);
+    const extracted = validateNames.validateAndExtract(this._globalObject, namespace, name);
 
     // Because of widespread use of this method internally, e.g. to manually implement attribute/content reflection, we
     // centralize the conversion to a string here, so that all call sites don't have to do it.
@@ -260,7 +264,7 @@ class ElementImpl extends NodeImpl {
   }
 
   toggleAttribute(qualifiedName, force) {
-    validateNames.name(qualifiedName);
+    validateNames.name(this._globalObject, qualifiedName);
 
     if (this._namespaceURI === HTML_NS && this._ownerDocument._parsingMode === "html") {
       qualifiedName = asciiLowercase(qualifiedName);
@@ -270,7 +274,10 @@ class ElementImpl extends NodeImpl {
 
     if (attribute === null) {
       if (force === undefined || force === true) {
-        const newAttr = attrGenerated.createImpl([], { localName: qualifiedName, value: "" });
+        const newAttr = this._ownerDocument._createAttribute({
+          localName: qualifiedName,
+          value: ""
+        });
         attributes.appendAttribute(this, newAttr);
         return true;
       }
@@ -322,7 +329,10 @@ class ElementImpl extends NodeImpl {
   removeAttributeNode(attr) {
     // eslint-disable-next-line no-restricted-properties
     if (!attributes.hasAttribute(this, attr)) {
-      throw new DOMException("Tried to remove an attribute that was not present", "NotFoundError");
+      throw DOMException.create(this._globalObject, [
+        "Tried to remove an attribute that was not present",
+        "NotFoundError"
+      ]);
     }
 
     // eslint-disable-next-line no-restricted-properties
@@ -333,6 +343,8 @@ class ElementImpl extends NodeImpl {
 
   getBoundingClientRect() {
     return {
+      x: 0,
+      y: 0,
       bottom: 0,
       height: 0,
       left: 0,
@@ -372,27 +384,40 @@ class ElementImpl extends NodeImpl {
 
   // https://dom.spec.whatwg.org/#dom-element-attachshadow
   attachShadow(init) {
+    const { _ownerDocument, _namespaceURI, _localName, _isValue } = this;
+
     if (this.namespaceURI !== HTML_NS) {
-      throw new DOMException(
+      throw DOMException.create(this._globalObject, [
         "This element does not support attachShadow. This element is not part of the HTML namespace.",
         "NotSupportedError"
-      );
+      ]);
     }
 
-    if (!isValidHostElementName(this.localName) && !isValidCustomElementName(this.localName)) {
+    if (!isValidHostElementName(_localName) && !isValidCustomElementName(_localName)) {
       const message = "This element does not support attachShadow. This element is not a custom element nor " +
         "a standard element supporting a shadow root.";
-      throw new DOMException(message, "NotSupportedError");
+      throw DOMException.create(this._globalObject, [message, "NotSupportedError"]);
+    }
+
+    if (isValidCustomElementName(_localName) || _isValue) {
+      const definition = lookupCEDefinition(_ownerDocument, _namespaceURI, _localName, _isValue);
+
+      if (definition && definition.disableShadow) {
+        throw DOMException.create(this._globalObject, [
+          "Shadow root cannot be create on a custom element with disabled shadow",
+          "NotSupportedError"
+        ]);
+      }
     }
 
     if (this._shadowRoot !== null) {
-      throw new DOMException(
+      throw DOMException.create(this._globalObject, [
         "Shadow root cannot be created on a host which already hosts a shadow tree.",
         "NotSupportedError"
-      );
+      ]);
     }
 
-    const shadow = ShadowRoot.createImpl([], {
+    const shadow = ShadowRoot.createImpl(this._globalObject, [], {
       ownerDocument: this.ownerDocument,
       mode: init.mode,
       host: this
@@ -437,8 +462,10 @@ class ElementImpl extends NodeImpl {
       return element.parentNode._preInsert(node, element.nextSibling);
     }
 
-    throw new DOMException('Must provide one of "beforebegin", "afterbegin", ' +
-      '"beforeend", or "afterend".', "SyntaxError");
+    throw DOMException.create(this._globalObject, [
+      'Must provide one of "beforebegin", "afterbegin", "beforeend", or "afterend".',
+      "SyntaxError"
+    ]);
   }
 
   insertAdjacentElement(where, element) {
@@ -446,7 +473,7 @@ class ElementImpl extends NodeImpl {
   }
 
   insertAdjacentText(where, data) {
-    const text = Text.createImpl([], { data, ownerDocument: this._ownerDocument });
+    const text = Text.createImpl(this._globalObject, [], { data, ownerDocument: this._ownerDocument });
 
     this._insertAdjacent(this, where, text);
   }
@@ -461,8 +488,10 @@ class ElementImpl extends NodeImpl {
       case "afterend": {
         context = this.parentNode;
         if (context === null || context.nodeType === NODE_TYPE.DOCUMENT_NODE) {
-          throw new DOMException("Cannot insert HTML adjacent to " +
-            "parent-less nodes or children of document nodes.", "NoModificationAllowedError");
+          throw DOMException.create(this._globalObject, [
+            "Cannot insert HTML adjacent to parent-less nodes or children of document nodes.",
+            "NoModificationAllowedError"
+          ]);
         }
         break;
       }
@@ -472,8 +501,10 @@ class ElementImpl extends NodeImpl {
         break;
       }
       default: {
-        throw new DOMException('Must provide one of "beforebegin", "afterbegin", ' +
-      '"beforeend", or "afterend".', "SyntaxError");
+        throw DOMException.create(this._globalObject, [
+          'Must provide one of "beforebegin", "afterbegin", "beforeend", or "afterend".',
+          "SyntaxError"
+        ]);
       }
     }
 
@@ -520,6 +551,7 @@ mixin(ElementImpl.prototype, NonDocumentTypeChildNode.prototype);
 mixin(ElementImpl.prototype, ParentNodeImpl.prototype);
 mixin(ElementImpl.prototype, ChildNodeImpl.prototype);
 mixin(ElementImpl.prototype, SlotableMixinImpl.prototype);
+mixin(ElementImpl.prototype, InnerHTMLImpl.prototype);
 
 ElementImpl.prototype.getElementsByTagName = memoizeQuery(function (qualifiedName) {
   return listOfElementsWithQualifiedName(qualifiedName, this);

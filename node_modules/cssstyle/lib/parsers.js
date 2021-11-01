@@ -18,6 +18,7 @@ exports.TYPES = {
   ANGLE: 8,
   KEYWORD: 9,
   NULL_OR_EMPTY_STR: 10,
+  CALC: 11,
 };
 
 // rough regular expressions
@@ -30,6 +31,7 @@ var stringRegEx = /^("[^"]*"|'[^']*')$/;
 var colorRegEx1 = /^#([0-9a-fA-F]{3,4}){1,2}$/;
 var colorRegEx2 = /^rgb\(([^)]*)\)$/;
 var colorRegEx3 = /^rgba\(([^)]*)\)$/;
+var calcRegEx = /^calc\(([^)]*)\)$/;
 var colorRegEx4 = /^hsla?\(\s*(-?\d+|-?\d*.\d+)\s*,\s*(-?\d+|-?\d*.\d+)%\s*,\s*(-?\d+|-?\d*.\d+)%\s*(,\s*(-?\d+|-?\d*.\d+)\s*)?\)/;
 var angleRegEx = /^([-+]?[0-9]*\.?[0-9]+)(deg|grad|rad)$/;
 
@@ -61,6 +63,9 @@ exports.valueType = function valueType(val) {
   if (urlRegEx.test(val)) {
     return exports.TYPES.URL;
   }
+  if (calcRegEx.test(val)) {
+    return exports.TYPES.CALC;
+  }
   if (stringRegEx.test(val)) {
     return exports.TYPES.STRING;
   }
@@ -70,6 +75,7 @@ exports.valueType = function valueType(val) {
   if (colorRegEx1.test(val)) {
     return exports.TYPES.COLOR;
   }
+
   var res = colorRegEx2.exec(val);
   var parts;
   if (res !== null) {
@@ -201,6 +207,11 @@ exports.parsePercent = function parsePercent(val) {
 
 // either a length or a percent
 exports.parseMeasurement = function parseMeasurement(val) {
+  var type = exports.valueType(val);
+  if (type === exports.TYPES.CALC) {
+    return val;
+  }
+
   var length = exports.parseLength(val);
   if (length !== undefined) {
     return length;

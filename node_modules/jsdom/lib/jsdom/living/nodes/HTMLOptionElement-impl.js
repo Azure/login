@@ -1,14 +1,16 @@
 "use strict";
 
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
+const NODE_TYPE = require("../node-type");
 const { stripAndCollapseASCIIWhitespace } = require("../helpers/strings");
 const { domSymbolTree } = require("../helpers/internal-constants");
+const { HTML_NS, SVG_NS } = require("../helpers/namespaces");
 const { closest } = require("../helpers/traversal");
 const { formOwner } = require("../helpers/form-controls");
 
 class HTMLOptionElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
 
     // whenever selectedness is set to true, make sure all
     // other options set selectedness to false
@@ -36,7 +38,7 @@ class HTMLOptionElementImpl extends HTMLElementImpl {
     }
   }
 
-  _attrModified(name) {
+  _attrModified(name, value, oldValue) {
     if (!this._dirtyness && name === "selected") {
       this._selectedness = this.hasAttributeNS(null, "selected");
       if (this._selectedness) {
@@ -44,7 +46,7 @@ class HTMLOptionElementImpl extends HTMLElementImpl {
       }
       this._askForAReset();
     }
-    super._attrModified.apply(this, arguments);
+    super._attrModified(name, value, oldValue);
   }
 
   get _selectNode() {
@@ -67,8 +69,7 @@ class HTMLOptionElementImpl extends HTMLElementImpl {
   }
 
   get text() {
-    // TODO is not correctly excluding script and SVG script descendants
-    return stripAndCollapseASCIIWhitespace(this.textContent);
+    return stripAndCollapseASCIIWhitespace(childTextContentExcludingDescendantsOfScript(this));
   }
   set text(value) {
     this.textContent = value;
@@ -122,6 +123,22 @@ class HTMLOptionElementImpl extends HTMLElementImpl {
   set label(value) {
     this.setAttributeNS(null, "label", value);
   }
+}
+
+function childTextContentExcludingDescendantsOfScript(root) {
+  let text = "";
+  for (const child of domSymbolTree.childrenIterator(root)) {
+    if (child._localName === "script" && (child._namespaceURI === HTML_NS || child._namespaceURI === SVG_NS)) {
+      continue;
+    }
+
+    if (child.nodeType === NODE_TYPE.TEXT_NODE || child.nodeType === NODE_TYPE.CDATA_SECTION_NODE) {
+      text += child.nodeValue;
+    } else {
+      text += childTextContentExcludingDescendantsOfScript(child);
+    }
+  }
+  return text;
 }
 
 module.exports = {

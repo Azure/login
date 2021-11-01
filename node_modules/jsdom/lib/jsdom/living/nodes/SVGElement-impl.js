@@ -10,8 +10,8 @@ const GlobalEventHandlersImpl = require("./GlobalEventHandlers-impl").implementa
 const HTMLOrSVGElementImpl = require("./HTMLOrSVGElement-impl").implementation;
 
 class SVGElementImpl extends ElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
     this._initHTMLOrSVGElement();
     this._initElementCSSInlineStyle();
     this._initGlobalEvents();
@@ -27,11 +27,11 @@ class SVGElementImpl extends ElementImpl {
       this._globalEventChanged(name.substring(2));
     }
 
-    super._attrModified.apply(this, arguments);
+    super._attrModified(name, value, oldValue);
   }
 
   get className() {
-    return SVGAnimatedString.createImpl([], {
+    return SVGAnimatedString.createImpl(this._globalObject, [], {
       element: this,
       attribute: "class"
     });

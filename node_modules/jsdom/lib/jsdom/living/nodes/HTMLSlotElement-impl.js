@@ -3,11 +3,13 @@
 const idlUtils = require("../generated/utils");
 const HTMLElement = require("../generated/HTMLElement");
 const HTMLElementImpl = require("./HTMLElement-impl").implementation;
-const { getRoot, assignSlotableForTree, findFlattenedSlotables } = require("../helpers/shadow-dom");
+
+const { nodeRoot } = require("../helpers/node");
+const { assignSlotableForTree, findFlattenedSlotables } = require("../helpers/shadow-dom");
 
 class HTMLSlotElementImpl extends HTMLElementImpl {
-  constructor(args, privateData) {
-    super(args, privateData);
+  constructor(globalObject, args, privateData) {
+    super(globalObject, args, privateData);
     this._assignedNodes = [];
   }
 
@@ -33,7 +35,7 @@ class HTMLSlotElementImpl extends HTMLElementImpl {
         return;
       }
 
-      assignSlotableForTree(getRoot(this));
+      assignSlotableForTree(nodeRoot(this));
     }
   }
 
