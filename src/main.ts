@@ -46,7 +46,7 @@ async function main() {
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
 
         //Check for the credentials in individual parameters in the workflow.
-        var servicePrincipalId = core.getInput('client-id', { required: false });;
+        var servicePrincipalId = core.getInput('client-id', { required: false });
         var servicePrincipalKey = null;
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
@@ -91,7 +91,8 @@ async function main() {
         if (enableOIDC) {
             console.log('Using OIDC authentication...')
             //generating ID-token
-            federatedToken = await core.getIDToken('api://AzureADTokenExchange');
+            let audience = core.getInput('audience', { required: false });
+            federatedToken = await core.getIDToken(audience);
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
@@ -209,10 +210,10 @@ async function executeAzCliCommand(
         await exec.exec(`"${azPath}" ${command}`, args, execOptions);
     }
     catch (error) {
-        throw new Error("CLI error:" + error);
+        core.error("Az-CLI" + error);
     }
 }
-async function jwtParser(federatedToken) {
+async function jwtParser(federatedToken: string) {
 
     let tokenPayload = federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");

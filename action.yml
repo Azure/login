@@ -26,6 +26,10 @@ inputs:
     description: 'Set this value to true to enable support for accessing tenants without subscriptions'
     required: false
     default: false
+  audience:
+    description: 'Provide audience field for access-token. Default value is 'api://AzureADTokenExchange' '
+    required: false
+    default: 'api://AzureADTokenExchange'
 branding:
   icon: 'login.svg'
   color: 'blue'

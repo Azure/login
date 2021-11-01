@@ -121,7 +121,7 @@ jobs:
           az group list
           pwd 
 ```
-This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
+Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
 
 ## Sample workflow that uses Azure login action using OIDC to run az PowerShell (Windows)
 
