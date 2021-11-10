@@ -229,6 +229,7 @@ async function executeAzCliCommand(
     }
     catch (error) {
         core.error("Az-CLI" + error);
+        return;
     }
 }
 async function jwtParser(federatedToken: string) {
