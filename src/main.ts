@@ -224,12 +224,7 @@ async function executeAzCliCommand(
     execOptions: any = {},
     args: any = []) {
     execOptions.silent = !!silent;
-    try {
-        await exec.exec(`"${azPath}" ${command}`, args, execOptions);
-    }
-    catch (error) {
-        core.error(error);
-    }
+    await exec.exec(`"${azPath}" ${command}`, args, execOptions);
 }
 async function jwtParser(federatedToken: string) {
 
