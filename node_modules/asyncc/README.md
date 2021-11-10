@@ -3,7 +3,7 @@
 > Just async patterns
 
 [![NPM version](https://badge.fury.io/js/asyncc.svg)](https://www.npmjs.com/package/asyncc/)
-[![Build Status](https://travis-ci.org/commenthol/asyncc.svg?branch=master)](https://travis-ci.org/commenthol/asyncc)
+[![Build Status](https://api.travis-ci.com/commenthol/asyncc.svg?branch=master)](https://travis-ci.com/commenthol/asyncc)
 
 Asynchronous patterns, no dependencies, no bloat, more isn't needed.
 

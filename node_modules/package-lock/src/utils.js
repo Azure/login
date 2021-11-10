@@ -1,4 +1,4 @@
-const _ = require('lodash')
+const _pick = require('lodash.pick')
 const fs = require('fs')
 const { relative, resolve, sep } = require('path')
 const glob = require('glob')
@@ -60,7 +60,7 @@ function extract (path, cb) {
     let obj = null
     if (!err && pckg) {
       obj = Object.assign(
-        _.pick(pckg, ['name', 'version', '_id', '_integrity', '_resolved', '_shasum', '_spec']),
+        _pick(pckg, ['name', 'version', '_id', '_integrity', '_resolved', '_shasum', '_spec']),
         { path }
       )
       if (!obj._id) {

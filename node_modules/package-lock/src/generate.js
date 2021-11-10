@@ -1,4 +1,4 @@
-const _ = require('lodash')
+const _get = require('lodash.get')
 const { DEPS } = require('./utils')
 
 const PRIVATE = '@private/private'
@@ -83,9 +83,9 @@ function genPackageJson (tree, pckg) {
   pckg = Object.assign({ name: PRIVATE, version: '1.0.0' }, pckg)
 
   Object.keys(tree).forEach((name) => {
-    const hasDep = _.get(pckg, ['dependencies', name]) ||
-      _.get(pckg, ['devDependencies', name])
-    const version = _.get(tree, [name, 'version'])
+    const hasDep = _get(pckg, ['dependencies', name]) ||
+      _get(pckg, ['devDependencies', name])
+    const version = _get(tree, [name, 'version'])
     if (!hasDep && version) {
       if (!pckg.optionalDependencies) pckg.optionalDependencies = {}
       pckg.optionalDependencies[name] = `^${version}`
