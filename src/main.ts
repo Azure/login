@@ -16,7 +16,7 @@ async function main() {
         const loginOptions: ExecOptions = {
             silent: true,
             ignoreReturnCode: true,
-            failOnStdErr: false,
+            failOnStdErr: true,
             listeners: {
                 stderr: (data: BufferSource) => {
                     let error = data.toString();
@@ -229,7 +229,6 @@ async function executeAzCliCommand(
     }
     catch (error) {
         core.error("Az-CLI" + error);
-        return;
     }
 }
 async function jwtParser(federatedToken: string) {
