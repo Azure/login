@@ -1,52 +1,51 @@
 'use strict';
-const {PassThrough: PassThroughStream} = require('stream');
+const {PassThrough} = require('stream');
 
 module.exports = options => {
-	options = {...options};
+	options = Object.assign({}, options);
 
 	const {array} = options;
 	let {encoding} = options;
-	const isBuffer = encoding === 'buffer';
+	const buffer = encoding === 'buffer';
 	let objectMode = false;
 
 	if (array) {
-		objectMode = !(encoding || isBuffer);
+		objectMode = !(encoding || buffer);
 	} else {
 		encoding = encoding || 'utf8';
 	}
 
-	if (isBuffer) {
+	if (buffer) {
 		encoding = null;
 	}
 
-	const stream = new PassThroughStream({objectMode});
+	let len = 0;
+	const ret = [];
+	const stream = new PassThrough({objectMode});
 
 	if (encoding) {
 		stream.setEncoding(encoding);
 	}
 
-	let length = 0;
-	const chunks = [];
-
 	stream.on('data', chunk => {
-		chunks.push(chunk);
+		ret.push(chunk);
 
 		if (objectMode) {
-			length = chunks.length;
+			len = ret.length;
 		} else {
-			length += chunk.length;
+			len += chunk.length;
 		}
 	});
 
 	stream.getBufferedValue = () => {
 		if (array) {
-			return chunks;
+			return ret;
 		}
 
-		return isBuffer ? Buffer.concat(chunks, length) : chunks.join('');
+		return buffer ? Buffer.concat(ret, len) : ret.join('');
 	};
 
-	stream.getBufferedLength = () => length;
+	stream.getBufferedLength = () => len;
 
 	return stream;
 };
