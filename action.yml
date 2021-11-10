@@ -27,7 +27,7 @@ inputs:
     required: false
     default: false
   audience:
-    description: 'Provide audience field for access-token. Default value is api://AzureADTokenExchange '
+    description: 'Provide audience field for access-token. Default value is api://AzureADTokenExchange' 
     required: false
     default: 'api://AzureADTokenExchange'
 branding:
