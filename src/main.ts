@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
@@ -10,6 +11,23 @@ var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREP
 
 async function main() {
     try {
+        //Options for error handling
+        let commandStdErr = false;
+        const loginOptions: ExecOptions = {
+            silent: true,
+            ignoreReturnCode: true,
+            failOnStdErr: false,
+            listeners: {
+                stderr: (data: BufferSource) => {
+                    let error = data.toString();
+                    if(error && error.trim().length !== 0)
+                    {
+                        commandStdErr = true;
+                        core.error(error);
+                    }
+                }
+            }
+        }
         // Set user agent variable
         var isAzCLISuccess = false;
         let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
@@ -154,14 +172,14 @@ async function main() {
         else {
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
         }
-        await executeAzCliCommand(`login`, true, {}, commonArgs);
+        await executeAzCliCommand(`login`, true,loginOptions, commonArgs);
 
         if (!allowNoSubscriptionsLogin) {
             var args = [
                 "--subscription",
                 subscriptionId
             ];
-            await executeAzCliCommand(`account set`, true, {}, args);
+            await executeAzCliCommand(`account set`, true,loginOptions, args);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
