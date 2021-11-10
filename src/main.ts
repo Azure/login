@@ -228,7 +228,7 @@ async function executeAzCliCommand(
         await exec.exec(`"${azPath}" ${command}`, args, execOptions);
     }
     catch (error) {
-        throw new Error("Login failed.");
+        throw new Error(error);
     }
 }
 async function jwtParser(federatedToken: string) {
