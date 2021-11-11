@@ -77,7 +77,7 @@ async function main() {
 
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
             if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
-                throw new Error("Few credentials are missing. ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
+                throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
         else {
             if (creds) {
@@ -172,14 +172,14 @@ async function main() {
         else {
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
         }
-        await executeAzCliCommand(`login`, true,loginOptions, commonArgs);
+        await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
         if (!allowNoSubscriptionsLogin) {
             var args = [
                 "--subscription",
                 subscriptionId
             ];
-            await executeAzCliCommand(`account set`, true,loginOptions, args);
+            await executeAzCliCommand(`account set`, true, loginOptions, args);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
