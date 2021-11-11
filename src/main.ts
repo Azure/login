@@ -209,7 +209,6 @@ async function main() {
         else {
             core.error(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
-        core.setFailed(error.replace('Error',''));
     }
     finally {
         // Reset AZURE_HTTP_USER_AGENT
