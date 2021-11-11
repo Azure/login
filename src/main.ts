@@ -19,7 +19,7 @@ async function main() {
             failOnStdErr: true,
             listeners: {
                 stderr: (data: BufferSource) => {
-                    let error = data.toString();
+                    let error = data.toString().toLowerCase().replace('error','');
                     if(error && error.trim().length !== 0)
                     {
                         commandStdErr = true;
