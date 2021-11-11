@@ -48,10 +48,10 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         let commandStdErr = false;
         const options: any = {
             listeners: {
-                stdout: (data: BufferSource) => {
+                stdout: (data: Buffer) => {
                     output += data.toString();
                 },
-                stderr: (data: BufferSource) => {
+                stderr: (data: Buffer) => {
                     let error = data.toString();
                     if(error && error.trim().length !== 0)
                     {
