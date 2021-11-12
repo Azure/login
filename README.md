@@ -273,7 +273,7 @@ For a more detailed overview, see more guidance around [Azure Federated Credenti
 #### Microsoft Graph
 
 1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
-1. reate a federated identity credential
+1. Create a federated identity credential
 
     Run the following command to [create a new federated identity credential](/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
     * specific environment
