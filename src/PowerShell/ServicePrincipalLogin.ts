@@ -53,7 +53,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
                 },
                 stderr: (data: Buffer) => {
                     let error = data.toString();
-                    if(error && error.trim().length !== 0)
+                    if (error && error.trim().length !== 0)
                     {
                         commandStdErr = true;
                         core.error(error);

@@ -19,8 +19,13 @@ async function main() {
             failOnStdErr: true,
             listeners: {
                 stderr: (data: Buffer) => {
-                    let error = data.toString().replace('ERROR','');
-                    if(error && error.trim().length !== 0)
+                    let error = data.toString();
+                    //removing the keyword 'ERROR' to avoid duplicates while throwing error
+                    if (error.toLowerCase().startsWith('error')) {
+                        error = error.slice(5);
+                    }
+                    // printing error
+                    if (error && error.trim().length !== 0)
                     {
                         commandStdErr = true;
                         core.error(error);
