@@ -1,6 +1,6 @@
 {
   "name": "login",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "@actions/core": "1.6.0",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
-    "actions-secret-parser": "^1.0.2"
+    "actions-secret-parser": "^1.0.2",
+    "package-lock": "^1.0.3"
   }
 }
