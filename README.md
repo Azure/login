@@ -22,8 +22,9 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
 
 Note: 
+   - Ensure the CLI version is 2.30 or above to use OIDC support.
    - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
-   - GitHub runners will soon be updated with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include scripts to download the same during workflow execution. 
+   - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
    - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
 
 
@@ -88,32 +89,17 @@ on: [push]
 
 permissions:
       id-token: write
-      
+      contents: read
 jobs: 
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-        
-      # ubuntu Az CLI installation 
-      - name: Install CLI-beta
-        run: |
-           cd ../..
-           CWD="$(pwd)"
-           python3 -m venv oidc-venv
-           . oidc-venv/bin/activate
-           echo "activated environment" 
-           python3 -m pip install --upgrade pip
-           echo "started installing cli beta" 
-           pip install -q --extra-index-url https://azcliprod.blob.core.windows.net/beta/simple/ azure-cli
-           echo "installed cli beta"    
-           echo "$CWD/oidc-venv/bin" >> $GITHUB_PATH   
-  
       - name: 'Az CLI login'
-        uses: azure/login@v1.4.0
+        uses: azure/login@v1.4.1
         with:
-          client-id: ${{ secrets.AZURE_CLIENTID }}
-          tenant-id: ${{ secrets.AZURE_TENANTID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   
       - name: 'Run az commands'
         run: |
@@ -121,7 +107,7 @@ jobs:
           az group list
           pwd 
 ```
-This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
+Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
 
 ## Sample workflow that uses Azure login action using OIDC to run az PowerShell (Windows)
 
@@ -133,38 +119,18 @@ on: [push]
 
 permissions:
       id-token: write
+      contents: read
       
 jobs: 
   Windows-latest:
       runs-on: windows-latest
       steps:
-
-        # windows Az CLI installation 
-        - name: Install CLI-beta
-          run: |
-              cd ../..
-              $CWD = Convert-Path .
-              echo $CWD
-              python --version
-              python -m venv oidc-venv
-              . .\oidc-venv\Scripts\Activate.ps1
-              python -m pip install -q --upgrade pip
-              echo "started installing cli beta" 
-              pip install -q --extra-index-url https://azcliprod.blob.core.windows.net/beta/simple/ azure-cli
-              echo "installed cli beta" 
-              echo "$CWD\oidc-venv\Scripts" >> $env:GITHUB_PATH
-
-        - name: Installing Az.accounts for powershell
-          shell: pwsh
-          run: |
-               Install-Module -Name Az.Accounts -Force -AllowClobber -Repository PSGallery
-  
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
-          uses: azure/login@v1.4.0
+          uses: azure/login@v1.4.1
           with:
-            client-id: ${{ secrets.AZURE_CLIENTID }}
-            tenant-id: ${{ secrets.AZURE_TENANTID }}
-            subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
             enable-AzPSSession: true
 
         - name: 'Get RG with powershell action'
@@ -264,26 +230,35 @@ You can add federated credentials in the Azure portal or with the Microsoft Grap
 1. The **Add a credential** blade opens.
 1. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
 1. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal) 
-1. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance](). 
+1. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
 1. Add a **Name** for the federated credential.
 1. Click **Add** to configure the federated credential.
 
-For a more detailed overview, see more guidance around [Azure Federated Credentials](). 
+For a more detailed overview, see more guidance around [Azure Federated Credentials](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-github). 
 
 #### Microsoft Graph
 
 1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
 1. Create a federated identity credential
 
-    Run the following command to [create a new federated identity credential](/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
+    Run the following command to [create a new federated identity credential](https://docs.microsoft.com/en-us/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-OBJECT-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
     * specific environment
-    * pull_request events
-    * specific branch
-    * specific tag
-
         ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
+    * pull_request events
+       ```azurecli
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:pull-request","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        ```
+    * specific branch
+       ```azurecli
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Branch}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        ```
+    * specific tag
+       ```azurecli
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com/","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Tag}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        ```
+
 ## Support for using `allow-no-subscriptions` flag with az login
 
 Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
