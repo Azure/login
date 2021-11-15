@@ -25,8 +25,7 @@ async function main() {
                         error = error.slice(5);
                     }
                     // printing error
-                    if (error && error.trim().length !== 0)
-                    {
+                    if (error && error.trim().length !== 0) {
                         commandStdErr = true;
                         core.error(error);
                     }
@@ -123,8 +122,6 @@ async function main() {
             else {
                 throw new Error("Could not get ID token for authentication.");
             }
-            let [issuer, subjectClaim] = await jwtParser(federatedToken);
-            console.log("Federated token details: \n issuer- " + issuer + " \n subject claim - " + subjectClaim);
         }
 
         // Attempting Az cli login
@@ -230,12 +227,4 @@ async function executeAzCliCommand(
     execOptions.silent = !!silent;
     await exec.exec(`"${azPath}" ${command}`, args, execOptions);
 }
-async function jwtParser(federatedToken: string) {
-
-    let tokenPayload = federatedToken.split('.')[1];
-    let bufferObj = Buffer.from(tokenPayload, "base64");
-    let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
-    return [decodedPayload['iss'], decodedPayload['sub']];
-}
-
 main();
