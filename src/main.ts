@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
@@ -10,6 +11,27 @@ var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREP
 
 async function main() {
     try {
+        //Options for error handling
+        let commandStdErr = false;
+        const loginOptions: ExecOptions = {
+            silent: true,
+            ignoreReturnCode: true,
+            failOnStdErr: true,
+            listeners: {
+                stderr: (data: Buffer) => {
+                    let error = data.toString();
+                    //removing the keyword 'ERROR' to avoid duplicates while throwing error
+                    if (error.toLowerCase().startsWith('error')) {
+                        error = error.slice(5);
+                    }
+                    // printing error
+                    if (error && error.trim().length !== 0) {
+                        commandStdErr = true;
+                        core.error(error);
+                    }
+                }
+            }
+        }
         // Set user agent variable
         var isAzCLISuccess = false;
         let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
@@ -46,7 +68,7 @@ async function main() {
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
 
         //Check for the credentials in individual parameters in the workflow.
-        var servicePrincipalId = core.getInput('client-id', { required: false });;
+        var servicePrincipalId = core.getInput('client-id', { required: false });
         var servicePrincipalKey = null;
         var tenantId = core.getInput('tenant-id', { required: false });
         var subscriptionId = core.getInput('subscription-id', { required: false });
@@ -59,7 +81,7 @@ async function main() {
 
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
             if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
-                throw new Error("Few credentials are missing. ClientId,tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
+                throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
         else {
             if (creds) {
@@ -91,7 +113,8 @@ async function main() {
         if (enableOIDC) {
             console.log('Using OIDC authentication...')
             //generating ID-token
-            federatedToken = await core.getIDToken('api://AzureADTokenExchange');
+            let audience = core.getInput('audience', { required: false });
+            federatedToken = await core.getIDToken(audience);
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
@@ -151,14 +174,14 @@ async function main() {
         else {
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
         }
-        await executeAzCliCommand(`login`, true, {}, commonArgs);
+        await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
         if (!allowNoSubscriptionsLogin) {
             var args = [
                 "--subscription",
                 subscriptionId
             ];
-            await executeAzCliCommand(`account set`, true, {}, args);
+            await executeAzCliCommand(`account set`, true, loginOptions, args);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
@@ -183,12 +206,11 @@ async function main() {
     }
     catch (error) {
         if (!isAzCLISuccess) {
-            core.error("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
+            core.setFailed("Az CLI Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
         }
         else {
-            core.error(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
+            core.setFailed(`Azure PowerShell Login failed. Please check the credentials. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
-        core.setFailed(error);
     }
     finally {
         // Reset AZURE_HTTP_USER_AGENT
@@ -203,12 +225,6 @@ async function executeAzCliCommand(
     execOptions: any = {},
     args: any = []) {
     execOptions.silent = !!silent;
-    try {
-        await exec.exec(`"${azPath}" ${command}`, args, execOptions);
-    }
-    catch (error) {
-        throw new Error(error);
-    }
+    await exec.exec(`"${azPath}" ${command}`, args, execOptions);
 }
-
 main();
