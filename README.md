@@ -246,9 +246,9 @@ For a more detailed overview, see more guidance around [Azure Federated Credenti
         ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
-    * pull-request events
+    * pull_request events
        ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:pull-request","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
+        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:pull_request","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
     * specific branch
        ```azurecli
