@@ -76,27 +76,31 @@ async function main() {
         var enableOIDC = true;
         var federatedToken = null;
 
-        // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
-        if (servicePrincipalId || tenantId || subscriptionId) {
-
-            //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
-            if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
-                throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
-        }
-        else {
-            if (creds) {
+        // If we have credentials json object
+        if (creds) {
+            servicePrincipalId = secrets.getSecret("$.clientId", true);
+            tenantId = secrets.getSecret("$.tenantId", true);
+            subscriptionId = secrets.getSecret("$.subscriptionId", true);
+            resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+            servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
+            // if there is a key, then use creds, else use OIDC
+            if (servicePrincipalKey) {
                 core.debug('using creds JSON...');
                 enableOIDC = false;
-                servicePrincipalId = secrets.getSecret("$.clientId", true);
-                servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
-                tenantId = secrets.getSecret("$.tenantId", true);
-                subscriptionId = secrets.getSecret("$.subscriptionId", true);
-                resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-            }
-            else {
-                throw new Error("Credentials are not passed for Login action.");
             }
         }
+        else {
+            // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
+            if (servicePrincipalId || tenantId || subscriptionId) {
+
+                //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
+                if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
+                    throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
+            } else {
+                throw new Error("Credentials are not passed for Login action.")
+            }
+        }
+        
         //generic checks 
         //servicePrincipalKey is only required in non-oidc scenario.
         if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
