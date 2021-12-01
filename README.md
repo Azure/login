@@ -34,7 +34,7 @@ Note:
    - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
    - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
    - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
-   - If the `creds` property contains a `clientKey` property, the task will log in using credentials. If there is no `clientKey`, the task will use OIDC.
+   - If the `creds` property contains a `clientSecret` property, the task will log in using credentials. If there is no `clientSecret`, the task will use OIDC.
 
 
 ## Sample workflow that uses Azure login action to run az cli
