@@ -3,6 +3,7 @@ import * as exec from '@actions/exec';
 import { ExecOptions } from '@actions/exec/lib/interfaces';
 import * as io from '@actions/io';
 import { FormatType, SecretParser } from 'actions-secret-parser';
+import { ManagedIdentityLogin } from './PowerShell/ManagedIdentityLogin';
 import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
 
 var azPath: string;
@@ -75,6 +76,10 @@ async function main() {
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC = true;
         var federatedToken = null;
+        
+        var useManagedIdentity = core.getInput('enable-managed-identity').toLowerCase() === "true";
+        var userManagedIdentityResourceId = core.getInput('user-managed-identity-resource-id', { required: false });
+        console.log('Preparing to login using a managed identity');
 
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
         if (servicePrincipalId || tenantId || subscriptionId) {
@@ -161,18 +166,29 @@ async function main() {
         console.log(`Done setting cloud: "${environment}"`);
 
         // Attempting Az cli login
-        var commonArgs = ["--service-principal",
+        var commonArgs : string[];
+        if (useManagedIdentity) {
+            commonArgs = ["--identity"];
+            if(userManagedIdentityResourceId){
+                commonArgs = commonArgs.concat(["-u", userManagedIdentityResourceId]);
+            }
+        }
+        else {
+            commonArgs = ["--service-principal",
             "-u", servicePrincipalId,
             "--tenant", tenantId
-        ];
+            ];
+        }
         if (allowNoSubscriptionsLogin) {
             commonArgs = commonArgs.concat("--allow-no-subscriptions");
         }
-        if (enableOIDC) {
-            commonArgs = commonArgs.concat("--federated-token", federatedToken);
-        }
-        else {
-            commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+        if (!useManagedIdentity){
+            if (enableOIDC) {
+                commonArgs = commonArgs.concat("--federated-token", federatedToken);
+            }
+            else {
+                commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+            }
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
@@ -187,19 +203,31 @@ async function main() {
         if (enableAzPSSession) {
             // Attempting Az PS login
             console.log(`Running Azure PS Login`);
-            var spnlogin: ServicePrincipalLogin;
+            if (useManagedIdentity) {
+                let managedIdentityLogin: ManagedIdentityLogin;
+                managedIdentityLogin = new ManagedIdentityLogin(
+                    userManagedIdentityResourceId
+                );
 
-            spnlogin = new ServicePrincipalLogin(
-                servicePrincipalId,
-                servicePrincipalKey,
-                federatedToken,
-                tenantId,
-                subscriptionId,
-                allowNoSubscriptionsLogin,
-                environment,
-                resourceManagerEndpointUrl);
-            await spnlogin.initialize();
-            await spnlogin.login();
+                await managedIdentityLogin.initialize();
+                await managedIdentityLogin.login();
+
+            }
+            else {
+                var spnlogin: ServicePrincipalLogin;
+
+                spnlogin = new ServicePrincipalLogin(
+                    servicePrincipalId,
+                    servicePrincipalKey,
+                    federatedToken,
+                    tenantId,
+                    subscriptionId,
+                    allowNoSubscriptionsLogin,
+                    environment,
+                    resourceManagerEndpointUrl);
+                await spnlogin.initialize();
+                await spnlogin.login();
+            }
         }
 
         console.log("Login successful.");

@@ -281,6 +281,73 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         allow-no-subscriptions: true
 ```
+
+## Using Azure Managed Identities with self-hosted runners:
+If using managed identities (system- or user-assigned), a **self-hosted Github runner is required**, installed on an Azure VM with a managed identity configured. To use managed identity, set the `enable-managed-identity` flag to `true`. This will use a system-assigned managed identity unless the resource ID of a user-assigned managed identity is supplied. This supports az CLI in addition to Azure Powershell.
+To get the resource ID of a user-assigned managed identity:
+- in the portal, `Resource ID` is available in the Properties blade of the user-assigned managed identity resource
+- in az PowerShell, use this command: `$(Get-AzUserAssignedIdentity -Name name-of-the-managed-identity-resource -ResourceGroupName name-of-the-resource-group).Id`{:.pwsh}
+- in az cli, use this command: `az identity list -g resource-group-name`{:.bash}
+The resource ID usually follows a format similar to this:
+
+`/subscriptions/subscription-id/resourcegroups/resource-group-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/your-user-assigned-managed-identity-name`
+
+Subscription ID is not required, although some managed identities may have permission in more than one subscription. Provide the subscription ID via a secret to explictly use a specific subscription.
+
+## Sample workflow that uses Azure login action with system-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Azure System-assigned Managed Identity sample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+
+    - name: Login via Az module
+      uses: azure/login@v1.XX
+      with:
+        enable-managed-identity: true
+
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+```
+## Sample workflow that uses Azure login action with user-assigned managed identity
+## Support for using `allow-no-subscriptions` flag with az login
+
+Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Azure User-assigned Managed Identity sample
+name: AzureLoginWithNoSubscriptions
+
+jobs:
+
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+
+    - name: Login via Az module
+      uses: azure/login@v1.XX
+      with:
+        enable-managed-identity: true
+        user-managed-identity-resource-id: "/subscriptions/subscription-id/resourcegroups/resource-group-name/providers/Microsoft.ManagedIdentity/userAssignedIdentities/your-user-assigned-managed-identity-name"
+
+    - name: Run Az CLI script
+      run: |
+        az webapp list --query "[?state=='Running']"
+```
+
 ## Az logout and security hardening
 
 This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
