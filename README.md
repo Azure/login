@@ -19,13 +19,22 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
    1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
-   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
-
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i). You can also pass a JSON object to the `creds` property that contains OIDC settings as follows:
+   ```json
+   { 
+     "clientId": "<clientId>",
+     "subscriptionId": "<subscriptionId>",
+     "tenantId": "<tenantId>",
+     ...
+   }
+   ```
+   
 Note: 
    - Ensure the CLI version is 2.30 or above to use OIDC support.
    - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
    - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
    - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
+   - If the `creds` property contains a `clientKey` property, the task will log in using credentials. If there is no `clientKey`, the task will use OIDC.
 
 
 ## Sample workflow that uses Azure login action to run az cli
