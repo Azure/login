@@ -119,7 +119,7 @@ async function main() {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
                 let [issuer, subjectClaim] = await jwtParser(federatedToken);
-                console.log("Federated token details: \n issuer- " + issuer + " \n subject claim - " + subjectClaim);
+                console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
             }
             else {
                 throw new Error("Could not get ID token for authentication.");
