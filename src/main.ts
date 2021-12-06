@@ -118,6 +118,8 @@ async function main() {
             if (!!federatedToken) {
                 if (environment != "azurecloud")
                     throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
+                let [issuer, subjectClaim] = await jwtParser(federatedToken);
+                console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
             }
             else {
                 throw new Error("Could not get ID token for authentication.");
@@ -226,5 +228,11 @@ async function executeAzCliCommand(
     args: any = []) {
     execOptions.silent = !!silent;
     await exec.exec(`"${azPath}" ${command}`, args, execOptions);
+}
+async function jwtParser(federatedToken: string) {
+    let tokenPayload = federatedToken.split('.')[1];
+    let bufferObj = Buffer.from(tokenPayload, "base64");
+    let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
+    return [decodedPayload['iss'], decodedPayload['sub']];
 }
 main();
