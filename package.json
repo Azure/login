@@ -4,7 +4,9 @@
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "clean": "rimraf ./lib",
+    "build": "npm run clean && webpack --mode production",
+    "build:dev": "npm run clean && webpack --mode development",
     "test": "jest"
   },
   "author": "Sumiran Aggarwal",
@@ -12,10 +14,16 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/node": "^12.7.11",
+    "copy-webpack-plugin": "^7.0.0",
     "jest": "^25.2.4",
     "jest-circus": "^25.2.7",
+    "rimraf": "~2.6.2",
+    "string-replace-loader": "^3.1.0",
     "ts-jest": "^25.3.0",
-    "typescript": "^3.6.3"
+    "ts-loader": "~5.2.2",
+    "typescript": "^3.6.3",
+    "webpack": "^5.23.0",
+    "webpack-cli": "^4.5.0"
   },
   "dependencies": {
     "@actions/core": "1.6.0",
