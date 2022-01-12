@@ -174,7 +174,14 @@ async function main() {
             commonArgs = commonArgs.concat("--federated-token", federatedToken);
         }
         else {
-            commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+                if(servicePrincipalKey.startsWith("-"))
+                {
+                    commonArgs = commonArgs.concat("-p", "\"" + servicePrincipalKey + "\"");
+                }
+                else
+                {
+                    commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+                }
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
