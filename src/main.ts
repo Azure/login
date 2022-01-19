@@ -180,7 +180,7 @@ async function main() {
                 }
                 else
                 {
-                    commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+                    commonArgs = commonArgs.concat("-p=", servicePrincipalKey);
                 }
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
