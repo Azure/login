@@ -21,6 +21,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
 
+
 Note: 
    - Ensure the CLI version is 2.30 or above to use OIDC support.
    - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
