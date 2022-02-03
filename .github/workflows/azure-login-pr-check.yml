@@ -1,0 +1,72 @@
+name: pr-check
+
+on:
+  pull_request_target:
+    branches:
+      - master
+      - 'releases/*'
+jobs:
+   az-login-test:
+     environment: Automation test
+     runs-on: windows-latest
+     steps:
+       - name: Checkout from PR branch  
+         uses: actions/checkout@v2
+         with: 
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+         # Using 12.x version as an example
+       - name: Set Node.js 12.x for GitHub Action
+         uses: actions/setup-node@v1
+         with:
+           node-version: 12.x
+
+       - name: installing node_modules
+         run: npm install 
+
+       - name: Build GitHub Action
+         run: npm run build
+         
+       - name: 'Az CLI login with subscription'
+         uses: ./
+         with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+       - run: |
+             az account show
+  #          az webapp list
+
+       - name: 'Az CLI login without subscription'
+         uses: ./
+         with:
+           creds: ${{ secrets.AZURE_CREDENTIALS_NO_SUB }}
+           allow-no-subscriptions: true
+
+       - run: |
+           az account show
+
+       - name: 'Azure PowerShell login with subscription'
+         uses: ./
+         with:
+           creds: ${{ secrets.AZURE_CREDENTIALS }}
+           enable-AzPSSession: true
+
+       - uses: azure/powershell@v1
+         with:
+           inlineScript: "Get-AzContext"
+           azPSVersion: "latest"
+
+       - name: 'Azure PowerShell login without subscription'
+         uses: ./
+         with:
+           creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
+           enable-AzPSSession: true
+           allow-no-subscriptions: true
+
+       - uses: azure/powershell@v1
+         with:
+           inlineScript: "Get-AzContext"
+           azPSVersion: "latest"
+          
+      
