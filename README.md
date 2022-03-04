@@ -211,7 +211,7 @@ Follow the steps to configure Azure Service Principal with a secret:
 
   {
     "clientId": "<GUID>",
-    "clientSecret": "<GUID>",
+    "clientSecret": "<CLIENT_SECRET>",
     "subscriptionId": "<GUID>",
     "tenantId": "<GUID>",
     (...)
