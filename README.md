@@ -209,16 +209,22 @@ Follow the steps to configure Azure Service Principal with a secret:
 
   # The command should output a JSON object similar to this:
 
+ 
   {
     "clientId": "<GUID>",
     "clientSecret": "<GUID>",
     "subscriptionId": "<GUID>",
     "tenantId": "<GUID>",
+    "resourceManagerEndpointUrl": <URL>
     (...)
   }
   
 ```
   * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
+
+### Manually creating the Credentials object
+
+If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientid` and `clientsecret` on the Service Principle, and your `subscriptionId` and `tenantId` on the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
 
 ### Configure a service principal with a Federated Credential to use OIDC based authentication:
 
