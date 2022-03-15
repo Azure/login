@@ -235,13 +235,15 @@ Follow the steps to configure Azure Service Principal with a secret:
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
 #### Azure portal
-1. Go to **Certificates and secrets**.  In the **Federated credentials** tab, select **Add credential**.  
-1. The **Add a credential** blade opens.
-1. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
-1. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal) 
-1. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
-1. Add a **Name** for the federated credential.
-1. Click **Add** to configure the federated credential.
+1. [Register an application](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) in Azure Portal
+2. Within the registered application, Go to **Certificates & secrets**.  
+3. In the **Federated credentials** tab, select **Add credential**.  
+4. The **Add a credential** blade opens.
+5. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
+6. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal) 
+7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
+8. Add a **Name** for the federated credential.
+9. Click **Add** to configure the federated credential.
 
 For a more detailed overview, see more guidance around [Azure Federated Credentials](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-github). 
 
