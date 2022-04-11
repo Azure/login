@@ -23,10 +23,8 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 
 Note: 
    - Ensure the CLI version is 2.30 or above to use OIDC support.
-   - OIDC support in Azure is in Public Preview and is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
-   - GitHub runners will soon be updating the with the Az CLI and PowerShell versions that support with OIDC. Hence the below sample workflows include explicit instructions to download the same during workflow execution. 
+   - OIDC support in Azure is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
    - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
-
 
 ## Sample workflow that uses Azure login action to run az cli
 
@@ -209,16 +207,23 @@ Follow the steps to configure Azure Service Principal with a secret:
 
   # The command should output a JSON object similar to this:
 
+ 
   {
     "clientId": "<GUID>",
     "clientSecret": "<CLIENT_SECRET>",
     "subscriptionId": "<GUID>",
     "tenantId": "<GUID>",
+    "resourceManagerEndpointUrl": <URL>
     (...)
   }
   
 ```
   * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
+  * Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
+
+### Manually creating the Credentials object
+
+If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientId` and `clientSecret` on the Service Principal, and your `subscriptionId` and `tenantId` of the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
 
 ### Configure a service principal with a Federated Credential to use OIDC based authentication:
 
@@ -235,6 +240,7 @@ You can add federated credentials in the Azure portal or with the Microsoft Grap
 7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
 8. Add a **Name** for the federated credential.
 9. Click **Add** to configure the federated credential.
+10. Make sure the above created application has the `contributor` access to the provided subscription.
 
 For a more detailed overview, see more guidance around [Azure Federated Credentials](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-github). 
 
@@ -290,7 +296,6 @@ This action doesn't implement ```az logout``` by default at the end of execution
 - name: Azure CLI script
   uses: azure/CLI@v1
   with:
-    azcliversion: 2.0.72
     inlineScript: |
       az logout
       az cache purge
