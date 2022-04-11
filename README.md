@@ -223,7 +223,7 @@ Follow the steps to configure Azure Service Principal with a secret:
 
 ### Manually creating the Credentials object
 
-If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientid` and `clientsecret` on the Service Principle, and your `subscriptionId` and `tenantId` on the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
+If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientId` and `clientSecret` on the Service Principal, and your `subscriptionId` and `tenantId` of the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
 
 ### Configure a service principal with a Federated Credential to use OIDC based authentication:
 
