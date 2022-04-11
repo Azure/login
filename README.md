@@ -210,10 +210,10 @@ Follow the steps to configure Azure Service Principal with a secret:
  
   {
     "clientId": "<GUID>",
-    "clientSecret": "<CLIENT_SECRET>",
+    "clientSecret": "<STRING>",
     "subscriptionId": "<GUID>",
     "tenantId": "<GUID>",
-    "resourceManagerEndpointUrl": <URL>
+    "resourceManagerEndpointUrl": "<URL>"
     (...)
   }
   
