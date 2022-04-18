@@ -240,7 +240,7 @@ You can add federated credentials in the Azure portal or with the Microsoft Grap
 7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
 8. Add a **Name** for the federated credential.
 9. Click **Add** to configure the federated credential.
-10. Make sure the above created application has the `contributor` access to the provided subscription.
+10. Make sure the above created application has the `contributor` access to the provided subscription. Visit [role-based-access-control](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current#prerequisites) for more details.
 
 For a more detailed overview, see more guidance around [Azure Federated Credentials](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-github). 
 
