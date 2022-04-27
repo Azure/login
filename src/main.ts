@@ -12,22 +12,27 @@ var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREP
 async function main() {
     try {
         //Options for error handling
-        let commandStdErr = false;
+        // let commandStdErr = false;
         const loginOptions: ExecOptions = {
             silent: true,
             ignoreReturnCode: true,
-            failOnStdErr: true,
+            // failOnStdErr: true,
             listeners: {
                 stderr: (data: Buffer) => {
                     let error = data.toString();
+                    let isWarning = error.toLowerCase().startsWith('warning')
+                    // logging WARNING
+                    if(isWarning) {
+                        core.warning(error);
+                    }
                     //removing the keyword 'ERROR' to avoid duplicates while throwing error
                     if (error.toLowerCase().startsWith('error')) {
                         error = error.slice(5);
                     }
                     // printing error
-                    if (error && error.trim().length !== 0) {
-                        commandStdErr = true;
-                        core.error(error);
+                    if (error && error.trim().length !== 0 && !isWarning) {
+                        // commandStdErr = true;
+                        throw error;
                     }
                 }
             }
