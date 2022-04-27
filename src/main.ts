@@ -32,7 +32,7 @@ async function main() {
                     // printing error
                     if (error && error.trim().length !== 0 && !isWarning) {
                         // commandStdErr = true;
-                        core.setFailed(error);
+                        core.error(error);
                     }
                 }
             }
