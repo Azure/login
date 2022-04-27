@@ -15,7 +15,7 @@ async function main() {
         // let commandStdErr = false;
         const loginOptions: ExecOptions = {
             silent: true,
-            ignoreReturnCode: true,
+            // ignoreReturnCode: true,
             // failOnStdErr: true,
             listeners: {
                 stderr: (data: Buffer) => {
