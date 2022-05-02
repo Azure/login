@@ -17,11 +17,11 @@ async function main() {
             listeners: {
                 stderr: (data: Buffer) => {
                     let error = data.toString();
-                    let isWarning = error.toLowerCase().startsWith('warning');
-                    let isError = error.toLowerCase().startsWith('error');
+                    let startsWithWarning = error.toLowerCase().startsWith('warning');
+                    let startsWithError = error.toLowerCase().startsWith('error');
                     // printing ERROR
-                    if (error && error.trim().length !== 0 && !isWarning) {
-                        if(isError) {
+                    if (error && error.trim().length !== 0 && !startsWithWarning) {
+                        if(startsWithError) {
                             //removing the keyword 'ERROR' to avoid duplicates while throwing error
                             error = error.slice(5);
                         }
