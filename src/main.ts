@@ -17,8 +17,8 @@ async function main() {
             listeners: {
                 stderr: (data: Buffer) => {
                     let error = data.toString();
-                    let isWarning = error.toLowerCase().startsWith('warning')
-                    let isError = error.toLowerCase().startsWith('error')
+                    let isWarning = error.toLowerCase().startsWith('warning');
+                    let isError = error.toLowerCase().startsWith('error');
                     // printing ERROR
                     if (error && error.trim().length !== 0 && !isWarning) {
                         if(isError) {
