@@ -12,22 +12,20 @@ var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREP
 async function main() {
     try {
         //Options for error handling
-        let commandStdErr = false;
         const loginOptions: ExecOptions = {
             silent: true,
-            ignoreReturnCode: true,
-            failOnStdErr: true,
             listeners: {
                 stderr: (data: Buffer) => {
                     let error = data.toString();
-                    //removing the keyword 'ERROR' to avoid duplicates while throwing error
-                    if (error.toLowerCase().startsWith('error')) {
-                        error = error.slice(5);
-                    }
-                    // printing error
-                    if (error && error.trim().length !== 0) {
-                        commandStdErr = true;
-                        core.error(error);
+                    let startsWithWarning = error.toLowerCase().startsWith('warning');
+                    let startsWithError = error.toLowerCase().startsWith('error');
+                    // printing ERROR
+                    if (error && error.trim().length !== 0 && !startsWithWarning) {
+                        if(startsWithError) {
+                            //removing the keyword 'ERROR' to avoid duplicates while throwing error
+                            error = error.slice(5);
+                        }
+                        core.setFailed(error);
                     }
                 }
             }
@@ -174,6 +172,7 @@ async function main() {
             commonArgs = commonArgs.concat("--federated-token", federatedToken);
         }
         else {
+            console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
             commonArgs = commonArgs.concat("-p", servicePrincipalKey);
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
