@@ -74,8 +74,8 @@ async function main() {
         var enableOIDC = true;
         var federatedToken = null;
 
-        // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
-        if (servicePrincipalId || tenantId || subscriptionId) {
+        // If any of the individual credentials (clent_id, tenat_id) is present.
+        if (servicePrincipalId || tenantId) {
 
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
             if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
@@ -88,7 +88,11 @@ async function main() {
                 servicePrincipalId = secrets.getSecret("$.clientId", true);
                 servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
                 tenantId = secrets.getSecret("$.tenantId", true);
-                subscriptionId = secrets.getSecret("$.subscriptionId", true);
+
+                if(!subscriptionId) {
+                    subscriptionId = secrets.getSecret("$.subscriptionId", true);
+                }
+
                 resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
             }
             else {
