@@ -89,7 +89,7 @@ async function main() {
                 servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
                 tenantId = secrets.getSecret("$.tenantId", true);
 
-                if(!subscriptionId) {
+                if (!subscriptionId) {
                     subscriptionId = secrets.getSecret("$.subscriptionId", true);
                 }
 
