@@ -1,0 +1,45 @@
+#This workflow is used to test azure login action for CLI edge build. Visit, https://github.com/Azure/azure-cli#edge-builds for more details.
+
+name: Run Azure Login Canary Test
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron:  ' 0 8 * * *'  
+permissions:
+      id-token: write
+      contents: read
+jobs: 
+  az-login-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name : Check Az version before installing
+        run: az --version
+        
+      - name: Installing Az CLI Edge build 
+        run: |
+           cd ../..
+           CWD="$(pwd)"
+           python3 -m venv oidc-venv
+           . oidc-venv/bin/activate
+           echo "***********activated virual environment**********" 
+           python3 -m pip install --upgrade pip
+           echo "***************started installing cli edge build******************"
+           pip3 install -q --upgrade --pre azure-cli --extra-index-url https://azurecliprod.blob.core.windows.net/edge --no-cache-dir --upgrade-strategy=eager
+           echo "***************installed cli Edge build*******************"    
+           echo "$CWD/oidc-venv/bin" >> $GITHUB_PATH
+           az --version
+           
+      - name: Check out repository
+        uses: actions/checkout@v2
+        
+      - name: 'Az CLI login non-oidc'
+        uses: 'azure/login@v1'
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Az CLI login oidc'
+        uses: 'azure/login@v1'
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}
