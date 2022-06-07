@@ -301,7 +301,8 @@ This action doesn't implement ```az logout``` by default at the end of execution
       az cache purge
       az account clear
 ```
-
+## Az CLI dependency
+Internally in this action, we use azure CLI and execute `az login` with the credentials provided through secrets. In order to validate the new az CLI releases for this action, canary test workflow is introduced which will execute the action on [az CLI's edge build](https://github.com/Azure/azure-cli#edge-builds) which will fail incase of any breaking change is being introduced in the new upcoming release. Incase of a failure, the concern will be raised to [azure-cli](https://github.com/Azure/azure-cli) for taking a necessary action and also the latest CLI installation will be postponed in [Runner VMs](https://github.com/actions/virtual-environments) as well for hosted runner to prevent the workflows failing due to the new CLI changes.
 # Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
