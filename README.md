@@ -222,7 +222,7 @@ Follow the steps to configure Azure Service Principal with a secret:
   * Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
   * If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) for Non-OIDC login, below snippet can help with the same. 
 ```yaml
-  - uses: Azure/login@v1.1
+  - uses: Azure/login@v1
     with:
       creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 ```
