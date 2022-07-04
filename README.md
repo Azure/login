@@ -226,7 +226,7 @@ Follow the steps to configure Azure Service Principal with a secret:
     with:
       creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 ```
-In a similar way, any additional parameter can be addded to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
+In a similar way, any additional parameter can be added to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
 
 ### Manually creating the Credentials object
 
