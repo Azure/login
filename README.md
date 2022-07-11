@@ -220,7 +220,7 @@ Follow the steps to configure Azure Service Principal with a secret:
 ```
   * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
   * Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
-  * If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) for Non-OIDC login, below snippet can help with the same. 
+  * If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) to address the [security concerns](https://docs.github.com/en/actions/security-guides/encrypted-secrets) for Non-OIDC login, below snippet can help with the same. 
 ```yaml
   - uses: Azure/login@v1
     with:
