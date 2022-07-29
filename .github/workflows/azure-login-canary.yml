@@ -1,0 +1,94 @@
+#This workflow is used to test azure login action for CLI edge build. Visit, https://github.com/Azure/azure-cli#edge-builds for more details.
+
+name: Run Azure Login Canary Test
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron:  ' 0 8 * * *'  
+permissions:
+      id-token: write
+      contents: read
+jobs: 
+  az-login-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name : Check Az version before installing
+        run: az --version
+        
+      - name: Installing Az CLI Edge build 
+        run: |
+           cd ../..
+           CWD="$(pwd)"
+           python3 -m venv canary-venv
+           . canary-venv/bin/activate
+           echo "***********activated virual environment**********" 
+           python3 -m pip install --upgrade pip
+           echo "***************started installing cli edge build******************"
+           pip3 install -q --upgrade --pre azure-cli --extra-index-url https://azurecliprod.blob.core.windows.net/edge --no-cache-dir --upgrade-strategy=eager
+           echo "***************installed cli Edge build*******************"    
+           echo "$CWD/canary-venv/bin" >> $GITHUB_PATH
+           az --version
+           
+      - name: Check out repository
+        uses: actions/checkout@v3
+        
+      - name: 'Az CLI login with subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - run: |
+          az account show
+          
+      - name: 'Az CLI login without subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          allow-no-subscriptions: true
+          
+      - run: |
+          az account show
+          
+      - name: 'Az CLI login with subscription OIDC'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
+        
+      - run: |
+          az account show
+          
+      - name: 'Az CLI login without subscription OIDC'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          allow-no-subscriptions: true
+          
+      - run: |
+          az account show
+          
+   
+          
+  slack-post-result:
+        runs-on: ubuntu-latest
+#         continue-on-error: true
+        if: ${{ always() }}
+        needs: [az-login-test]
+        steps:
+          - name: Create slack post
+            id: slack_report
+            run: |
+              TITLE="Login action canary tests update - "
+              DATEVAR=`date "+%d/%m/%YT%H:%M:%S"`
+              TITLE="${TITLE}${DATEVAR}"
+              REPORT="${TITLE}\r\nLink to run - https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\r\n" 
+              RUN_URL="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              REPORT="${REPORT}\r\n"
+              if [ ${{needs.az-login-test.result}} == 'success' ]; then REPORT="${REPORT}\r\n|✅|<${RUN_URL}|az-login-test>"; else REPORT="${REPORT}\r\n|❌|<${RUN_URL}|az-login-test>"; fi
+              echo "::set-output name=report::$REPORT"
+          - name: Post to slack
+            shell: bash
+            run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${{SECRETS.SLACK_CHANNEL_SECRET}}
+
