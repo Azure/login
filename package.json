@@ -4,7 +4,7 @@
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "echo Running build && tsc",
     "test": "jest"
   },
   "author": "Sumiran Aggarwal",
