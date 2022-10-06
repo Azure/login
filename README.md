@@ -203,7 +203,7 @@ Follow the steps to configure Azure Service Principal with a secret:
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
 ```
-Replace {subscription-id}, {resource-group} with the subscription, resource group details
+Replace `{subscription-id}`, `{resource-group}` with the subscription, resource group details
 
 The command should output a JSON object similar to this:
 
