@@ -1,7 +1,7 @@
 export default class Constants {
     static readonly prefix: string = "az_";
     static readonly moduleName: string = "Az.Accounts";
-    static readonly versionPattern = /[0-9]\.[0-9]\.[0-9]/;
+    static readonly versionPattern = /[0-9]+\.[0-9]+\.[0-9]+/;
 
     static readonly AzureCloud: string = "AzureCloud";
     static readonly Subscription: string = "Subscription";
