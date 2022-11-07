@@ -143,7 +143,7 @@ jobs:
 
 ```
 
-Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github Action to run your Azure PowerShell scripts.
+Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
 ## Sample to connect to Azure US Government cloud
 
@@ -162,7 +162,7 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github Acti
         enable-AzPSSession: true
 ```
 
-Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github Action to run your Azure PowerShell scripts.
+Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
 ## Sample Azure Login workflow that to run az cli on Azure Stack Hub
 
