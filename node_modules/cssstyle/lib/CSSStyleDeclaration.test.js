@@ -547,4 +547,10 @@ describe('CSSStyleDeclaration', () => {
     expect(style.getPropertyValue('--foo')).toEqual('');
     expect(style.getPropertyValue('--fOo')).toEqual('purple');
   });
+
+  test('supports calc', () => {
+    const style = new CSSStyleDeclaration();
+    style.setProperty('width', 'calc(100% - 100px)');
+    expect(style.getPropertyValue('width')).toEqual('calc(100% - 100px)');
+  });
 });

@@ -1,25 +1,9 @@
-# Pirates [![Version][version-badge]][npm-link] [![Build Status][build-badge]][build-link] [![Coverage][codecov-badge]][codecov-link] [![Commitizen friendly][cz-badge]][cz-link] [![semantic-release][sr-badge]][sr-link] [![MIT License][license-badge]][license-link]
+# Pirates [![Coverage][codecov-badge]][codecov-link]
 
 ### Properly hijack require
 
-[version-badge]: 	https://img.shields.io/npm/v/pirates.svg   "npm version"
-[downloads-badge]: https://img.shields.io/npm/dm/pirates.svg "npm downloads"
-[npm-link]:  http://npm.im/pirates                           "npm"
-
-[codecov-badge]: https://img.shields.io/codecov/c/github/ariporad/pirates/master.svg?style=flat "codecov"
-[codecov-link]: https://codecov.io/gh/ariporad/pirates "codecov"
-
-[license-badge]: https://img.shields.io/npm/l/express.svg    "MIT License"
-[license-link]:  http://ariporad.mit-license.org             "MIT License"
-
-[build-badge]: https://travis-ci.org/ariporad/pirates.svg                   "Travis CI Build Status"
-[build-link]:  https://travis-ci.org/ariporad/pirates                       "Travis CI Build Status"
-
-[cz-badge]: https://img.shields.io/badge/commitizen-friendly-brightgreen.svg "Commitizen friendly"
-[cz-link]: http://commitizen.github.io/cz-cli/                               "Commitizen friendly"
-
-[sr-badge]: https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg
-[sr-link]: https://github.com/semantic-release/semantic-release
+[codecov-badge]: https://img.shields.io/codecov/c/github/danez/pirates/master.svg?style=flat "codecov"
+[codecov-link]: https://codecov.io/gh/danez/pirates "codecov"
 
 ## Why?
 
@@ -34,7 +18,7 @@ where discussion was finally moved.
 
 [the Babel issue thread]: https://github.com/babel/babel/pull/3062 "Babel Issue Thread"
 [the nyc issue thread]: https://github.com/bcoe/nyc/issues/70 "NYC Issue Thread"
-[issue-1]: https://github.com/ariporad/pirates/issues/1 "Issue #1"
+[issue-1]: https://github.com/danez/pirates/issues/1 "Issue #1"
 
 ## Installation
 
@@ -51,7 +35,7 @@ const addHook = require('pirates').addHook;
 
 function matcher(filename) {
   // Here, you can inspect the filename to determine if it should be hooked or
-  // not. Just return a truthy/falsey. Files in node_modules are automatically ignored, 
+  // not. Just return a truthy/falsey. Files in node_modules are automatically ignored,
   // unless otherwise specified in options (see below).
 
   // TODO: Implement your logic here
@@ -59,7 +43,7 @@ function matcher(filename) {
 }
 
 const revert = addHook(
-  (code, filename) => code.replace('@@foo', 'console.log(\'foo\');'), 
+  (code, filename) => code.replace('@@foo', 'console.log(\'foo\');'),
   { exts: ['.js'], matcher }
 );
 
@@ -80,10 +64,6 @@ if false, then the matcher will be called for any files in `node_modules` (defau
 
 ## Projects that use Pirates
 
-See the [wiki page](https://github.com/ariporad/pirates/wiki/Projects-using-Pirates). If you add Pirates to your project,
+See the [wiki page](https://github.com/danez/pirates/wiki/Projects-using-Pirates). If you add Pirates to your project,
 (And you should! It works best if everyone uses it. Then we can have a happy world full of happy require hooks!), please
 add yourself to the wiki.
-
-## License
-
-[MIT](http://ariporad.mit-license.org)
