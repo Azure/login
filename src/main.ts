@@ -40,7 +40,7 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        core.debug(`az cli version used: ${azPath}`);
+        core.debug(`az cli path: ${azPath}`);
         let azureSupportedCloudName = new Set([
             "azureusgovernment",
             "azurechinacloud",
