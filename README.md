@@ -19,7 +19,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
    1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
-   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id`, `tenant-id` and `subscription-id` of the Azure service principal associated with an OIDC Federated Identity Credential credeted in step (i)
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
 
 Note: 
    - Ensure the CLI version is 2.30 or above to use OIDC support.
