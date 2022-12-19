@@ -17,6 +17,11 @@ jobs:
 
     - name: 'Checking out repo code'
       uses: actions/checkout@v2
+      
+    - name: Set Node.js 16.x for GitHub Action
+         uses: actions/setup-node@v1
+         with:
+           node-version: 16.x
 
     - name: 'Validate build'
       run: |
