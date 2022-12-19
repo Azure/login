@@ -2,29 +2,28 @@
 
 ## Automate your GitHub workflows using Azure Actions
 
-[GitHub Actions](https://help.github.com/en/articles/about-github-actions)  gives you the flexibility to build an automated software development lifecycle workflow. 
+[GitHub Actions](https://help.github.com/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
 
-With [GitHub Actions for Azure](https://github.com/Azure/actions/) you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure. 
+With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
 
-# GitHub Action for Azure Login
+## GitHub Action for Azure Login
 
-With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
 
-- By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true. 
+- By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
-- To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to [this](#configure-a-service-principal-with-a-secret)  section below for details).
-
-- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure Service Principal with a Federated Identity Credential. 
+- To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally, the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to the [Configure a service principal with a secret](#configure-a-service-principal-with-a-secret) section below for details).
+- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure Service Principal with a Federated Identity Credential.
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
-- To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, 
+- To login using **OpenID Connect (OIDC) based Federated Identity Credentials**,
    1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
-   2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job. 
+   2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
+Note:
 
-Note: 
-   - Ensure the CLI version is 2.30 or above to use OIDC support.
-   - OIDC support in Azure is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon. 
-   - By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
+- Ensure the CLI version is 2.30 or above to use OIDC support.
+- OIDC support in Azure is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon.
+- By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure.
 
 ## Sample workflow that uses Azure login action to run az cli
 
@@ -77,6 +76,7 @@ jobs:
         Get-AzVM -ResourceGroupName "ResourceGroup11"
         
 ```
+
 ## Sample workflow that uses Azure login action using OIDC to run az cli (Linux)
 
 ```yaml
@@ -105,7 +105,8 @@ jobs:
           az group list
           pwd 
 ```
-Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both windows and linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the windows runner. Please note that powershell login is not supported in Macos runners.
+
+Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both Windows and Linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the Windows runner. Please note that powershell login is not supported in macOS runners.
 
 ## Sample workflow that uses Azure login action using OIDC to run az PowerShell (Windows)
 
@@ -140,7 +141,7 @@ jobs:
 
 ```
 
-Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
+Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
 ## Sample to connect to Azure US Government cloud
 
@@ -159,7 +160,7 @@ Refer [Azure PowerShell](https://github.com/azure/powershell) Github action to r
         enable-AzPSSession: true
 ```
 
-Refer to the [Azure PowerShell](https://github.com/azure/powershell) Github action to run your Azure PowerShell scripts.
+Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
 ## Sample Azure Login workflow that to run az cli on Azure Stack Hub
 
@@ -185,25 +186,28 @@ jobs:
         az webapp list --query "[?state=='Running']"
 
 ```
-Refer to the [Azure Stack Hub Login Action Tutorial](https://docs.microsoft.com/en-us/azure-stack/user/ci-cd-github-action-login-cli?view=azs-2008) for more detailed instructions.
 
-## Configure deployment credentials:
+Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com/azure-stack/user/ci-cd-github-action-login-cli?view=azs-2008) for more detailed instructions.
+
+## Configure deployment credentials
   
-### Configure a service principal with a secret:
+### Configure a service principal with a secret
 
-For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/en/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
+For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
 
+Follow the following steps to configure Azure Service Principal with a secret:
 
-Follow the steps to configure Azure Service Principal with a secret:
-  * Define a new secret under your repository settings, Add secret menu
-  * Store the output of the below [az cli](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+- Define a new secret under your repository settings, Add secret menu
+- Store the output of the below [az cli](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+
 ```bash  
 
    az ad sp create-for-rbac --name "myApp" --role contributor \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
 ```
-Replace `{subscription-id}`, `{resource-group}` with the subscription, resource group details
+
+Replace `{subscription-id}` and `{resource-group}` with the subscription and resource group details, respectively.
 
 The command should output a JSON object similar to this:
 
@@ -218,58 +222,68 @@ The command should output a JSON object similar to this:
   }
   
 ```
-  * Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
-  * Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
-  * If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) to address the [security concerns](https://docs.github.com/en/actions/security-guides/encrypted-secrets) for Non-OIDC login, below snippet can help with the same. 
+
+- Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
+- Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
+- If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) to address the [security concerns](https://docs.github.com/actions/security-guides/encrypted-secrets) for Non-OIDC login, below snippet can help with the same.
+
 ```yaml
   - uses: Azure/login@v1
     with:
       creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
 ```
+
 In a similar way, any additional parameter can be added to creds such as resourceManagerEndpointUrl for Azure Stack, for example.
 
 ### Manually creating the Credentials object
 
 If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientId` and `clientSecret` on the Service Principal, and your `subscriptionId` and `tenantId` of the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
 
-### Configure a service principal with a Federated Credential to use OIDC based authentication:
-
+### Configure a service principal with a Federated Credential to use OIDC based authentication
 
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
 #### Azure portal
-1. [Register an application](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) in Azure Portal
+
+1. [Register an application](https://learn.microsoft.com/azure/active-directory/develop/quickstart-register-app) in Azure Portal
 2. Within the registered application, Go to **Certificates & secrets**.  
 3. In the **Federated credentials** tab, select **Add credential**.  
 4. The **Add a credential** blade opens.
 5. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
-6. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal) 
-7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance]( https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-[…]dc-claims). 
+6. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal)
+7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance](https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-trust-conditions-on-cloud-roles-using-oidc-claims).
 8. Add a **Name** for the federated credential.
 9. Click **Add** to configure the federated credential.
-10. Make sure the above created application has the `contributor` access to the provided subscription. Visit [role-based-access-control](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal?tabs=current#prerequisites) for more details.
+10. Make sure the above created application has the `contributor` access to the provided subscription. Visit [role-based-access-control](https://learn.microsoft.com/azure/role-based-access-control/role-assignments-portal?tabs=current#prerequisites) for more details.
 
-For a more detailed overview, see more guidance around [Azure Federated Credentials](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-github). 
+For a more detailed overview, see more guidance around [Azure Federated Credentials](https://learn.microsoft.com/azure/active-directory/develop/workload-identity-federation-create-trust-github).
 
 #### Microsoft Graph
 
 1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
 1. Create a federated identity credential
 
-    Run the following command to [create a new federated identity credential](https://docs.microsoft.com/en-us/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-OBJECT-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
-    * specific environment
+    Run the following command to [create a new federated identity credential](https://learn.microsoft.com/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-OBJECT-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
+    - specific environment
+
         ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
-    * pull_request events
+
+    - pull_request events
+
        ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:pull_request","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
-    * specific branch
+
+    - specific branch
+
        ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Branch}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
-    * specific tag
+
+    - specific tag
+
        ```azurecli
         az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Tag}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
         ```
@@ -296,10 +310,12 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         allow-no-subscriptions: true
 ```
+
 ## Az logout and security hardening
 
-This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
-```
+This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
+
+```yaml
 - name: Azure CLI script
   uses: azure/CLI@v1
   with:
@@ -308,13 +324,16 @@ This action doesn't implement ```az logout``` by default at the end of execution
       az cache purge
       az account clear
 ```
+
 ## Az CLI dependency
+
 Internally in this action, we use azure CLI and execute `az login` with the credentials provided through secrets. In order to validate the new az CLI releases for this action, [canary test workflow](.github/workflows/azure-login-canary.yml) is written which will execute the action on [az CLI's edge build](https://github.com/Azure/azure-cli#edge-builds) which will fail incase of any breaking change is being introduced in the new upcoming release. The test results can be posted on a slack or teams channel using the corresponding integrations. Incase of a failure, the concern will be raised to [azure-cli](https://github.com/Azure/azure-cli) for taking a necessary action and also the latest CLI installation will be postponed in [Runner VMs](https://github.com/actions/virtual-environments) as well for hosted runner to prevent the workflows failing due to the new CLI changes.
-# Contributing
+
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+the rights to use your contribution. For details, visit <https://cla.opensource.microsoft.com>.
 
 When you submit a pull request, a CLA bot will automatically determine whether you need to provide
 a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
