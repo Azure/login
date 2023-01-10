@@ -13,17 +13,17 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
 - To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally, the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to the [Configure a service principal with a secret](#configure-a-service-principal-with-a-secret) section below for details).
-- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure Service Principal with a Federated Identity Credential.
+- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure [Workload Identity Federation](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation). **We recommend using OIDC based authentication for increased security.**
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
-- To login using **OpenID Connect (OIDC) based Federated Identity Credentials**,
-   1. Follow [this](#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the service principal.
+- To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, you need to first configure trust between GitHub workflow and an Azure Managed Identity or an Azure AD App (Service Principal)
+   1. Follow [this](#configure-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your Azure Managed Identity or AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the Managed Identity/service principal.
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
-   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
 Note:
 
 - Ensure the CLI version is 2.30 or above to use OIDC support.
 - OIDC support in Azure is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon.
-- By default, Azure access tokens issued during OIDC based login could have limited validity. This expiration time is configurable in Azure. Please go through understanding [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
+- By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refger to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 ## Sample workflow that uses Azure login action to run az cli
 
 ```yaml
@@ -238,54 +238,12 @@ In a similar way, any additional parameter can be added to creds such as resourc
 
 If you already created and assigned a Service Principal in Azure you can manually create the .json object above by finding the `clientId` and `clientSecret` on the Service Principal, and your `subscriptionId` and `tenantId` of the subscription and tenant respectively. The `resourceManagerEndpointUrl` will be `https://management.azure.com/` if you are using the public Azure cloud.
 
-### Configure a service principal with a Federated Credential to use OIDC based authentication
+### Configure a Federated Credential to use OIDC based authentication
 
-You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
+Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app”](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support for Managed Identities.
 
-#### Azure portal
+You can add federated credentials in the Azure portal or with the Microsoft Graph REST API. 
 
-1. [Register an application](https://learn.microsoft.com/azure/active-directory/develop/quickstart-register-app) in Azure Portal
-2. Within the registered application, Go to **Certificates & secrets**.  
-3. In the **Federated credentials** tab, select **Add credential**.  
-4. The **Add a credential** blade opens.
-5. In the **Federated credential scenario** box select **GitHub actions deploying Azure resources**.
-6. Specify the **Organization** and **Repository** for your GitHub Actions workflow which needs to access the Azure resources scoped by this App (Service Principal)
-7. For **Entity type**, select **Environment**, **Branch**, **Pull request**, or **Tag** and specify the value, based on how you have configured the trigger for your GitHub workflow. For a more detailed overview, see [GitHub OIDC guidance](https://docs.github.com/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#defining-trust-conditions-on-cloud-roles-using-oidc-claims).
-8. Add a **Name** for the federated credential.
-9. Click **Add** to configure the federated credential.
-10. Make sure the above created application has the `contributor` access to the provided subscription. Visit [role-based-access-control](https://learn.microsoft.com/azure/role-based-access-control/role-assignments-portal?tabs=current#prerequisites) for more details.
-
-For a more detailed overview, see more guidance around [Azure Federated Credentials](https://learn.microsoft.com/azure/active-directory/develop/workload-identity-federation-create-trust-github).
-
-#### Microsoft Graph
-
-1. Launch [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) and sign in to your tenant.
-1. Create a federated identity credential
-
-    Run the following command to [create a new federated identity credential](https://learn.microsoft.com/graph/api/application-post-federatedidentitycredentials?view=graph-rest-beta&preserve-view=true) on your app (specified by the object ID of the app). Substitute the values `APPLICATION-OBJECT-ID`, `CREDENTIAL-NAME`, `SUBJECT`. The options for subject refer to your request filter. These are the conditions that OpenID Connect uses to determine when to issue an authentication token.  
-    - specific environment
-
-        ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:environment:Production","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
-        ```
-
-    - pull_request events
-
-       ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:pull_request","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
-        ```
-
-    - specific branch
-
-       ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Branch}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
-        ```
-
-    - specific tag
-
-       ```azurecli
-        az rest --method POST --uri 'https://graph.microsoft.com/beta/applications/<APPLICATION-OBJECT-ID>/federatedIdentityCredentials' --body '{"name":"<CREDENTIAL-NAME>","issuer":"https://token.actions.githubusercontent.com","subject":"repo:octo-org/octo-repo:ref:refs/heads/{Tag}","description":"Testing","audiences":["api://AzureADTokenExchange"]}' 
-        ```
 
 ## Support for using `allow-no-subscriptions` flag with az login
 
