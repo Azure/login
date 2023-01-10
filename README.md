@@ -8,7 +8,7 @@ With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can crea
 
 ## GitHub Action for Azure Login
 
-With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can automate your workflow to do an Azure login using [Azure service principal](https://docs.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and run Az CLI and Azure PowerShell scripts.
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can do an Azure login using [Azure Managed Identities and Azure service principal](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview#managed-identity-types) to run Az CLI and Azure PowerShell scripts. 
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
@@ -240,7 +240,7 @@ If you already created and assigned a Service Principal in Azure you can manuall
 
 ### Configure a Federated Credential to use OIDC based authentication
 
-Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app”](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support for Managed Identities.
+Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app”](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support.
 
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API. 
 
