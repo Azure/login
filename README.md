@@ -192,7 +192,7 @@ Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com
   
 ### Configure a service principal with a secret
 
-For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://help.github.com/articles/virtual-environments-for-github-actions#creating-and-using-secrets-encrypted-variables) in the GitHub repository and then use them in the workflow.
+For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) in the GitHub repository and then use them in the workflow.
 
 Follow the following steps to configure Azure Service Principal with a secret:
 
