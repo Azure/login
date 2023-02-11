@@ -1,6 +1,7 @@
 'use strict';
 const os = require('os');
 const fs = require('fs');
+const isDocker = require('is-docker');
 
 const isWsl = () => {
 	if (process.platform !== 'linux') {
@@ -8,11 +9,16 @@ const isWsl = () => {
 	}
 
 	if (os.release().toLowerCase().includes('microsoft')) {
+		if (isDocker()) {
+			return false;
+		}
+
 		return true;
 	}
 
 	try {
-		return fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft');
+		return fs.readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft') ?
+			!isDocker() : false;
 	} catch (_) {
 		return false;
 	}

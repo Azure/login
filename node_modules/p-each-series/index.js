@@ -5,11 +5,17 @@ const pEachSeries = async (iterable, iterator) => {
 
 	for (const value of iterable) {
 		// eslint-disable-next-line no-await-in-loop
-		await iterator(await value, index++);
+		const returnValue = await iterator(await value, index++);
+
+		if (returnValue === pEachSeries.stop) {
+			break;
+		}
 	}
 
 	return iterable;
 };
+
+pEachSeries.stop = Symbol('pEachSeries.stop');
 
 module.exports = pEachSeries;
 // TODO: Remove this for the next major release
