@@ -1,0 +1,240 @@
+Acciones de GitHub para implementar en Azure
+Automatice sus flujos de trabajo de GitHub con Azure Actions
+GitHub Actions le brinda la flexibilidad para crear un flujo de trabajo de ciclo de vida de desarrollo de software automatizado.
+
+Con GitHub Actions for Azure , puede crear flujos de trabajo que puede configurar en su repositorio para compilar, probar, empaquetar, lanzar e implementar en Azure.
+
+Acción de GitHub para el inicio de sesión de Azure
+Con la acción de inicio de sesión de Azure , puede iniciar sesión en Azure mediante Azure Managed Identities y la entidad de servicio de Azure para ejecutar la CLI de Az y los scripts de Azure PowerShell.
+
+De forma predeterminada, la acción solo inicia sesión con la CLI de Azure (usando el az logincomando). Para iniciar sesión con el módulo Az PowerShell, establezca enable-AzPSSessionen verdadero. Para iniciar sesión en inquilinos de Azure sin suscripciones, establezca el parámetro opcional allow-no-subscriptionsen verdadero.
+
+Para iniciar sesión en una de las nubes de Azure Government o Azure Stack, establezca el parámetro opcional environmentcon uno de los valores admitidos AzureUSGovernmento AzureChinaCloudo AzureStack. Si no se especifica este parámetro, toma el valor predeterminado AzureCloudy se conecta a la nube pública de Azure. Además, el parámetro credstoma la entidad de servicio de Azure creada en la nube particular para conectarse (consulte la sección Configurar una entidad de servicio con un secreto a continuación para obtener más información).
+
+La acción admite dos formas diferentes de autenticación con Azure. Uno que usa la entidad de servicio de Azure con secretos. El otro es el método de autenticación OpenID connect (OIDC) mediante Azure Workload Identity Federation . Recomendamos usar autenticación basada en OIDC para mayor seguridad.
+
+Para iniciar sesión con Azure Service Principal con un secreto, siga esta guía.
+
+Para iniciar sesión con credenciales de identidad federadas basadas en OpenID Connect (OIDC) , primero debe configurar la confianza entre el flujo de trabajo de GitHub y una identidad administrada de Azure o una aplicación de Azure AD (principal de servicio)
+
+Siga esta guía para crear una credencial federada asociada con su Azure Managed Identity o AD App (principal de servicio). Esto es necesario para establecer la confianza de OIDC entre los flujos de trabajo de implementación de GitHub y los recursos específicos de Azure incluidos en el ámbito de la identidad administrada/principal de servicio.
+En su flujo de trabajo de GitHub, configure permissions:con id-token: writeun nivel de flujo de trabajo o nivel de trabajo en función de si el token OIDC debe generarse automáticamente para todos los trabajos o para un trabajo específico.
+Dentro del trabajo que se implementa en Azure, agregue la acción de inicio de sesión/Azure y pase el client-idy tenant-idde la entidad de servicio/identidad administrada de Azure asociada con una credencial de identidad federada de OIDC creada en el paso (i). También debe pasar subscription-ido establecer allow-no-subscriptionsen verdadero. Nota:
+Asegúrese de que la versión de la CLI sea 2.30 o superior para utilizar la compatibilidad con OIDC.
+
+La compatibilidad con OIDC en Azure solo se admite para nubes públicas. Próximamente se agregará compatibilidad con otras nubes, como nubes gubernamentales, Azure Stacks.
+
+De forma predeterminada, los tokens de acceso de Azure emitidos durante el inicio de sesión basado en OIDC podrían tener una validez limitada. Se espera que el token de acceso de Azure emitido por la aplicación AD (principal de servicio) tenga una caducidad de 1 hora de forma predeterminada. Y con las Identidades Administradas, serían 24 hrs. Este tiempo de caducidad se puede configurar aún más en Azure. Consulte la vida útil del token de acceso para obtener más detalles.
+
+Flujo de trabajo de muestra que usa la acción de inicio de sesión de Azure para ejecutar az cli
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginSample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - run: |
+        az webapp list --query "[?state=='Running']"
+Flujo de trabajo de muestra que usa la acción de inicio de sesión de Azure para ejecutar Azure PowerShell
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzurePowerShellLoginSample
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Login via Az module
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
+        enable-AzPSSession: true 
+     
+     - run: |
+        Get-AzVM -ResourceGroupName "ResourceGroup11"
+        
+Flujo de trabajo de muestra que usa la acción de inicio de sesión de Azure mediante OIDC para ejecutar az cli (Linux)
+# File: .github/workflows/OIDC_workflow.yml
+
+name: Run Azure Login with OIDC
+on: [push]
+
+permissions:
+      id-token: write
+      contents: read
+jobs: 
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Az CLI login'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  
+      - name: 'Run az commands'
+        run: |
+          az account show
+          az group list
+          pwd 
+Los usuarios también pueden especificar audienceel campo para el token de acceso en los parámetros de entrada de la acción. Si no se especifica, el valor predeterminado es api://AzureADTokenExchange. Esta acción también es compatible con login az powershell para ejecutores de Windows y Linux mediante la configuración de un parámetro de entrada enable-AzPSSession: true. A continuación se muestra el flujo de trabajo de muestra para el mismo utilizando el corredor de Windows. Tenga en cuenta que el inicio de sesión de PowerShell no es compatible con los corredores macOS.
+
+Flujo de trabajo de muestra que utiliza la acción de inicio de sesión de Azure mediante OIDC para ejecutar az PowerShell (Windows)
+# File: .github/workflows/OIDC_workflow.yml
+
+name: Run Azure Login with OIDC
+on: [push]
+
+permissions:
+      id-token: write
+      contents: read
+      
+jobs: 
+  Windows-latest:
+      runs-on: windows-latest
+      steps:
+        - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
+          uses: azure/login@v1
+          with:
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+            enable-AzPSSession: true
+
+        - name: 'Get RG with powershell action'
+          uses: azure/powershell@v1
+          with:
+             inlineScript: |
+               Get-AzResourceGroup
+             azPSVersion: "latest"
+Consulte la acción GitHub de Azure PowerShell para ejecutar sus scripts de Azure PowerShell.
+
+Muestra para conectarse a la nube de Azure US Government
+    - name: Login to Azure US Gov Cloud with CLI
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+        environment: 'AzureUSGovernment'
+        enable-AzPSSession: false
+    - name: Login to Azure US Gov Cloud with Az Powershell
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_US_GOV_CREDENTIALS }}
+        environment: 'AzureUSGovernment'
+        enable-AzPSSession: true
+Consulte la acción GitHub de Azure PowerShell para ejecutar sus scripts de Azure PowerShell.
+
+Ejemplo de flujo de trabajo de inicio de sesión de Azure para ejecutar az cli en Azure Stack Hub
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginSample
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        environment: 'AzureStack'
+
+    - run: |
+        az webapp list --query "[?state=='Running']"
+Consulte el Tutorial de acción de inicio de sesión de Azure Stack Hub para obtener instrucciones más detalladas.
+
+Configurar credenciales de implementación
+Configurar una entidad de servicio con un secreto
+Para usar cualquier credencial como Azure Service Principal, Publish Profile, etc., agréguelos como secretos en el repositorio de GitHub y luego utilícelos en el flujo de trabajo.
+
+Siga los siguientes pasos para configurar Azure Service Principal con un secreto:
+
+Defina un nuevo secreto en la configuración de su repositorio, menú Agregar secreto
+Almacene la salida del siguiente comando az cli como el valor de la variable secreta, por ejemplo, 'AZURE_CREDENTIALS'
+   az ad sp create-for-rbac --name "myApp" --role contributor \
+                            --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
+                            --sdk-auth
+Reemplace {subscription-id}y {resource-group}con los detalles de la suscripción y el grupo de recursos, respectivamente.
+
+El comando debería generar un objeto JSON similar a este:
+
+ {
+   "clientId": "<GUID>",
+   "clientSecret": "<STRING>",
+   "subscriptionId": "<GUID>",
+   "tenantId": "<GUID>",
+   "resourceManagerEndpointUrl": "<URL>"
+   (...)
+ }
+ 
+Ahora, en el archivo de flujo de trabajo en su rama: .github/workflows/workflow.ymlreemplace el secreto en la acción de inicio de sesión de Azure con su secreto (consulte el ejemplo anterior)
+Nota: El az ad sp create-for-rbaccomando anterior le dará la --sdk-authadvertencia de desaprobación. Como estamos trabajando con CLI para este proceso de desuso, recomendamos enfáticamente a los usuarios que usen este --sdk-authindicador ya que la salida del diccionario de resultados cambia y no se acepta mediante la acción de inicio de sesión si --sdk-authno se usa.
+Si desea pasar el Id. de suscripción, el Id. de inquilino, el Id. de cliente y el Secreto de cliente como parámetros individuales en lugar de agruparlos en un solo objeto JSON (creds) para abordar los problemas de seguridad para el inicio de sesión no OIDC, el siguiente fragmento puede ayudar con lo mismo .
+  - uses: Azure/login@v1
+    with:
+      creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+De manera similar, se puede agregar cualquier parámetro adicional a los créditos, como resourceManagerEndpointUrl para Azure Stack, por ejemplo.
+
+Creación manual del objeto Credentials
+Si ya creó y asignó una entidad de servicio en Azure, puede crear manualmente el objeto .json anterior buscando el clientIdy clientSecreten la entidad de servicio, y su subscriptionIdy tenantIdde la suscripción y el arrendatario, respectivamente. Lo resourceManagerEndpointUrlserá https://management.azure.com/si está utilizando la nube pública de Azure.
+
+Configurar una credencial federada para usar la autenticación basada en OIDC
+Consulte la documentación de Microsoft en "Configurar una credencial de identidad federada en una aplicación" y "Configurar una identidad administrada asignada por el usuario" para confiar en un proveedor de identidad externo (versión preliminar) que tiene más detalles sobre la compatibilidad con Azure Workload Identity Federation (OIDC).
+
+Puede agregar credenciales federadas en Azure Portal o con la API REST de Microsoft Graph.
+
+Compatibilidad con el uso allow-no-subscriptionsde la bandera con inicio de sesión az
+Se ha agregado la capacidad para admitir el acceso a inquilinos sin suscripciones tanto para OIDC como para no OIDC. Esto puede ser útil para ejecutar comandos de nivel de arrendatario, como az ad. La acción acepta un parámetro opcional allow-no-subscriptionsque es falsepor defecto.
+
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginWithNoSubscriptions
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        allow-no-subscriptions: true
+Cierre de sesión de Az y refuerzo de la seguridad
+Esta acción no se implementa az logoutde forma predeterminada al final de la ejecución. Sin embargo, no hay forma de alterar las credenciales o la información de la cuenta porque el ejecutor alojado en github está en una máquina virtual que se volverá a crear para cada ejecución del cliente y se eliminará todo. Pero si el corredor es autohospedado, lo que no es github, se recomienda cerrar la sesión manualmente al final del flujo de trabajo, como se muestra a continuación. Más detalles sobre la seguridad de los corredores se pueden encontrar aquí .
+
+- name: Azure CLI script
+  uses: azure/CLI@v1
+  with:
+    inlineScript: |
+      az logout
+      az cache purge
+      az account clear
+Dependencia de la CLI de Az
+Internamente en esta acción, usamos Azure CLI y ejecutamos az logincon las credenciales proporcionadas a través de secretos. Con el fin de validar las nuevas versiones de az CLI para esta acción, se escribe un flujo de trabajo de prueba controlado que ejecutará la acción en la compilación de borde de az CLI que fallará en caso de que se introduzca algún cambio importante en la próxima versión nueva. Los resultados de la prueba se pueden publicar en un canal de Slack o Teams utilizando las integraciones correspondientes. En caso de falla, la inquietud se elevará a azure-cli para que tome las medidas necesarias y también se pospondrá la última instalación de la CLI en las máquinas virtuales de Runner y para el corredor alojado para evitar que los flujos de trabajo fallen debido a los nuevos cambios de la CLI.
+
+contribuyendo
+Este proyecto agradece contribuciones y sugerencias. La mayoría de las contribuciones requieren que acepte un Acuerdo de licencia de contribuyente (CLA) que declara que tiene derecho a otorgarnos, y de hecho lo hace, los derechos para utilizar su contribución. Para obtener más información, visite https://cla.opensource.microsoft.com .
+
+Cuando envía una solicitud de extracción, un bot de CLA determinará automáticamente si necesita proporcionar un CLA y decorar el PR de manera adecuada (por ejemplo, verificación de estado, comentario). Simplemente siga las instrucciones proporcionadas por el bot. Solo tendrá que hacer esto una vez en todos los repositorios que utilicen nuestro CLA.
+
+Este proyecto ha adoptado el Código de conducta de código abierto de Microsoft . Para obtener más información, consulte las Preguntas frecuentes sobre el Código de conducta o comuníquese con opencode@microsoft.com si tiene preguntas o comentarios adicionales
