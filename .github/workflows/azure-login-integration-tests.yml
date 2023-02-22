@@ -1,0 +1,129 @@
+name: Run Azure Login Integration Tests
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 */3 * * *'
+permissions:
+      id-token: write
+      contents: write
+
+jobs: 
+
+  az-login-test-non-oidc:
+    runs-on: ubuntu-latest
+#     continue-on-error: true
+    steps:
+      - name: 'Az CLI login with subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - run: |
+          az account show
+#          az webapp list
+          
+      - name: 'Az CLI login without subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          allow-no-subscriptions: true
+          
+      - run: |
+          az account show
+          
+      - name: 'Azure PowerShell login with subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
+          
+      - name: 'Azure PowerShell login without subscription'
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+          enable-AzPSSession: true
+          allow-no-subscriptions: true
+        
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
+
+  az-login-test-oidc:
+    runs-on: ubuntu-latest
+#     continue-on-error: true
+    steps:
+      - name: 'Az CLI login with subscription'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
+        
+      - run: |
+          az account show
+#          az webapp list
+          
+      - name: 'Az CLI login without subscription'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          allow-no-subscriptions: true
+          
+      - run: |
+          az account show
+          
+      - name: 'Azure PowerShell login with subscription'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
+          enable-AzPSSession: true
+          
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
+          
+      - name: 'Azure PowerShell login without subscription'
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENTID }}
+          tenant-id: ${{ secrets.AZURE_TENANTID }}
+          enable-AzPSSession: true
+          allow-no-subscriptions: true
+        
+      - uses: azure/powershell@v1
+        with:
+          inlineScript: "Get-AzContext"
+          azPSVersion: "latest"
+          
+  slack-post-result:
+        runs-on: ubuntu-latest
+#         continue-on-error: true
+        if: ${{ always() }}
+        needs: [az-login-test-non-oidc, az-login-test-oidc]
+        steps:
+          - name: Create slack post
+            id: slack_report
+            run: |
+              TITLE="Login action OIDC flow tests update - "
+              DATEVAR=`date "+%d/%m/%YT%H:%M:%S"`
+              TITLE="${TITLE}${DATEVAR}"
+              REPORT="${TITLE}\r\nLink to run - https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\r\n" 
+              RUN_URL="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              REPORT="${REPORT}\r\n"
+              if [ ${{needs.az-login-test-non-oidc.result}} == 'success' ]; then REPORT="${REPORT}\r\n|✅|<${RUN_URL}|az-login-test-non-oidc>"; else REPORT="${REPORT}\r\n|❌|<${RUN_URL}|az-login-test-non-oidc>"; fi
+              if [ ${{needs.az-login-test-oidc.result}} == 'success' ]; then REPORT="${REPORT}\r\n|✅|<${RUN_URL}|az-login-test-oidc>"; else REPORT="${REPORT}\r\n|❌|<${RUN_URL}|az-login-test-oidc>"; fi
+              echo "::set-output name=report::$REPORT"
+
+          - name: Post to slack
+            shell: bash
+            run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${{SECRETS.SLACK_CHANNEL_SECRET}}

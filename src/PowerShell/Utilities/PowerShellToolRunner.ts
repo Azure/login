@@ -3,7 +3,6 @@ import * as exec from '@actions/exec';
 
 export default class PowerShellToolRunner {
     static psPath: string;
-
     static async init() {
         if(!PowerShellToolRunner.psPath) {
             PowerShellToolRunner.psPath = await io.which("pwsh", true);
@@ -11,6 +10,7 @@ export default class PowerShellToolRunner {
     }
 
     static async executePowerShellScriptBlock(scriptBlock: string, options: any = {}) {
+        //Options for error handling
         await exec.exec(`"${PowerShellToolRunner.psPath}" -Command`, [scriptBlock], options)
     }
 }
