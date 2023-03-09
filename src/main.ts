@@ -40,7 +40,7 @@ async function main() {
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
         azPath = await io.which("az", true);
-        core.debug(`az cli version used: ${azPath}`);
+        core.debug(`az cli path: ${azPath}`);
         let azureSupportedCloudName = new Set([
             "azureusgovernment",
             "azurechinacloud",
@@ -189,7 +189,7 @@ async function main() {
         }
         else {
             console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-            commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+            commonArgs = commonArgs.concat(`--password=${servicePrincipalKey}`);
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
@@ -223,10 +223,10 @@ async function main() {
     }
     catch (error) {
         if (!isAzCLISuccess) {
-            core.setFailed("Az CLI Login failed. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows");
+            core.setFailed(`Az CLI Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
         else {
-            core.setFailed(`Azure PowerShell Login failed. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
+            core.setFailed(`Azure PowerShell Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
         }
     }
     finally {
