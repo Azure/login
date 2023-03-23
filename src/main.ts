@@ -175,7 +175,7 @@ async function main() {
         }
         else {
             console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-            commonArgs = commonArgs.concat("-p", servicePrincipalKey);
+            commonArgs = commonArgs.concat(`--password=${servicePrincipalKey}`);
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
