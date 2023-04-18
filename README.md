@@ -8,7 +8,7 @@ With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can crea
 
 ## GitHub Action for Azure Login
 
-With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can do an Azure login using [Azure Managed Identities and Azure service principal](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview#managed-identity-types) to run Az CLI and Azure PowerShell scripts. 
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can do an Azure login using [Azure Managed Identities and Azure service principal](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview#managed-identity-types) to run Az CLI and Azure PowerShell scripts.
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
@@ -18,12 +18,14 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, you need to first configure trust between GitHub workflow and an Azure Managed Identity or an Azure AD App (Service Principal)
    1. Follow [this](#configure-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your Azure Managed Identity or AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the Managed Identity/service principal.
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
-   3. Within the Job deploying to Azure, add Azure/login action and pass the [GitHub variables](https://docs.github.com/en/actions/learn-github-actions/variables#using-the-vars-context-to-access-configuration-variable-values) with values of `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
+   3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
+
 Note:
 
 - Ensure the CLI version is 2.30 or above to use OIDC support.
 - OIDC support in Azure is supported only for public clouds. Support for other clouds like Government clouds, Azure Stacks would be added soon.
 - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refger to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
+
 ## Sample workflow that uses Azure login action to run az cli
 
 ```yaml
@@ -94,9 +96,9 @@ jobs:
       - name: 'Az CLI login'
         uses: azure/login@v1
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   
       - name: 'Run az commands'
         run: |
@@ -126,9 +128,9 @@ jobs:
         - name: OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)
           uses: azure/login@v1
           with:
-            client-id: ${{ vars.AZURE_CLIENT_ID }}
-            tenant-id: ${{ vars.AZURE_TENANT_ID }}
-            subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }} 
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
             enable-AzPSSession: true
 
         - name: 'Get RG with powershell action'
@@ -242,8 +244,7 @@ If you already created and assigned a Service Principal in Azure you can manuall
 
 Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app”](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support.
 
-You can add federated credentials in the Azure portal or with the Microsoft Graph REST API. 
-
+You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
 ## Support for using `allow-no-subscriptions` flag with az login
 
