@@ -56,7 +56,7 @@ async function main() {
                 }
             }
         };
-        await executeAzCliCommand("--version", true, execOptions);
+        await executeAzCliCommand("--version", false, execOptions);
         core.debug(`az cli version used:\n${output}`);
 
         let creds = core.getInput('creds', { required: false });
@@ -134,7 +134,7 @@ async function main() {
 
             console.log(`Unregistering cloud: "${environment}" first if it exists`);
             try {
-                await executeAzCliCommand(`cloud set -n AzureCloud`, true);
+                await executeAzCliCommand(`cloud set -n AzureCloud`, false);
                 await executeAzCliCommand(`cloud unregister -n "${environment}"`, false);
             }
             catch (error) {
@@ -177,14 +177,14 @@ async function main() {
             console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
             commonArgs = commonArgs.concat(`--password=${servicePrincipalKey}`);
         }
-        await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
+        await executeAzCliCommand(`login`, false, loginOptions, commonArgs);
 
         if (!allowNoSubscriptionsLogin) {
             var args = [
                 "--subscription",
                 subscriptionId
             ];
-            await executeAzCliCommand(`account set`, true, loginOptions, args);
+            await executeAzCliCommand(`account set`, false, loginOptions, args);
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
