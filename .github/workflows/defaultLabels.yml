@@ -35,13 +35,14 @@ jobs:
           days-before-close: -1
           operations-per-run: 100
 
-      - uses: actions/stale@v3
-        name: Closing issue with no feedback for 7 days
+      - uses: actions/stale@v8
+        name: Close issue with no feedback for 20 days
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: '""'
-          close-issue-message: 'This issue has been labeled as `needs-author-feedback` for 7 days without activity and is being closed. If you believe this issue still requires attention, please reopen and provide the requested information.'
-          days-before-stale: 20
-          days-before-close: 0
+          close-issue-message: 'This issue has been labeled as `needs-author-feedback` for 20 days without activity and is being closed. If you believe this issue still requires attention, please reopen and provide the requested information.'
+          days-before-stale: -1
+          days-before-close: 20
           stale-issue-label: 'needs-author-feedback'
+          only-issue-labels: 'needs-author-feedback'
+          close-issue-reason: 'completed'
           operations-per-run: 100
