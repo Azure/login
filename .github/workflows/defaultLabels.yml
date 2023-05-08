@@ -39,7 +39,7 @@ jobs:
         name: Close issue with no feedback for 20 days
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          close-issue-message: 'This issue has been labeled as `needs-author-feedback` for 20 days without activity and is being closed. If you believe this issue still requires attention, please reopen and provide the requested information.'
+          close-issue-message: 'This issue has been labeled as `needs-author-feedback` for 20 days with no activity. We will close it for now. If you require additional assistance, please feel free to reopen it with the required information.'
           days-before-stale: -1
           days-before-close: 20
           stale-issue-label: 'needs-author-feedback'
