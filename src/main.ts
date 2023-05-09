@@ -73,6 +73,8 @@ async function main() {
         var resourceManagerEndpointUrl = "https://management.azure.com/";
         var enableOIDC = true;
         var federatedToken = null;
+        const useManagedIdentity = core.getInput('enable-managed-identity').toLowerCase() === "true";
+        const userManagedIdentityResourceId = core.getInput('user-managed-identity-resource-id', { required: false });
 
         // If any of the individual credentials (clent_id, tenat_id, subscription_id) is present.
         if (servicePrincipalId || tenantId || subscriptionId) {
@@ -91,41 +93,52 @@ async function main() {
                 subscriptionId = secrets.getSecret("$.subscriptionId", true);
                 resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
             }
-            else {
-                throw new Error("Credentials are not passed for Login action.");
-            }
-        }
-        //generic checks 
-        //servicePrincipalKey is only required in non-oidc scenario.
-        if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
-            throw new Error("Not all values are present in the credentials. Ensure clientId, clientSecret and tenantId are supplied.");
-        }
-        if (!subscriptionId && !allowNoSubscriptionsLogin) {
-            throw new Error("Not all values are present in the credentials. Ensure subscriptionId is supplied.");
-        }
-        if (!azureSupportedCloudName.has(environment)) {
-            throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
-        }
-
-        // OIDC specific checks
-        if (enableOIDC) {
-            console.log('Using OIDC authentication...')
-            try {
-                //generating ID-token
-                let audience = core.getInput('audience', { required: false });
-                federatedToken = await core.getIDToken(audience);
-                if (!!federatedToken) {
-                    if (environment != "azurecloud")
-                        throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
-                    let [issuer, subjectClaim] = await jwtParser(federatedToken);
-                    console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+            else if(useManagedIdentity){
+                if(userManagedIdentityResourceId){
+                    core.debug('using user-assigned managed identity...');
+                }
+                else{
+                    core.debug('using system-assigned managed identity...');
                 }
             }
-            catch (error) {
-                core.error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
+            else {
+                throw new Error("Credentials are not passed for Login action and managed identity is not enabled.");
             }
         }
 
+        if(!useManagedIdentity){
+            //generic checks 
+            //servicePrincipalKey is only required in non-oidc scenario.
+            if (!servicePrincipalId || !tenantId || !(servicePrincipalKey || enableOIDC)) {
+                throw new Error("Not all values are present in the credentials. Ensure clientId, clientSecret and tenantId are supplied.");
+            }
+            if (!subscriptionId && !allowNoSubscriptionsLogin) {
+                throw new Error("Not all values are present in the credentials. Ensure subscriptionId is supplied.");
+            }
+            if (!azureSupportedCloudName.has(environment)) {
+                throw new Error("Unsupported value for environment is passed.The list of supported values for environment are ‘azureusgovernment', ‘azurechinacloud’, ‘azuregermancloud’, ‘azurecloud’ or ’azurestack’");
+            }
+
+            // OIDC specific checks
+            if (enableOIDC) {
+                console.log('Using OIDC authentication...')
+                try {
+                    //generating ID-token
+                    let audience = core.getInput('audience', { required: false });
+                    federatedToken = await core.getIDToken(audience);
+                    if (!!federatedToken) {
+                        if (environment != "azurecloud")
+                            throw new Error(`Your current environment - "${environment}" is not supported for OIDC login.`);
+                        let [issuer, subjectClaim] = await jwtParser(federatedToken);
+                        console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+                    }
+                }
+                catch (error) {
+                    core.error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
+                }
+            }
+        }
+        
         // Attempting Az cli login
         if (environment == "azurestack") {
             if (!resourceManagerEndpointUrl) {
@@ -163,28 +176,39 @@ async function main() {
         console.log(`Done setting cloud: "${environment}"`);
 
         // Attempting Az cli login
-        var commonArgs = ["--service-principal",
-            "-u", servicePrincipalId,
-            "--tenant", tenantId
-        ];
-        if (allowNoSubscriptionsLogin) {
-            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        if(useManagedIdentity){
+            var commonArgs = ["--identity"];
+            if(userManagedIdentityResourceId){
+                commonArgs = commonArgs.concat("-u", userManagedIdentityResourceId);
+            }
         }
-        if (enableOIDC) {
-            commonArgs = commonArgs.concat("--federated-token", federatedToken);
-        }
-        else {
-            console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-            commonArgs = commonArgs.concat(`--password=${servicePrincipalKey}`);
+        else{
+            var commonArgs = ["--service-principal",
+                "-u", servicePrincipalId,
+                "--tenant", tenantId
+            ];
+            if (allowNoSubscriptionsLogin) {
+                commonArgs = commonArgs.concat("--allow-no-subscriptions");
+            }
+            if (enableOIDC) {
+                commonArgs = commonArgs.concat("--federated-token", federatedToken);
+            }
+            else {
+                console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
+                commonArgs = commonArgs.concat(`--password=${servicePrincipalKey}`);
+            }
         }
         await executeAzCliCommand(`login`, true, loginOptions, commonArgs);
 
         if (!allowNoSubscriptionsLogin) {
-            var args = [
-                "--subscription",
-                subscriptionId
-            ];
-            await executeAzCliCommand(`account set`, true, loginOptions, args);
+            if(!(useManagedIdentity && !userManagedIdentityResourceId)){
+                //pass when using a system-assigned managed identity
+                var args = [
+                    "--subscription",
+                    subscriptionId
+                ];
+                await executeAzCliCommand(`account set`, true, loginOptions, args);
+            }
         }
         isAzCLISuccess = true;
         if (enableAzPSSession) {
@@ -209,10 +233,10 @@ async function main() {
     }
     catch (error) {
         if (!isAzCLISuccess) {
-            core.setFailed(`Az CLI Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
+            core.setFailed(`Az CLI Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
         }
         else {
-            core.setFailed(`Azure PowerShell Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows"`);
+            core.setFailed(`Azure PowerShell Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
         }
     }
     finally {

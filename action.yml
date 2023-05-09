@@ -1,7 +1,7 @@
 # Login to Azure subscription
 name: 'Azure Login'
-description: 'Authenticate to Azure using OIDC and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
-inputs: 
+description: 'Authenticate to Azure using OIDC and run your Az CLI or Az PowerShell based actions or scripts. github.com/Azure/Actions'
+inputs:
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: false
@@ -14,8 +14,17 @@ inputs:
   subscription-id:
     description: 'Azure subscriptionId'
     required: false
+  enable-managed-identity: 
+    description: 'Set this value to true to enable Managed Identity for your action. Requires a self-hosted Github runner on an Azure VM with Managed Identity enabled.'
+    required: false
+    default: false
+  user-managed-identity-resource-id:
+    description: >-
+      'Set this value to the Resource ID of your user managed identity. If using a system managed identity, leave this empty.
+      This setting has no effect if enable-managed-identity is false.'
+    required: false
   enable-AzPSSession: 
-    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
+    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
     default: false
   environment:
@@ -23,7 +32,7 @@ inputs:
     required: false
     default: azurecloud
   allow-no-subscriptions:
-    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
+    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
     required: false
     default: false
   audience:
