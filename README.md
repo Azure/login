@@ -163,7 +163,7 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Acti
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
-## Sample Azure Login workflow that to run az cli on Azure Stack Hub
+## Sample Azure Login workflow to run az cli on Azure Stack Hub
 
 ```yaml
 
