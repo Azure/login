@@ -29,7 +29,6 @@ Note:
 ## Sample workflow that uses Azure login action to run az cli
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -54,7 +53,6 @@ jobs:
 ## Sample workflow that uses Azure login action to run Azure PowerShell
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -93,18 +91,20 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Az CLI login'
+      - name: Az CLI login
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   
-      - name: 'Run az commands'
-        run: |
-          az account show
-          az group list
-          pwd 
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
+            az group list
 ```
 
 Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both Windows and Linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the Windows runner. Please note that powershell login is not supported in macOS runners.
@@ -147,6 +147,8 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Acti
 ## Sample to connect to Azure US Government cloud
 
 ```yaml
+# File: .github/workflows/workflow.yml
+
     - name: Login to Azure US Gov Cloud with CLI
       uses: azure/login@v1
       with:
@@ -166,7 +168,6 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Acti
 ## Sample Azure Login workflow that uses Azure login action to run az cli on Azure Stack Hub
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -247,23 +248,33 @@ Please refer to Microsoft's documentation at ["Configure a federated identity cr
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
 ## Using Azure Managed Identities with self-hosted runners:
-If you want to use managed identities (system- or user-assigned) to sign in, a self-hosted Github runner is required to be installed on an Azure VM ["with a managed identity configured"](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use managed identity, please set the `enable-managed-identity` flag to `true`. This will use a system-assigned managed identity unless the resource ID of a user-assigned managed identity: `user-managed-identity-resource-id` is supplied.
+If you want to use managed identities (system- or user-assigned) to sign in, a self-hosted Github runner is required to be installed on an Azure VM [with a managed identity configured](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use managed identity, please set the `enable-managed-identity` flag to `true`. This will use a system-assigned managed identity unless the resource ID of a user-assigned managed identity: `user-managed-identity-resource-id` is supplied.
 To get the resource ID of a user-assigned managed identity:
-- in the portal, `Resource ID` is available in the Properties blade of the user-assigned managed identity resource.
-- in az PowerShell, use this command: `$(Get-AzUserAssignedIdentity -Name name-of-the-managed-identity-resource -ResourceGroupName name-of-the-resource-group).Id`{:.pwsh}
-- in az cli, use this command: `az identity list -g resource-group-name`{:.bash}
+- In the portal, it is available in the `Properties` blade of the user-assigned managed identity resource.
+- In az PowerShell, use the command: 
+```pwsh
+$(Get-AzUserAssignedIdentity -Name name-of-the-managed-identity-resource -ResourceGroupName name-of-the-resource-group).Id
+```
+- In az cli, use the command: 
+```bash
+az vm identity show --resource-group <resource_group_name> --name <vm_name> --query userAssignedIdentities
+
+```
 The resource ID usually follows a format similar to this:
 
-`/subscriptions/<subscription-id>/resourcegroups/<resource-group-name>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<your-user-assigned-managed-identity-name>`
+```bash
+/subscriptions/<subscription-id>/resourcegroups/<resource-group-name>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<your-user-assigned-managed-identity-name> 
+```
 
 For security concern, we recommend you to store it as a secret in the GitHub repository. 
 
-Subscription ID is not required when using Managed Identity. However some user-assigned managed identities may have permission in more than one subscription, please provide the subscription ID in `subscription-id` via a secret to explictly use a specific subscription. If you decide not to specify the subscription, please don't forget to set the optional parameter `allow-no-subscriptions` to `true`.
+Subscription ID is not required when using system-assigned managed identity. However, some user-assigned managed identities may have permission in more than one subscription, please provide the `subscription-id` to explictly use a specific subscription. If you decide not to specify the subscription, please don't forget to set the optional parameter `allow-no-subscriptions` to `true`.
 
 ## Sample workflow that uses Azure login action with system-assigned managed identity
 
 ```yaml
 # File: .github/workflows/workflow.yml
+
 on: [push]
 
 name: Azure System-assigned Managed Identity sample
@@ -278,11 +289,9 @@ jobs:
       with:
         enable-managed-identity: true
 
-    - name: Azure CLI script
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          az account show
+    - name: Show az account
+      run: |
+        az account show
 
 ```
 
@@ -290,6 +299,7 @@ jobs:
 
 ```yaml
 # File: .github/workflows/workflow.yml
+
 on: [push]
 
 name: Azure User-assigned Managed Identity sample
@@ -306,11 +316,9 @@ jobs:
         user-managed-identity-resource-id: ${{ secrets.AZURE_USER_MANAGED_IDENTITY }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Azure CLI script
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-          az account show
+    - name: Show az account
+      run: |
+        az account show
 
 ```
 
