@@ -78,6 +78,7 @@ async function main() {
 
         // Check if managed identity is enabled first
         if (useManagedIdentity){
+            enableOIDC = false;
             if(userManagedIdentityResourceId){
                 core.debug('using user-assigned managed identity...');
                 if (!subscriptionId && !allowNoSubscriptionsLogin) {
