@@ -247,26 +247,31 @@ Please refer to Microsoft's documentation at ["Configure a federated identity cr
 
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
-## Using Azure Managed Identities with self-hosted runners:
+## Using Azure Managed Identities with self-hosted runners
+
 If you want to use managed identities (system- or user-assigned) to sign in, a self-hosted Github runner is required to be installed on an Azure VM [with a managed identity configured](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use managed identity, please set the `enable-managed-identity` flag to `true`. This will use a system-assigned managed identity unless the resource ID of a user-assigned managed identity: `user-managed-identity-resource-id` is supplied.
 To get the resource ID of a user-assigned managed identity:
+
 - In the portal, it is available in the `Properties` blade of the user-assigned managed identity resource.
-- In az PowerShell, use the command: 
+- In az PowerShell, use the command:
+
 ```pwsh
 $(Get-AzUserAssignedIdentity -Name name-of-the-managed-identity-resource -ResourceGroupName name-of-the-resource-group).Id
 ```
-- In az cli, use the command: 
+
+- In az cli, use the command:
+
 ```bash
 az vm identity show --resource-group <resource_group_name> --name <vm_name> --query userAssignedIdentities
-
 ```
+
 The resource ID usually follows a format similar to this:
 
 ```bash
 /subscriptions/<subscription-id>/resourcegroups/<resource-group-name>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<your-user-assigned-managed-identity-name> 
 ```
 
-For security concern, we recommend you to store it as a secret in the GitHub repository. 
+For security concern, we recommend you to store it as a secret in the GitHub repository.
 
 Subscription ID is not required when using system-assigned managed identity. However, some user-assigned managed identities may have permission in more than one subscription, please provide the `subscription-id` to explictly use a specific subscription. If you decide not to specify the subscription, please don't forget to set the optional parameter `allow-no-subscriptions` to `true`.
 
