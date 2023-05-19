@@ -6,7 +6,7 @@ export default class Constants {
     static readonly AzureCloud: string = "AzureCloud";
     static readonly Tenant: string = "Tenant";
     static readonly ManagementGroup: string = "ManagementGroup";
-    static readonly Subscription: string = "Subscription";";
+    static readonly Subscription: string = "Subscription";
     static readonly ServicePrincipal: string = "ServicePrincipal";
 
     static readonly Success: string = "Success";

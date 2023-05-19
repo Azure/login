@@ -36,7 +36,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
         this.environment = environment;
         this.resourceManagerEndpointUrl = resourceManagerEndpointUrl;
         this.allowNoSubscriptionsLogin = allowNoSubscriptionsLogin;
-        this.scopeLevel = 
+        this.scopeLevel = scopeLevel;
     }
 
     async initialize() {
