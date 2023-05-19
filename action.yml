@@ -30,7 +30,7 @@ inputs:
     description: 'Provide audience field for access-token. Default value is api://AzureADTokenExchange' 
     required: false
     default: 'api://AzureADTokenExchange'
-  scopeLevel:
+  scope-level:
     description: 'Scope Level. Supported values are subscription, tenant, or managementgroup. Default is subscription' 
     required: false
     default: 'subscription'
