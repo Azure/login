@@ -63,7 +63,8 @@ async function main() {
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
-        const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
+        const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";";
+        const scopeLevel = core.getInput('scopeLevel').toLowerCase();
 
         //Check for the credentials in individual parameters in the workflow.
         var servicePrincipalId = core.getInput('client-id', { required: false });
@@ -200,7 +201,8 @@ async function main() {
                 subscriptionId,
                 allowNoSubscriptionsLogin,
                 environment,
-                resourceManagerEndpointUrl);
+                resourceManagerEndpointUrl,
+                scopeLevel);
             await spnlogin.initialize();
             await spnlogin.login();
         }
