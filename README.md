@@ -29,7 +29,6 @@ Note:
 ## Sample workflow that uses Azure login action to run az cli
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -54,7 +53,6 @@ jobs:
 ## Sample workflow that uses Azure login action to run Azure PowerShell
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]
@@ -93,18 +91,20 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Az CLI login'
+      - name: Az CLI login
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   
-      - name: 'Run az commands'
-        run: |
-          az account show
-          az group list
-          pwd 
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
+            az group list
 ```
 
 Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both Windows and Linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the Windows runner. Please note that powershell login is not supported in macOS runners.
@@ -147,6 +147,8 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Acti
 ## Sample to connect to Azure US Government cloud
 
 ```yaml
+# File: .github/workflows/workflow.yml
+
     - name: Login to Azure US Gov Cloud with CLI
       uses: azure/login@v1
       with:
@@ -163,10 +165,9 @@ Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Acti
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
-## Sample Azure Login workflow that to run az cli on Azure Stack Hub
+## Sample Azure Login workflow that uses Azure login action to run az cli on Azure Stack Hub
 
 ```yaml
-
 # File: .github/workflows/workflow.yml
 
 on: [push]

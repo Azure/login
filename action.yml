@@ -1,6 +1,6 @@
 # Login to Azure subscription
 name: 'Azure Login'
-description: 'Authenticate to Azure using OIDC and run your Az CLI or Az PowerShell based Actions or scripts. github.com/Azure/Actions'
+description: 'Authenticate to Azure using OIDC and run your Az CLI or Az PowerShell based actions or scripts. github.com/Azure/Actions'
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
@@ -15,7 +15,7 @@ inputs:
     description: 'Azure subscriptionId'
     required: false
   enable-AzPSSession: 
-    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
+    description: 'Set this value to true to enable Azure PowerShell Login in addition to Az CLI login'
     required: false
     default: false
   environment:
@@ -23,7 +23,7 @@ inputs:
     required: false
     default: azurecloud
   allow-no-subscriptions:
-    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
+    description: 'Set this value to true to enable support for accessing tenants without subscriptions'
     required: false
     default: false
   audience:
