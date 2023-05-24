@@ -116,7 +116,8 @@ async function main() {
                 federatedToken = await core.getIDToken(audience);
             }
             catch (error) {
-                throw new Error(`${error.message.split(':')[1]}. Please make sure to give write permissions to id-token in the workflow.`);
+                core.error(`Please make sure to give write permissions to id-token in the workflow.`);
+                throw error;
             }
             if (!!federatedToken) {
                 let [issuer, subjectClaim] = await jwtParser(federatedToken);
