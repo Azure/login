@@ -64,6 +64,7 @@ async function main() {
         let environment = core.getInput("environment").toLowerCase();
         const enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         const allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
+        const scopeLevel = core.getInput('scope-level').toLowerCase();
 
         //Check for the credentials in individual parameters in the workflow.
         var servicePrincipalId = core.getInput('client-id', { required: false });
@@ -78,7 +79,7 @@ async function main() {
         if (servicePrincipalId || tenantId || subscriptionId) {
 
             //If few of the individual credentials (clent_id, tenat_id, subscription_id) are missing in action inputs.
-            if (!(servicePrincipalId && tenantId && (subscriptionId || allowNoSubscriptionsLogin)))
+            if (!(servicePrincipalId && tenantId && ((subscriptionId || allowNoSubscriptionsLogin) && scopeLevel == "subscription")))
                 throw new Error("Few credentials are missing. ClientId, tenantId are mandatory. SubscriptionId is also mandatory if allow-no-subscriptions is not set.");
         }
         else {
@@ -202,7 +203,8 @@ async function main() {
                 subscriptionId,
                 allowNoSubscriptionsLogin,
                 environment,
-                resourceManagerEndpointUrl);
+                resourceManagerEndpointUrl,
+                scopeLevel);
             await spnlogin.initialize();
             await spnlogin.login();
         }

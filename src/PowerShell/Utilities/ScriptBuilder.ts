@@ -25,7 +25,7 @@ export default class ScriptBuilder {
                     -Environment '${args.environment}' | out-null;`;
             }
             // command to set the subscription
-            if (args.scopeLevel === Constants.Subscription && !args.allowNoSubscriptionsLogin) {
+            if (args.scopeLevel.toLowerCase() === Constants.Subscription.toLowerCase() && !args.allowNoSubscriptionsLogin) {
                 command += `Set-AzContext -SubscriptionId '${args.subscriptionId}' -TenantId '${tenantId}' | out-null;`;
             }
         }

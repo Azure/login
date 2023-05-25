@@ -106,6 +106,8 @@ jobs:
             az group list
 ```
 
+
+
 Users can also specify `audience` field for access-token in the input parameters of the action. If not specified, it is defaulted to `api://AzureADTokenExchange`. This action supports login az powershell as well for both Windows and Linux runners by setting an input parameter `enable-AzPSSession: true`. Below is the sample workflow for the same using the Windows runner. Please note that powershell login is not supported in macOS runners.
 
 ## Sample workflow that uses Azure login action using OIDC to run az PowerShell (Windows)
@@ -269,6 +271,28 @@ jobs:
         allow-no-subscriptions: true
 ```
 
+## Support for using `scope-level`
+
+Capability has been added to support access to the different scope levels (`subscription`, `managementgroup`, or `tenant`) for both OIDC and non-OIDC. This can be useful if you need to target a particular management group and actually if scope level is `tenant` its the same as having `allow-no-subscription` enabled
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: AzureLoginWithNoSubscriptions
+
+jobs:
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        scope-level: 'managementgroup'
+```
 ## Az logout and security hardening
 
 This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get reimaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).

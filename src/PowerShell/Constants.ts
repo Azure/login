@@ -4,6 +4,8 @@ export default class Constants {
     static readonly versionPattern = /[0-9]+\.[0-9]+\.[0-9]+/;
 
     static readonly AzureCloud: string = "AzureCloud";
+    static readonly Tenant: string = "Tenant";
+    static readonly ManagementGroup: string = "ManagementGroup";
     static readonly Subscription: string = "Subscription";
     static readonly ServicePrincipal: string = "ServicePrincipal";
 
