@@ -1,11 +1,17 @@
 import { ServicePrincipalLogin } from '../../src/PowerShell/ServicePrincipalLogin';
+import { LoginConfig } from '../../src/common/LoginConfig';
 
 jest.mock('../../src/PowerShell/Utilities/Utils');
 jest.mock('../../src/PowerShell/Utilities/PowerShellToolRunner');
 let spnlogin: ServicePrincipalLogin;
 
 beforeAll(() => {
-    spnlogin = new ServicePrincipalLogin("servicePrincipalID", "servicePrinicipalkey", null, "tenantId", "subscriptionId", false, null, null);
+    var loginConfig = new LoginConfig();
+    loginConfig.servicePrincipalId = "servicePrincipalID";
+    loginConfig.servicePrincipalKey = "servicePrinicipalkey";
+    loginConfig.tenantId = "tenantId";
+    loginConfig.subscriptionId = "subscriptionId";
+    spnlogin = new ServicePrincipalLogin(loginConfig);
 });
 
 afterEach(() => {
