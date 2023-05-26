@@ -4,36 +4,15 @@ import Utils from './Utilities/Utils';
 import PowerShellToolRunner from './Utilities/PowerShellToolRunner';
 import ScriptBuilder from './Utilities/ScriptBuilder';
 import Constants from './Constants';
+import { LoginConfig } from '../common/LoginConfig';
 
 export class ServicePrincipalLogin implements IAzurePowerShellSession {
     static readonly scopeLevel: string = Constants.Subscription;
     static readonly scheme: string = Constants.ServicePrincipal;
-    environment: string;
-    servicePrincipalId: string;
-    servicePrincipalKey: string;
-    tenantId: string;
-    subscriptionId: string;
-    resourceManagerEndpointUrl: string;
-    allowNoSubscriptionsLogin: boolean;
-    federatedToken: string;
+    loginConfig: LoginConfig;
 
-    constructor(servicePrincipalId: string,
-        servicePrincipalKey: string,
-        federatedToken: string,
-        tenantId: string,
-        subscriptionId: string,
-        allowNoSubscriptionsLogin: boolean,
-        environment: string,
-        resourceManagerEndpointUrl: string) {
-
-        this.servicePrincipalId = servicePrincipalId;
-        this.servicePrincipalKey = servicePrincipalKey;
-        this.federatedToken = federatedToken;
-        this.tenantId = tenantId;
-        this.subscriptionId = subscriptionId;
-        this.environment = environment;
-        this.resourceManagerEndpointUrl = resourceManagerEndpointUrl;
-        this.allowNoSubscriptionsLogin = allowNoSubscriptionsLogin;
+    constructor(loginConfig: LoginConfig) {
+        this.loginConfig = loginConfig;
     }
 
     async initialize() {
@@ -53,8 +32,7 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
                 },
                 stderr: (data: Buffer) => {
                     let error = data.toString();
-                    if (error && error.trim().length !== 0)
-                    {
+                    if (error && error.trim().length !== 0) {
                         commandStdErr = true;
                         core.error(error);
                     }
@@ -62,16 +40,16 @@ export class ServicePrincipalLogin implements IAzurePowerShellSession {
             }
         };
         const args: any = {
-            servicePrincipalId: this.servicePrincipalId,
-            servicePrincipalKey: this.servicePrincipalKey,
-            federatedToken: this.federatedToken,
-            subscriptionId: this.subscriptionId,
-            environment: this.environment,
+            servicePrincipalId: this.loginConfig.servicePrincipalId,
+            servicePrincipalKey: this.loginConfig.servicePrincipalKey,
+            federatedToken: this.loginConfig.federatedToken,
+            subscriptionId: this.loginConfig.subscriptionId,
+            environment: this.loginConfig.environment,
             scopeLevel: ServicePrincipalLogin.scopeLevel,
-            allowNoSubscriptionsLogin: this.allowNoSubscriptionsLogin,
-            resourceManagerEndpointUrl: this.resourceManagerEndpointUrl
+            allowNoSubscriptionsLogin: this.loginConfig.allowNoSubscriptionsLogin,
+            resourceManagerEndpointUrl: this.loginConfig.resourceManagerEndpointUrl
         }
-        const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.tenantId, args);
+        const script: string = new ScriptBuilder().getAzPSLoginScript(ServicePrincipalLogin.scheme, this.loginConfig.tenantId, args);
         await PowerShellToolRunner.init();
         await PowerShellToolRunner.executePowerShellScriptBlock(script, options);
         const result: any = JSON.parse(output.trim());
