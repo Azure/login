@@ -44,12 +44,13 @@ export class LoginConfig {
             this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         }
 
-        if (!this.servicePrincipalKey) {
-            this.getFederatedToken();
-        }
+        this.getFederatedTokenIfNecessary();
     }
 
-    async getFederatedToken() {
+    async getFederatedTokenIfNecessary() {
+        if (this.servicePrincipalKey) {
+            return;
+        }
         try {
             this.federatedToken = await core.getIDToken(this.audience);
         }
