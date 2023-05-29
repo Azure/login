@@ -59,7 +59,7 @@ export class LoginConfig {
             throw error;
         }
         let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
-        console.log("Federated token details: \n issuer - " + issuer + " \n subject claim - " + subjectClaim);
+        console.log("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
     }
 
     async validate() {
