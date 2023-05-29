@@ -30,11 +30,8 @@ export class LoginConfig {
         this.tenantId = core.getInput('tenant-id', { required: false });
         this.subscriptionId = core.getInput('subscription-id', { required: false });
 
-        this.audience = core.getInput('audience', { required: false });
-        this.federatedToken = null;
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
-
         if (creds) {
             core.debug('Reading creds in JSON...');
             this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.getSecret("$.clientId", false);
@@ -44,6 +41,8 @@ export class LoginConfig {
             this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         }
 
+        this.audience = core.getInput('audience', { required: false });
+        this.federatedToken = null;
         this.getFederatedTokenIfNecessary();
     }
 
