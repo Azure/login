@@ -26,8 +26,10 @@ export class AzureCliLogin {
         };
         await this.executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
-
-        this.setAzurestackEnvIfNecessary();
+        
+        if (this.loginConfig.environment == "azurestack") {
+            this.setAzurestackEnv();
+        }
 
         await this.executeAzCliCommand(`cloud set -n "${this.loginConfig.environment}"`, false);
         console.log(`Done setting cloud: "${this.loginConfig.environment}"`);
@@ -40,12 +42,12 @@ export class AzureCliLogin {
         if (this.loginConfig.allowNoSubscriptionsLogin) {
             commonArgs = commonArgs.concat("--allow-no-subscriptions");
         }
-        if (this.loginConfig.enableOIDC) {
-            commonArgs = commonArgs.concat("--federated-token", this.loginConfig.federatedToken);
+        if (this.loginConfig.servicePrincipalKey) {
+            console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
+            commonArgs = commonArgs.concat("-p", this.loginConfig.servicePrincipalKey);
         }
         else {
-            console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-            commonArgs = commonArgs.concat(`--password=${this.loginConfig.servicePrincipalKey}`);
+            commonArgs = commonArgs.concat("--federated-token", this.loginConfig.federatedToken);
         }
 
         const loginOptions: ExecOptions = defaultExecOptions();
@@ -60,10 +62,7 @@ export class AzureCliLogin {
         }
     }
 
-    async setAzurestackEnvIfNecessary() {
-        if (this.loginConfig.environment != "azurestack") {
-            return;
-        }
+    async setAzurestackEnv() {
         if (!this.loginConfig.resourceManagerEndpointUrl) {
             throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
         }
