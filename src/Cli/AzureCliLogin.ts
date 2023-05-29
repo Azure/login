@@ -7,7 +7,7 @@ import * as io from '@actions/io';
 export class AzureCliLogin {
     loginConfig: LoginConfig;
     azPath: string;
-    
+
     constructor(loginConfig: LoginConfig) {
         this.loginConfig = loginConfig;
     }
@@ -26,7 +26,7 @@ export class AzureCliLogin {
         };
         await this.executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
-        
+
         if (this.loginConfig.environment == "azurestack") {
             this.setAzurestackEnv();
         }
