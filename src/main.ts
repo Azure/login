@@ -16,7 +16,7 @@ async function main() {
         core.exportVariable('AZURE_HTTP_USER_AGENT', userAgentString);
         core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
 
-        // perpare the login configuration
+        // prepare the login configuration
         var loginConfig = new LoginConfig();
         await loginConfig.initialize();
         await loginConfig.validate();
