@@ -27,9 +27,7 @@ export class AzureCliLogin {
         await this.executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
 
-        if (this.loginConfig.environment == "azurestack") {
-            this.setAzurestackEnv();
-        }
+        this.setAzurestackEnvIfNecessary();
 
         await this.executeAzCliCommand(`cloud set -n "${this.loginConfig.environment}"`, false);
         console.log(`Done setting cloud: "${this.loginConfig.environment}"`);
@@ -62,7 +60,10 @@ export class AzureCliLogin {
         }
     }
 
-    async setAzurestackEnv() {
+    async setAzurestackEnvIfNecessary() {
+        if (this.loginConfig.environment != "azurestack") {
+            return;
+        }
         if (!this.loginConfig.resourceManagerEndpointUrl) {
             throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
         }
