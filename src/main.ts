@@ -7,7 +7,6 @@ var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USE
 var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREPS_HOST_ENVIRONMENT}` : "";
 
 async function main() {
-    var isAzCLISuccess = false;
     try {
         let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
         let actionName = 'AzureLogin';
@@ -24,7 +23,6 @@ async function main() {
         // login to Azure Cli
         var cliLogin = new AzureCliLogin(loginConfig);
         await cliLogin.login();
-        isAzCLISuccess = true;
 
         //login to Azure PowerShell
         if (loginConfig.enableAzPSSession) {
@@ -37,7 +35,7 @@ async function main() {
         console.log("Login successful.");
     }
     catch (error) {
-        if (!isAzCLISuccess) {
+        if (!cliLogin.isSuccess) {
             core.setFailed(`Az CLI Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
         }
         else {

@@ -7,13 +7,20 @@ import * as io from '@actions/io';
 export class AzureCliLogin {
     loginConfig: LoginConfig;
     azPath: string;
+    loginOptions: ExecOptions;
+    isSuccess: boolean;
 
     constructor(loginConfig: LoginConfig) {
         this.loginConfig = loginConfig;
+        this.loginOptions = defaultExecOptions();
+        this.isSuccess = false;
     }
 
     async login() {
         this.azPath = await io.which("az", true);
+        if (!this.azPath) {
+            throw new Error("az cli is not found in the runner.");
+        }
         core.debug(`az cli path: ${this.azPath}`);
 
         let output: string = "";
@@ -24,6 +31,7 @@ export class AzureCliLogin {
                 }
             }
         };
+
         await this.executeAzCliCommand("--version", true, execOptions);
         core.debug(`az cli version used:\n${output}`);
 
@@ -32,32 +40,10 @@ export class AzureCliLogin {
         await this.executeAzCliCommand(`cloud set -n "${this.loginConfig.environment}"`, false);
         console.log(`Done setting cloud: "${this.loginConfig.environment}"`);
 
-        // Attempting Az cli login
-        var commonArgs = ["--service-principal",
-            "-u", this.loginConfig.servicePrincipalId,
-            "--tenant", this.loginConfig.tenantId
-        ];
-        if (this.loginConfig.allowNoSubscriptionsLogin) {
-            commonArgs = commonArgs.concat("--allow-no-subscriptions");
-        }
-        if (this.loginConfig.servicePrincipalKey) {
-            console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-            commonArgs = commonArgs.concat("-p", this.loginConfig.servicePrincipalKey);
-        }
-        else {
-            commonArgs = commonArgs.concat("--federated-token", this.loginConfig.federatedToken);
-        }
-
-        const loginOptions: ExecOptions = defaultExecOptions();
-        await this.executeAzCliCommand(`login`, true, loginOptions, commonArgs);
-
-        if (!this.loginConfig.allowNoSubscriptionsLogin) {
-            var args = [
-                "--subscription",
-                this.loginConfig.subscriptionId
-            ];
-            await this.executeAzCliCommand(`account set`, true, loginOptions, args);
-        }
+        await this.loginWithSecret();
+        await this.loginWithOIDC();
+        await this.loginWithUserManagedIdentity();
+        await this.loginWithSystemManagedIdentity();
     }
 
     async setAzurestackEnvIfNecessary() {
@@ -93,6 +79,111 @@ export class AzureCliLogin {
         }
 
         console.log(`Done registering cloud: "${this.loginConfig.environment}"`)
+    }
+
+    async loginWithSecret() {
+        if (!(this.loginConfig.servicePrincipalId && this.loginConfig.tenantId && this.loginConfig.servicePrincipalKey) || this.isSuccess) {
+            return;
+        }
+        console.log(`Attempting az cli login by using service principal with secret...\n
+                     Note: Azure/login action also supports OIDC login mechanism. If you want to use OIDC login, please do not input ClientSecret. 
+                     Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.`);
+        var commonArgs = ["--service-principal",
+            "-u", this.loginConfig.servicePrincipalId,
+            "--tenant", this.loginConfig.tenantId,
+            "-p", this.loginConfig.servicePrincipalKey
+        ];
+        if (this.loginConfig.allowNoSubscriptionsLogin) {
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+        try {
+            await this.executeAzCliCommand(`login`, true, this.loginOptions, commonArgs);
+            await this.setSubscription();
+            this.isSuccess = true;
+        }
+        catch (error) {
+            core.error(`Failed with error: ${error}.\n
+                        Stop login by using service principal with secret.`);
+        }
+    }
+
+    async loginWithOIDC() {
+        if (!(this.loginConfig.servicePrincipalId && this.loginConfig.tenantId) || this.isSuccess) {
+            return;
+        }
+        console.log(`Attempting az cli login by using OIDC...`);
+        var commonArgs = ["--service-principal",
+            "-u", this.loginConfig.servicePrincipalId,
+            "--tenant", this.loginConfig.tenantId,
+            "--federated-token", this.loginConfig.federatedToken
+        ];
+        if (this.loginConfig.allowNoSubscriptionsLogin) {
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+        try {
+            await this.executeAzCliCommand(`login`, true, this.loginOptions, commonArgs);
+            await this.setSubscription();
+            this.isSuccess = true;
+        }
+        catch (error) {
+            core.error(`Failed with error: ${error}.\n
+                        Stop login by using OIDC.`);
+        }
+    }
+
+    async loginWithUserManagedIdentity() {
+        if (!this.loginConfig.servicePrincipalId || this.isSuccess) {
+            return;
+        }
+        console.log(`Attempting az cli login by using user-assigned managed identity...`);
+        var commonArgs = ["--identity",
+            "-u", this.loginConfig.servicePrincipalId];
+        if (this.loginConfig.allowNoSubscriptionsLogin) {
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+        await this.executeAzCliCommand(`login`, true, this.loginOptions, commonArgs);
+        await this.setSubscription();
+        try {
+            await this.executeAzCliCommand(`login`, true, this.loginOptions, commonArgs);
+            await this.setSubscription();
+            this.isSuccess = true;
+        }
+        catch (error) {
+            core.error(`Failed with error: ${error}.\n
+                        Stop login by using user-assigned managed identity.`);
+        }
+    }
+
+    async loginWithSystemManagedIdentity() {
+        if (this.isSuccess) {
+            return;
+        }
+        console.log(`Attempting az cli login by using system-assigned managed identity...`);
+        var commonArgs = ["--identity"];
+        if (this.loginConfig.allowNoSubscriptionsLogin) {
+            commonArgs = commonArgs.concat("--allow-no-subscriptions");
+        }
+        try {
+            await this.executeAzCliCommand(`login`, true, this.loginOptions, commonArgs);
+            await this.setSubscription();
+            this.isSuccess = true;
+        }
+        catch (error) {
+            core.error(`Failed with error: ${error}.\n
+                        Stop login by using system-assigned managed identity.`);
+        }
+    }
+
+    async setSubscription() {
+        if (!this.loginConfig.subscriptionId) {
+            if (!this.loginConfig.allowNoSubscriptionsLogin) {
+                core.warning(`No subscription-id is given. Skip setting subscription...
+                              If there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.`);
+            }
+            return;
+        }
+        var args = ["--subscription", this.loginConfig.subscriptionId];
+        await this.executeAzCliCommand(`account set`, true, this.loginOptions, args);
     }
 
     async executeAzCliCommand(

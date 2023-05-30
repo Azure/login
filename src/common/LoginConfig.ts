@@ -62,12 +62,6 @@ export class LoginConfig {
     }
 
     async validate() {
-        if (!this.servicePrincipalId || !this.tenantId) {
-            throw new Error("Not all values are present in the credentials. Ensure clientId and tenantId are supplied.");
-        }
-        if (!this.subscriptionId && !this.allowNoSubscriptionsLogin) {
-            throw new Error("SubscriptionId is mandatory if allow-no-subscriptions is not set.");
-        }
         if (!LoginConfig.azureSupportedCloudName.has(this.environment)) {
             throw new Error("Unsupported value for environment is passed. The list of supported values for environment are 'azureusgovernment', 'azurechinacloud', 'azuregermancloud', 'azurecloud' or 'azurestack'");
         }
