@@ -12,13 +12,27 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
+- About the parameter `subscription-id`: This parameter is used to specify which subscription to work. If you don't specify a subscription, the Action uses your current, active subscription.
+
 - To login into one of the Azure Government clouds or Azure Stack, set the optional parameter `environment` with one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureStack`. If this parameter is not specified, it takes the default value `AzureCloud` and connects to the Azure Public Cloud. Additionally, the parameter `creds` takes the Azure service principal created in the particular cloud to connect (Refer to the [Configure a service principal with a secret](#configure-a-service-principal-with-a-secret) section below for details).
-- The Action supports two different ways of authentication with Azure. One using the Azure Service Principal with secrets. The other is OpenID connect (OIDC) method of authentication using Azure [Workload Identity Federation](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation). **We recommend using OIDC based authentication for increased security.**
+
+- The Action supports three different ways of authentication with Azure.
+  1. Using the Azure Service Principal with secrets.
+  2. Using OpenID connect (OIDC) method of authentication by Azure [Workload Identity Federation](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation). **We recommend using OIDC based authentication for increased security.**
+  3. Using the Managed Identity configued on an Azure VM.
+
 - To login using Azure Service Principal with a secret, follow [this](#configure-a-service-principal-with-a-secret) guidance.
 - To login using **OpenID Connect (OIDC) based Federated Identity Credentials**, you need to first configure trust between GitHub workflow and an Azure Managed Identity or an Azure AD App (Service Principal)
    1. Follow [this](#configure-a-federated-credential-to-use-oidc-based-authentication) guidance to create a Federated Credential associated with your Azure Managed Identity or AD App (Service Principal). This is needed to establish OIDC trust between GitHub deployment workflows and the specific Azure resources scoped by the Managed Identity/service principal.
    2. In your GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
+- To login using Managed Identities, follow [this](#configure-azure-managed-identities-with-self-hosted-runners) guidance.
+
+- The Action identifies the authentication method by the parameters you input.
+  1. If all the parameters: `clientId`, `tenantId` and `clientSecret` are detected in your output, we will attempt to login by using service principal with the secret.
+  2. If parameters: `clientId` and `tenantId` are detected in your output, we will attempt to login by using OIDC.
+  3. If parameters: `clientId` is detected in your output, we will attempt to login by using user-assigned identity.
+  4. If no parameter is detected in your output, we will attempt to login by using system-assigned identity.
 
 Note:
 
@@ -143,6 +157,44 @@ jobs:
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
+## Sample workflow that uses Azure login action with system-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+on: [push]
+name: Azure System-assigned Managed Identity sample
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Azure Login
+      uses: azure/login@v1
+
+    - name: Show az account
+      run: |
+        az account show
+```
+
+## Sample workflow that uses Azure login action with user-assigned managed identity
+
+```yaml
+# File: .github/workflows/workflow.yml
+on: [push]
+name: Azure User-assigned Managed Identity sample
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Show az account
+      run: |
+        az account show
+```
+
 ## Sample to connect to Azure US Government cloud
 
 ```yaml
@@ -196,7 +248,7 @@ Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com
 
 For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) in the GitHub repository and then use them in the workflow.
 
-Follow the following steps to configure Azure Service Principal with a secret:
+Follow the following steps to configure Azure Service Principal with a secret in the scope of `resource-group` as the role of `contributor`.
 
 - Define a new secret under your repository settings, Add secret menu
 - Store the output of the below [az cli](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
@@ -208,7 +260,7 @@ Follow the following steps to configure Azure Service Principal with a secret:
                             --sdk-auth
 ```
 
-Replace `{subscription-id}` and `{resource-group}` with the subscription and resource group details, respectively.
+Please assign the service principal with proper `role` and `scope` you desired. Replace `{subscription-id}` and `{resource-group}` with the subscription and resource group details, respectively.
 
 The command should output a JSON object similar to this:
 
@@ -242,13 +294,22 @@ If you already created and assigned a Service Principal in Azure you can manuall
 
 ### Configure a Federated Credential to use OIDC based authentication
 
-Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app”](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support.
+Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a federated identity credential on user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support.
 
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
+### Configure Azure Managed Identities with self-hosted runners
+
+If you want to use managed identities (system- or user-assigned) to sign in, a self-hosted Github runner is required to be installed on an Azure VM with a managed identity configured. Please refer to Microsoft's documentation at ["Configure managed identities for Azure resources on an Azure VM"](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use system-assigned managed identity, there are no mandatory parameters. To use user-assigned managed identity, `client-id` of the identity is mandatory.
+To get the `client-id` of a user-assigned managed identity, use the command:
+
+```bash
+az vm identity show --resource-group <resource_group_name> --name <vm_name> --query userAssignedIdentities
+```
+
 ## Support for using `allow-no-subscriptions` flag with az login
 
-Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+Capability has been added to support access to tenants without subscriptions. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
 
 ```yaml
 # File: .github/workflows/workflow.yml
