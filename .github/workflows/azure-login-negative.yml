@@ -1,0 +1,369 @@
+name: Azure Login Action Negative Test
+on:
+  pull_request_target:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+
+  OSTest:
+    runs-on: macos-latest
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v2
+      with: 
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Set Node.js 16.x for GitHub Action
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+        
+    - name: 'Run L0 tests'
+      id: run_test
+      continue-on-error: true
+      run: |
+        npm run test
+    
+    - name: Check Last step failed
+      if: steps.run_test.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds
+      id: login_1
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_1.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+        az group show --name GitHubActionGroup
+        az vm list
+
+    - name: Run Azure PowerShell
+      id: ps_1
+      continue-on-error: true
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzVM
+
+    - name: Check Last step failed
+      if: steps.ps_1.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters
+      id: login_2
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_2.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Run Azure Cli again
+      run: |
+        az account show
+
+    - name: Run Azure PowerShell again
+      id: ps_2
+      continue-on-error: true
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+
+    - name: Check Last step failed
+      if: steps.ps_2.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+  PermissionTest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v2
+      with: 
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Set Node.js 16.x for GitHub Action
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      id: cli_3
+      continue-on-error: true
+      run: |
+        az account show
+        az group show --name GitHubActionGroup
+        az vm list
+
+    - name: Check Last step failed
+      if: steps.cli_3.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Run Azure PowerShell
+      id: ps_3
+      continue-on-error: true
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzVM
+
+    - name: Check Last step failed
+      if: steps.ps_3.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+  ParameterTest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v2
+      with: 
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Set Node.js 16.x for GitHub Action
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with creds, missing parameters in creds
+      id: login_4
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP3_NO_Secret}}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_4.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, wrong keys
+      id: login_5
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP4_Wrong_Key}}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_5.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, no creds or individual parameters
+      id: login_6
+      continue-on-error: true
+      uses: ./
+      with:
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_6.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, only client-id, no tenant-id, subscription-id
+      id: login_7
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_7.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, only tenant-id, subscription-id, no client-id
+      id: login_8
+      continue-on-error: true
+      uses: ./
+      with:
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_8.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, disable ps session
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: false
+
+    - name: Run Azure Cli 
+      run: |
+        az account show
+        az group show --name GitHubActionGroup
+        az vm list
+
+    - name: Run Azure PowerShell
+      id: ps_8
+      continue-on-error: true
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzVM
+
+    - name: Check Last step failed
+      if: steps.ps_8.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, wrong boolean value
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: notboolean
+
+    - name: Run Azure Cli 
+      run: |
+        az account show
+        az group show --name GitHubActionGroup
+        az vm list
+
+    - name: Run Azure PowerShell
+      id: ps_9
+      continue-on-error: true
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzVM
+
+    - name: Check Last step failed
+      if: steps.ps_9.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, with a wrong audience
+      id: login_10
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        audience: "https://github.com/actions"
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_10.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
