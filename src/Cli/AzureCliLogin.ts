@@ -85,9 +85,7 @@ export class AzureCliLogin {
         if (!(this.loginConfig.servicePrincipalId && this.loginConfig.tenantId && this.loginConfig.servicePrincipalKey) || this.isSuccess) {
             return;
         }
-        console.log(`Attempting az cli login by using service principal with secret...\n
-                     Note: Azure/login action also supports OIDC login mechanism. If you want to use OIDC login, please do not input ClientSecret. 
-                     Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.`);
+        console.log(`Attempting az cli login by using service principal with secret...\nNote: Azure/login action also supports OIDC login mechanism. If you want to use OIDC login, please do not input ClientSecret. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.`);
         var commonArgs = ["--service-principal",
             "-u", this.loginConfig.servicePrincipalId,
             "--tenant", this.loginConfig.tenantId,
@@ -102,8 +100,7 @@ export class AzureCliLogin {
             this.isSuccess = true;
         }
         catch (error) {
-            core.error(`Failed with error: ${error}.\n
-                        Stop login by using service principal with secret.`);
+            core.error(`Failed with error: ${error}.\nStop login by using service principal with secret.`);
         }
     }
 
@@ -126,8 +123,7 @@ export class AzureCliLogin {
             this.isSuccess = true;
         }
         catch (error) {
-            core.error(`Failed with error: ${error}.\n
-                        Stop login by using OIDC.`);
+            core.error(`Failed with error: ${error}.\nStop login by using OIDC.`);
         }
     }
 
@@ -149,8 +145,7 @@ export class AzureCliLogin {
             this.isSuccess = true;
         }
         catch (error) {
-            core.error(`Failed with error: ${error}.\n
-                        Stop login by using user-assigned managed identity.`);
+            core.error(`Failed with error: ${error}.\nStop login by using user-assigned managed identity.`);
         }
     }
 
@@ -169,16 +164,14 @@ export class AzureCliLogin {
             this.isSuccess = true;
         }
         catch (error) {
-            core.error(`Failed with error: ${error}.\n
-                        Stop login by using system-assigned managed identity.`);
+            core.error(`Failed with error: ${error}.\nStop login by using system-assigned managed identity.`);
         }
     }
 
     async setSubscription() {
         if (!this.loginConfig.subscriptionId) {
             if (!this.loginConfig.allowNoSubscriptionsLogin) {
-                core.warning(`No subscription-id is given. Skip setting subscription...
-                              If there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.`);
+                core.warning(`No subscription-id is given. Skip setting subscription...\nIf there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.`);
             }
             return;
         }

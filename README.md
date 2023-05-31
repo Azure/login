@@ -31,8 +31,8 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 - The Action identifies the authentication method by the parameters you input.
   1. If all the parameters: `clientId`, `tenantId` and `clientSecret` are detected in your output, we will attempt to login by using service principal with the secret.
   2. If parameters: `clientId` and `tenantId` are detected in your output, we will attempt to login by using OIDC.
-  3. If parameters: `clientId` is detected in your output, we will attempt to login by using user-assigned identity.
-  4. If no parameter is detected in your output, we will attempt to login by using system-assigned identity.
+  3. If parameters: `clientId` is detected in your output, we will attempt to login by using user-assigned managed identity.
+  4. If no parameter is detected in your output, we will attempt to login by using system-assigned managed identity.
 
 Note:
 
