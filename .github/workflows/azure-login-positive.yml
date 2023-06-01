@@ -19,9 +19,6 @@ jobs:
     steps:
     - name: 'Checking out repo code'
       uses: actions/checkout@v2
-      with: 
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Set Node.js 16.x for GitHub Action
       uses: actions/setup-node@v1
@@ -88,9 +85,6 @@ jobs:
     steps:
     - name: 'Checking out repo code'
       uses: actions/checkout@v2
-      with: 
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        ref: ${{ github.event.pull_request.head.ref }}
 
     - name: Set Node.js 16.x for GitHub Action
       uses: actions/setup-node@v1
