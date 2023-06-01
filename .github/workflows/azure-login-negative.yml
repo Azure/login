@@ -1,8 +1,7 @@
 name: Azure Login Action Negative Test
 on:
-  pull_request_target:
-    branches:
-      - master
+  workflow_dispatch:
+  push:
 
 permissions:
   id-token: write
