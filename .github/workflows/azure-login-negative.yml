@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3.5.2
 
     - name: Set Node.js 16.x for GitHub Action
       uses: actions/setup-node@v1
@@ -127,7 +127,7 @@ jobs:
     steps:
 
     - name: 'Checking out repo code'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3.5.2
 
     - name: Set Node.js 16.x for GitHub Action
       uses: actions/setup-node@v1
@@ -190,7 +190,7 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3.5.2
 
     - name: Set Node.js 16.x for GitHub Action
       uses: actions/setup-node@v1
