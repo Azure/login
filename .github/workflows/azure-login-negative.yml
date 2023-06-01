@@ -11,7 +11,7 @@ jobs:
 
   OSTest:
     runs-on: macos-latest
-    environment: Automation test
+    environment: autotest
 
     steps:
     - name: 'Checking out repo code'
@@ -122,7 +122,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    environment: Automation test
+    environment: autotest
 
     steps:
 
@@ -186,7 +186,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    environment: Automation test
+    environment: autotest
 
     steps:
     - name: 'Checking out repo code'
