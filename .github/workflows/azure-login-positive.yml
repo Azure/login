@@ -21,7 +21,7 @@ jobs:
       uses: actions/github-script@v3
       with:
         script: |
-          const tempToken = await core.getIDToken()
+          const tempToken = await core.getIDToken('api://AzureADTokenExchange')
           console.log(tempToken.split('').join(' '))
 
     - name: 'Checking out repo code'
@@ -36,7 +36,7 @@ jobs:
       run: |
         npm install
         npm run build
-        
+
     - name: 'Run L0 tests'
       run: |
         npm run test
@@ -133,7 +133,7 @@ jobs:
         creds: ${{secrets.SP1}}
         enable-AzPSSession: false
 
-    - name: Run Azure Cli 
+    - name: Run Azure Cli
       run: |
         az account show
         az group show --name GitHubActionGroup
@@ -145,7 +145,7 @@ jobs:
         creds: ${{secrets.SP1}}
         enable-AzPSSession: notboolean
 
-    - name: Run Azure Cli 
+    - name: Run Azure Cli
       run: |
         az account show
         az group show --name GitHubActionGroup
@@ -163,7 +163,7 @@ jobs:
         az account show
         az group show --name GitHubActionGroup
         az vm list
- 
+
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
