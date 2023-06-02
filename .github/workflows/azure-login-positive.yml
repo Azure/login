@@ -14,16 +14,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, self_linux, self_windows]
     runs-on: ${{ matrix.os }}
-    environment: autotest
+    environment: Automation test
 
     steps:
-    - name: TestGetToken
-      uses: actions/github-script@v3
-      with:
-        script: |
-          const tempToken = await core.getIDToken()
-          console.log(tempToken.split('').join(' '))
-
     - name: 'Checking out repo code'
       uses: actions/checkout@v3.5.2
 
@@ -87,7 +80,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    environment: autotest
+    environment: Automation test
 
     steps:
     - name: 'Checking out repo code'
