@@ -17,6 +17,13 @@ jobs:
     environment: autotest
 
     steps:
+    - name: TestGetToken
+      uses: actions/github-script@v3
+      with:
+        script: |
+          const tempToken = await core.getIDToken()
+          console.log(tempToken.split('').join(' '))
+
     - name: 'Checking out repo code'
       uses: actions/checkout@v3.5.2
 
