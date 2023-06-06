@@ -122,7 +122,7 @@ jobs:
               REPORT="${REPORT}\r\n"
               if [ ${{needs.az-login-test-non-oidc.result}} == 'success' ]; then REPORT="${REPORT}\r\n|✅|<${RUN_URL}|az-login-test-non-oidc>"; else REPORT="${REPORT}\r\n|❌|<${RUN_URL}|az-login-test-non-oidc>"; fi
               if [ ${{needs.az-login-test-oidc.result}} == 'success' ]; then REPORT="${REPORT}\r\n|✅|<${RUN_URL}|az-login-test-oidc>"; else REPORT="${REPORT}\r\n|❌|<${RUN_URL}|az-login-test-oidc>"; fi
-              echo "::set-output name=report::$REPORT"
+              echo -e "report=$REPORT" >> $GITHUB_OUTPUT
 
           - name: Post to slack
             shell: bash
