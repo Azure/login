@@ -1,0 +1,310 @@
+name: Azure Login Action Positive Test
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  BasicTest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, self_linux, self_windows]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+      - name: "Checking out repo code"
+        uses: actions/checkout@v3.5.2
+
+      - name: Set Node.js 16.x for GitHub Action
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: "Validate build"
+        run: |
+          npm install
+          npm run build
+
+      - name: "Run L0 tests"
+        run: |
+          npm run test
+
+      - name: Login with creds
+        uses: ./
+        with:
+          creds: ${{secrets.SP1}}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+          az group show --name GitHubActionGroup
+          az vm list
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+            Get-AzResourceGroup -Name GitHubActionGroup
+            Get-AzVM
+
+      - name: Login with individual parameters
+        uses: ./
+        with:
+          client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+          tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+          subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli again
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell again
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+  ParameterTest:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+      - name: "Checking out repo code"
+        uses: actions/checkout@v3.5.2
+
+      - name: Set Node.js 16.x for GitHub Action
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: "Validate build"
+        run: |
+          npm install
+          npm run build
+
+      # Attempt with secret will fail, Attempt with OIDC will succeed with SP2
+      - name: Login with both creds and individual parameters
+        uses: ./
+        with:
+          creds: ${{secrets.SP1}}
+          client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+          tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+          subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+          az group show --name GitHubActionGroup
+          az vm list
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+            Get-AzResourceGroup -Name GitHubActionGroup
+            Get-AzVM
+
+      - name: Login with creds, disable ps session
+        uses: ./
+        with:
+          creds: ${{secrets.SP1}}
+          enable-AzPSSession: false
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+          az group show --name GitHubActionGroup
+          az vm list
+
+      - name: Login with creds, wrong boolean value
+        uses: ./
+        with:
+          creds: ${{secrets.SP1}}
+          enable-AzPSSession: notboolean
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+          az group show --name GitHubActionGroup
+          az vm list
+
+      - name: Login by OIDC with all info in creds
+        uses: ./
+        with:
+          creds: ${{secrets.SP2}}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+      - name: Login with creds, allow no subscription
+        uses: ./
+        with:
+          creds: ${{secrets.SP1}}
+          allow-no-subscriptions: true
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+          az group show --name GitHubActionGroup
+          az vm list
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+            Get-AzResourceGroup -Name GitHubActionGroup
+            Get-AzVM
+
+      - name: Login without subscriptionId
+        uses: ./
+        with:
+          client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+          tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+      - name: Login with individual parameters, no subscription, allow no subscription
+        uses: ./
+        with:
+          client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+          tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+          allow-no-subscriptions: true
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+  VMTest:
+    strategy:
+      matrix:
+        os: [self_linux, self_windows]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: "Checking out repo code"
+        uses: actions/checkout@v3.5.2
+
+      - name: Set Node.js 16.x for GitHub Action
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: "Validate build"
+        run: |
+          npm install
+          npm run build
+
+      - name: Login with system-assigned managed identity
+        uses: ./
+        with:
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+      - name: Login with user assigned managed identity
+        uses: ./
+        with:
+          client-id: ${{ secrets.UMI1_CLIENT_ID }}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+      - name: Login with user-assigned managed identity with subscription-id
+        uses: ./
+        with:
+          client-id: ${{ secrets.UMI1_CLIENT_ID }}
+          subscription-id: ${{ secrets.UMI1_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
+
+      - name: Login with tenant-level user-assigned managed identity with allow-no-subscriptions
+        uses: ./
+        with:
+          client-id: ${{ secrets.UMI2_CLIENT_ID }}
+          allow-no-subscriptions: true
+          enable-AzPSSession: true
+
+      - name: Run Azure Cli
+        run: |
+          az account show
+
+      - name: Run Azure PowerShell
+        uses: azure/powershell@v1.2.0
+        with:
+          azPSVersion: "latest"
+          inlineScript: |
+            Get-AzContext | Format-List
