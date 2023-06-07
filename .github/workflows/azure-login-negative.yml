@@ -379,13 +379,15 @@ jobs:
         npm run build
 
     - name: Login with tenant-level user-assigned managed identity, no allow-no-subscriptions
+      id: login_11
+      continue-on-error: true
       uses: ./
       with:
         client-id: ${{ secrets.UMI2_CLIENT_ID }}
         enable-AzPSSession: true
 
     - name: Check Last step failed
-      if: steps.login_10.outcome == 'success'
+      if: steps.login_11.outcome == 'success'
       uses: actions/github-script@v3
       with:
           script: |
