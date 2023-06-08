@@ -33,11 +33,11 @@ export class LoginConfig {
         let creds = core.getInput('creds', { required: false });
         let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
         if (creds) {
-            core.debug('using creds JSON...');
-            this.servicePrincipalId = secrets.getSecret("$.clientId", true);
-            this.servicePrincipalKey = secrets.getSecret("$.clientSecret", true);
-            this.tenantId = secrets.getSecret("$.tenantId", true);
-            this.subscriptionId = secrets.getSecret("$.subscriptionId", true);
+            core.debug('Reading creds in JSON...');
+            this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.getSecret("$.clientId", false);
+            this.servicePrincipalKey = secrets.getSecret("$.clientSecret", false);
+            this.tenantId = this.tenantId ? this.tenantId : secrets.getSecret("$.tenantId", false);
+            this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.getSecret("$.subscriptionId", false);
             this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
         }
 

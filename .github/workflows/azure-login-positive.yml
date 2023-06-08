@@ -96,6 +96,7 @@ jobs:
         npm install
         npm run build
 
+    # Attempt with secret will fail, Attempt with OIDC will succeed with SP2
     - name: Login with both creds and individual parameters
       uses: ./
       with:
@@ -103,7 +104,8 @@ jobs:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
         subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
-        enable-AzPSSession: true
+        allow-no-subscriptions: true
+        # enable-AzPSSession: true
 
     - name: Login with creds, disable ps session
       uses: ./
@@ -128,6 +130,24 @@ jobs:
         az account show
         az group show --name GitHubActionGroup
         az vm list
+
+    - name: Login by OIDC with all info in creds 
+      uses: ./
+      with:
+        creds: ${{secrets.SP2}}
+        allow-no-subscriptions: true
+        # enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+
+    # - name: Run Azure PowerShell
+    #   uses: azure/powershell@v1.2.0
+    #   with:
+    #     azPSVersion: "latest"
+    #     inlineScript: |
+    #       Get-AzContext | Format-List
 
     - name: Login with creds, allow no subscription
       uses: ./

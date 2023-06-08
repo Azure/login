@@ -32,7 +32,9 @@ async function main() {
             await spnlogin.login();
         }
 
-        console.log("Login successful.");
+        if (!cliLogin.isSuccess) {
+            core.setFailed(`Az CLI Login failed. Please check the credentials and make sure az is installed on the runner.`);
+        }
     }
     catch (error) {
         if (!cliLogin.isSuccess) {

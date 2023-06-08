@@ -146,7 +146,7 @@ jobs:
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
         subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
-        enable-AzPSSession: true
+        # enable-AzPSSession: true
 
     - name: Run Azure Cli
       id: cli_3
