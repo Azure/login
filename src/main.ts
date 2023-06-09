@@ -27,6 +27,10 @@ async function main() {
         //login to Azure PowerShell
         if (loginConfig.enableAzPSSession) {
             console.log(`Running Azure PS Login`);
+            //remove the following 'if session' once the code is ready
+            if(!loginConfig.servicePrincipalKey){
+                await loginConfig.getFederatedToken();
+            }
             var spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(loginConfig);
             await spnlogin.initialize();
             await spnlogin.login();

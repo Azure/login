@@ -62,18 +62,18 @@ jobs:
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
         subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
-        # enable-AzPSSession: true
+        enable-AzPSSession: true
 
     - name: Run Azure Cli again
       run: |
         az account show
 
-    # - name: Run Azure PowerShell again
-    #   uses: azure/powershell@v1.2.0
-    #   with:
-    #     azPSVersion: "latest"
-    #     inlineScript: |
-    #       Get-AzContext | Format-List
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
 
   ParameterTest:
     strategy:
@@ -105,7 +105,18 @@ jobs:
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
         subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
-        # enable-AzPSSession: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
 
     - name: Login with creds, disable ps session
       uses: ./
@@ -136,18 +147,18 @@ jobs:
       with:
         creds: ${{secrets.SP2}}
         allow-no-subscriptions: true
-        # enable-AzPSSession: true
+        enable-AzPSSession: true
 
     - name: Run Azure Cli
       run: |
         az account show
 
-    # - name: Run Azure PowerShell
-    #   uses: azure/powershell@v1.2.0
-    #   with:
-    #     azPSVersion: "latest"
-    #     inlineScript: |
-    #       Get-AzContext | Format-List
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
 
     - name: Login with creds, allow no subscription
       uses: ./
