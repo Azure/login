@@ -28,25 +28,16 @@ async function main() {
         if (loginConfig.enableAzPSSession) {
             console.log(`Running Azure PS Login`);
             //remove the following 'if session' once the code is ready
-            if(!loginConfig.servicePrincipalKey){
+            if (!loginConfig.servicePrincipalKey) {
                 await loginConfig.getFederatedToken();
             }
             var spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(loginConfig);
             await spnlogin.initialize();
             await spnlogin.login();
         }
-
-        if (!cliLogin.isSuccess) {
-            core.setFailed(`Az CLI Login failed. Please check the credentials and make sure az is installed on the runner.`);
-        }
     }
     catch (error) {
-        if (!cliLogin.isSuccess) {
-            core.setFailed(`Az CLI Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
-        }
-        else {
-            core.setFailed(`Azure PowerShell Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
-        }
+        core.setFailed(`Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
     }
     finally {
         // Reset AZURE_HTTP_USER_AGENT

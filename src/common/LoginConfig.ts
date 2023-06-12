@@ -50,8 +50,7 @@ export class LoginConfig {
             this.federatedToken = await core.getIDToken(this.audience);
         }
         catch (error) {
-            core.error(`Please make sure to give write permissions to id-token in the workflow.`);
-            throw error;
+            core.error(`Failed with error: ${error}. Please make sure to give write permissions to id-token in the workflow.`);
         }
         let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
         console.log("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
