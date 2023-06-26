@@ -1,0 +1,34 @@
+
+
+
+
+
+
+
+
+Incoming Mail (POP) Server	
+pop.gmail.com
+
+Requires SSL: Yes
+
+Port: 995
+
+Outgoing Mail (SMTP) Server	
+smtp.gmail.com
+
+Requires SSL: Yes
+
+Requires TLS: Yes (if available)
+
+Requires Authentication: Yes
+
+Port for TLS/STARTTLS: 587
+
+If you use Gmail with your work or school account, check with your administrator for the correct SMTP configuration.
+
+Server timeouts	Greater than 1 minute (5 is recommended)
+Full Name or Display Name	Your name
+Account Name, User Name, or Email address	Your email address
+Password	Your Gmail password
+
+t                                            -L-                                     T
