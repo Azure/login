@@ -8,20 +8,19 @@ export class AzureCliLogin {
     loginConfig: LoginConfig;
     azPath: string;
     loginOptions: ExecOptions;
-    isSuccess: boolean;
 
     constructor(loginConfig: LoginConfig) {
         this.loginConfig = loginConfig;
         this.loginOptions = defaultExecOptions();
-        this.isSuccess = false;
     }
 
     async login() {
+        console.log(`Running Azure CLI Login`);
         this.azPath = await io.which("az", true);
         if (!this.azPath) {
-            throw new Error("az cli is not found in the runner.");
+            throw new Error("Azure CLI is not found in the runner.");
         }
-        core.debug(`az cli path: ${this.azPath}`);
+        core.debug(`Azure CLI path: ${this.azPath}`);
 
         let output: string = "";
         const execOptions: any = {
@@ -32,24 +31,34 @@ export class AzureCliLogin {
             }
         };
 
-        await this.executeAzCliCommand('--version', [], true, execOptions);
-        core.debug(`az cli version used:\n${output}`);
+        await this.executeAzCliCommand(["--version"], true, execOptions);
+        core.debug(`Azure CLI version used:\n${output}`);
 
         this.setAzurestackEnvIfNecessary();
 
-        await this.executeAzCliCommand('cloud set', ['-n', `${this.loginConfig.environment}`], false);
+        await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
         console.log(`Done setting cloud: "${this.loginConfig.environment}"`);
 
-        await this.loginWithSecret();
-        await this.loginWithOIDC();
-        await this.loginWithUserManagedIdentity();
-        await this.loginWithSystemManagedIdentity();
-
-        if (!this.isSuccess) {
-            throw new Error("Az CLI Login failed.");
+        if (this.loginConfig.authType == "service_principal") {
+            let args = ["--service-principal",
+                "--username", this.loginConfig.servicePrincipalId,
+                "--tenant", this.loginConfig.tenantId
+            ];
+            if (this.loginConfig.servicePrincipalKey) {
+                await this.loginWithSecret(args);
+            }
+            else {
+                await this.loginWithOIDC(args);
+            }
         }
         else {
-            console.log("Az CLI Login succeeded.");
+            let args = ["--identity"];
+            if (this.loginConfig.servicePrincipalId) {
+                await this.loginWithUserAssignedIdentity(args);
+            }
+            else {
+                await this.loginWithSystemAssignedIdentity(args);
+            }
         }
     }
 
@@ -63,8 +72,8 @@ export class AzureCliLogin {
 
         console.log(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
         try {
-            await this.executeAzCliCommand('cloud set', ["-n", "AzureCloud"], true);
-            await this.executeAzCliCommand('cloud unregister', ["-n", `${this.loginConfig.environment}`], false);
+            await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
+            await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
         }
         catch (error) {
             console.log(`Ignore cloud not registered error: "${error}"`);
@@ -79,75 +88,46 @@ export class AzureCliLogin {
             let suffixKeyvault = ".vault" + baseUri.substring(baseUri.indexOf('.')); // keyvault suffix starts with .
             let suffixStorage = baseUri.substring(baseUri.indexOf('.') + 1); // storage suffix starts without .
             let profileVersion = "2019-03-01-hybrid";
-            await this.executeAzCliCommand('cloud register', ["-n", `${this.loginConfig.environment}`, "--endpoint-resource-manager", `${this.loginConfig.resourceManagerEndpointUrl}`, "--suffix-keyvault-dns", `${suffixKeyvault}`, "--suffix-storage-endpoint", `${suffixStorage}`, "--profile", `${profileVersion}`], false);
+            await this.executeAzCliCommand(["cloud", "register", "-n", this.loginConfig.environment, "--endpoint-resource-manager", `"${this.loginConfig.resourceManagerEndpointUrl}"`, "--suffix-keyvault-dns", `"${suffixKeyvault}"`, "--suffix-storage-endpoint", `"${suffixStorage}"`, "--profile", `"${profileVersion}"`], false);
         }
         catch (error) {
-            core.error(`Error while trying to register cloud "${this.loginConfig.environment}": "${error}"`);
+            core.error(`Error while trying to register cloud "${this.loginConfig.environment}"`);
+            throw error;
         }
 
         console.log(`Done registering cloud: "${this.loginConfig.environment}"`)
     }
 
-    async loginWithSecret() {
-        if (this.isSuccess || !(this.loginConfig.servicePrincipalId && this.loginConfig.tenantId && this.loginConfig.servicePrincipalKey)) {
-            core.debug('Skip login with secret.');
-            return;
-        }
-        let args = ["--service-principal",
-            "--username", this.loginConfig.servicePrincipalId,
-            "--tenant", this.loginConfig.tenantId,
-            `--password=${this.loginConfig.servicePrincipalKey}`
-        ];
+    async loginWithSecret(args: string[]) {
+        console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
+        args.push(`--password=${this.loginConfig.servicePrincipalKey}`);
         await this.callCliLogin(args, 'service principal with secret');
     }
 
-    async loginWithOIDC() {
-        if (this.isSuccess || !(this.loginConfig.servicePrincipalId && this.loginConfig.tenantId)) {
-            core.debug('Skip login with OIDC.');
-            return;
-        }
+    async loginWithOIDC(args: string[]) {
         await this.loginConfig.getFederatedToken();
-        let args = ["--service-principal",
-            "--username", this.loginConfig.servicePrincipalId,
-            "--tenant", this.loginConfig.tenantId,
-            "--federated-token", this.loginConfig.federatedToken
-        ];
+        args.push("--federated-token", this.loginConfig.federatedToken);
         await this.callCliLogin(args, 'OIDC');
     }
 
-    async loginWithUserManagedIdentity() {
-        if (this.isSuccess || !this.loginConfig.servicePrincipalId) {
-            core.debug('Skip login with user assigned managed identity.');
-            return;
-        }
-        let args = ["--identity",
-            "--username", this.loginConfig.servicePrincipalId];
+    async loginWithUserAssignedIdentity(args: string[]) {
+        args.push("--username", this.loginConfig.servicePrincipalId);
         await this.callCliLogin(args, 'user-assigned managed identity');
     }
 
-    async loginWithSystemManagedIdentity() {
-        if (this.isSuccess) {
-            core.debug('Skip login with system assigned managed identity.');
-            return;
-        }
-        let args = ["--identity"];
+    async loginWithSystemAssignedIdentity(args: string[]) {
         await this.callCliLogin(args, 'system-assigned managed identity');
     }
 
     async callCliLogin(args: string[], methodName: string) {
-        try {
-            console.log(`Attempting az cli login by using ${methodName}...`);
-            if (this.loginConfig.allowNoSubscriptionsLogin) {
-                args.push("--allow-no-subscriptions");
-            }
-            await this.executeAzCliCommand('login', args, true, this.loginOptions);
-            await this.setSubscription();
-            this.isSuccess = true;
-            console.log(`Az cli login succeed by using ${methodName}.`);
+        console.log(`Attempting Azure CLI login by using ${methodName}...`);
+        args.unshift("login");
+        if (this.loginConfig.allowNoSubscriptionsLogin) {
+            args.push("--allow-no-subscriptions");
         }
-        catch (error) {
-            core.error(`Failed with error: ${error}.\nStop login by using ${methodName}.`);
-        }
+        await this.executeAzCliCommand(args, true, this.loginOptions);
+        await this.setSubscription();
+        console.log(`Azure CLI login succeed by using ${methodName}.`);
     }
 
     async setSubscription() {
@@ -155,21 +135,20 @@ export class AzureCliLogin {
             return;
         }
         if (!this.loginConfig.subscriptionId) {
-            core.warning('No subscription-id is given. Skip setting subscription...If there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.');
+            core.warning('No subscription-id is given. Skip setting subscription... If there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.');
             return;
         }
-        let args = ["--subscription", this.loginConfig.subscriptionId];
-        await this.executeAzCliCommand('account set', args, true, this.loginOptions);
-        console.log('Subscription is set successfully.');
+        let args = ["account", "set", "--subscription", this.loginConfig.subscriptionId];
+        await this.executeAzCliCommand(args, true, this.loginOptions);
+        console.log("Subscription is set successfully.");
     }
 
     async executeAzCliCommand(
-        command: string,
         args: string[],
         silent?: boolean,
         execOptions: any = {}) {
         execOptions.silent = !!silent;
-        await exec.exec(`"${this.azPath}" ${command}`, args, execOptions);
+        await exec.exec(`"${this.azPath}"`, args, execOptions);
     }
 }
 

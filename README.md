@@ -8,7 +8,7 @@ With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can crea
 
 ## GitHub Action for Azure Login
 
-With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can do an Azure login using [Azure Managed Identities and Azure service principal](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview#managed-identity-types) to run Az CLI and Azure PowerShell scripts.
+With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Action, you can do an Azure login using [Azure Managed Identities](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview#managed-identity-types) and [Azure service principal](https://learn.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals) to run Azure CLI and Azure PowerShell scripts.
 
 - By default, the action only logs in with the Azure CLI (using the `az login` command). To log in with the Az PowerShell module, set `enable-AzPSSession` to true. To login to Azure tenants without any subscriptions, set the optional parameter `allow-no-subscriptions` to true.
 
@@ -28,18 +28,18 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
 - To login using Managed Identities, follow [this](#configure-azure-managed-identities-with-self-hosted-runners) guidance.
 
-- The Action identifies the authentication method by the parameters you input.
-  1. If all the parameters: `clientId`, `tenantId` and `clientSecret` are detected in your input, we will attempt to login by using service principal with the secret.
-  2. If parameters: `clientId` and `tenantId` are detected in your input, we will attempt to login by using OIDC.
-  3. If parameters: `clientId` is detected in your input, we will attempt to login by using user-assigned managed identity.
-  4. If no parameter is detected in your input, we will attempt to login by using system-assigned managed identity.
+- The Action provides a parameter `auth-type` to identify the type of authentication.
+  1. If `auth-type: SERVICE_PRINCIPAL` with `clientId`, `tenantId` and `clientSecret` detected in your input, we will attempt to login by using service principal with the secret.
+  2. If `auth-type: SERVICE_PRINCIPAL` with `clientId` and `tenantId` detected in your input, we will attempt to login by using OIDC.
+  3. If `auth-type: IDENTITY` with `clientId` detected in your input, we will attempt to login by using user-assigned managed identity.
+  4. If `auth-type: IDENTITY` without `clientId` detected in your input, we will attempt to login by using system-assigned managed identity.
 
 Note:
 
 - Ensure the CLI version is 2.30 or above to use OIDC support.
 - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refger to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
-## Sample workflow that uses Azure login action to run az cli
+## Sample workflow that uses Azure login action to run Azure CLI
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -89,7 +89,7 @@ jobs:
         
 ```
 
-## Sample workflow that uses Azure login action using OIDC to run az cli (Linux)
+## Sample workflow that uses Azure login action using OIDC to run azure cli (Linux)
 
 ```yaml
 # File: .github/workflows/OIDC_workflow.yml
@@ -104,7 +104,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Az CLI login
+      - name: Azure CLI login
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -168,6 +168,8 @@ jobs:
     steps:
     - name: Azure Login
       uses: azure/login@v1
+      with:
+        auth-type: IDENTITY
 
     - name: Show group list
       run: |
@@ -189,6 +191,8 @@ jobs:
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        auth-type: IDENTITY
+
     - name: Show group list
       run: |
         az group list
@@ -215,7 +219,7 @@ jobs:
 
 Refer to the [Azure PowerShell](https://github.com/azure/powershell) GitHub Action to run your Azure PowerShell scripts.
 
-## Sample Azure Login workflow that uses Azure login action to run az cli on Azure Stack Hub
+## Sample Azure Login workflow that uses Azure login action to run Azure CLI on Azure Stack Hub
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -247,14 +251,14 @@ Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com
 
 For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) in the GitHub repository and then use them in the workflow.
 
-Follow the following steps to configure Azure Service Principal with a secret in the scope of `resource-group` as the role of `contributor`.
+Follow the following steps to configure Azure Service Principal with a secret in the scope of `resource-group` as the role of `reader`.
 
 - Define a new secret under your repository settings, Add secret menu
-- Store the output of the below [az cli](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+- Store the output of the below [Azure CLI](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
 
 ```bash  
 
-   az ad sp create-for-rbac --name "myApp" --role contributor \
+   az ad sp create-for-rbac --name "myApp" --role reader \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
                             --sdk-auth
 ```
@@ -293,13 +297,13 @@ If you already created and assigned a Service Principal in Azure you can manuall
 
 ### Configure a Federated Credential to use OIDC based authentication
 
-Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a federated identity credential on user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider (preview) which has more details about the Azure Workload Identity Federation (OIDC) support.
+Please refer to Microsoft's documentation at ["Configure a federated identity credential on an app"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) and ["Configure a federated identity credential on user-assigned managed identity"](https://learn.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation-create-trust-user-assigned-managed-identity?pivots=identity-wif-mi-methods-azp#github-actions-deploying-azure-resources) to trust an external identity provider which has more details about the Azure Workload Identity Federation (OIDC) support.
 
 You can add federated credentials in the Azure portal or with the Microsoft Graph REST API.
 
 ### Configure Azure Managed Identities with self-hosted runners
 
-If you want to use managed identities (system- or user-assigned) to sign in, a self-hosted Github runner is required to be installed on an Azure VM with a managed identity configured. Please refer to Microsoft's documentation at ["Configure managed identities for Azure resources on an Azure VM"](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use system-assigned managed identity, there are no mandatory parameters. To use user-assigned managed identity, `client-id` of the identity is mandatory.
+If you want to use (system- or user-assigned) managed identities to sign in, a self-hosted Github runner is required to be installed on an Azure VM with a managed identity configured. Please refer to Microsoft's documentation at ["Configure managed identities for Azure resources on an Azure VM"](https://learn.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-cli-windows-vm). To use managed identity, `auth-type` must be set to `IDENTITY`. To use user-assigned managed identity, `client-id` of the identity is mandatory.
 To get the `client-id` of a user-assigned managed identity, use the command:
 
 ```bash
@@ -343,9 +347,9 @@ This action doesn't implement ```az logout``` by default at the end of execution
       az account clear
 ```
 
-## Az CLI dependency
+## Azure CLI dependency
 
-Internally in this action, we use azure CLI and execute `az login` with the credentials provided through secrets. In order to validate the new az CLI releases for this action, [canary test workflow](.github/workflows/azure-login-canary.yml) is written which will execute the action on [az CLI's edge build](https://github.com/Azure/azure-cli#edge-builds) which will fail incase of any breaking change is being introduced in the new upcoming release. The test results can be posted on a slack or teams channel using the corresponding integrations. Incase of a failure, the concern will be raised to [azure-cli](https://github.com/Azure/azure-cli) for taking a necessary action and also the latest CLI installation will be postponed in [Runner VMs](https://github.com/actions/virtual-environments) as well for hosted runner to prevent the workflows failing due to the new CLI changes.
+Internally in this action, we use azure CLI and execute `az login` with the credentials provided through secrets. In order to validate the new Azure CLI releases for this action, [canary test workflow](.github/workflows/azure-login-canary.yml) is written which will execute the action on [Azure CLI's edge build](https://github.com/Azure/azure-cli#edge-builds) which will fail incase of any breaking change is being introduced in the new upcoming release. The test results can be posted on a slack or teams channel using the corresponding integrations. Incase of a failure, the concern will be raised to [azure-cli](https://github.com/Azure/azure-cli) for taking a necessary action and also the latest CLI installation will be postponed in [Runner VMs](https://github.com/actions/virtual-environments) as well for hosted runner to prevent the workflows failing due to the new CLI changes.
 
 ## Contributing
 

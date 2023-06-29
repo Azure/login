@@ -20,7 +20,7 @@ async function main() {
         await loginConfig.initialize();
         await loginConfig.validate();
 
-        // login to Azure Cli
+        // login to Azure CLI
         var cliLogin = new AzureCliLogin(loginConfig);
         await cliLogin.login();
 
@@ -35,9 +35,11 @@ async function main() {
             await spnlogin.initialize();
             await spnlogin.login();
         }
+        console.log("Login successful.");
     }
     catch (error) {
-        core.setFailed(`Login failed with ${error}. Please check the credentials and make sure az is installed on the runner. For more information refer https://aka.ms/create-secrets-for-GitHub-workflows`);
+        core.setFailed(`Login failed with ${error}. Please check the credentials and auth-type, and make sure 'az' is installed on the runner. For more information refer https://github.com/Azure/login#readme.`);
+        core.debug(error.stack);
     }
     finally {
         // Reset AZURE_HTTP_USER_AGENT

@@ -9,6 +9,11 @@ export class LoginConfig {
         "azurecloud",
         "azurestack"]);
 
+    static readonly azureSupportedAuthType = new Set([
+        "service_principal",
+        "identity"]);
+
+    authType: string;
     servicePrincipalId: string;
     servicePrincipalKey: string;
     tenantId: string;
@@ -24,6 +29,7 @@ export class LoginConfig {
         this.environment = core.getInput("environment").toLowerCase();
         this.enableAzPSSession = core.getInput('enable-AzPSSession').toLowerCase() === "true";
         this.allowNoSubscriptionsLogin = core.getInput('allow-no-subscriptions').toLowerCase() === "true";
+        this.authType = core.getInput('auth-type').toLowerCase();
 
         this.servicePrincipalId = core.getInput('client-id', { required: false });
         this.servicePrincipalKey = null;
@@ -50,7 +56,8 @@ export class LoginConfig {
             this.federatedToken = await core.getIDToken(this.audience);
         }
         catch (error) {
-            core.error(`Failed with error: ${error}. Please make sure to give write permissions to id-token in the workflow.`);
+            core.error(`Please make sure to give write permissions to id-token in the workflow.`);
+            throw error;
         }
         let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
         console.log("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
@@ -59,6 +66,14 @@ export class LoginConfig {
     async validate() {
         if (!LoginConfig.azureSupportedCloudName.has(this.environment)) {
             throw new Error("Unsupported value for environment is passed. The list of supported values for environment are 'azureusgovernment', 'azurechinacloud', 'azuregermancloud', 'azurecloud' or 'azurestack'");
+        }
+        if (!LoginConfig.azureSupportedAuthType.has(this.authType)) {
+            throw new Error("Unsupported value for authentication type is passed. The list of supported values for auth-type are 'SERVICE_PRINCIPAL' or 'IDENTITY'");
+        }
+        if (this.authType == "service_principal") {
+            if (!this.servicePrincipalId || !this.tenantId) {
+                throw new Error("Using auth-type: SERVICE_PRINCIPAL. Not all values are present in the credentials. Ensure clientId and tenantId are supplied.");
+            }
         }
     }
 }

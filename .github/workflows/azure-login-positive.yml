@@ -75,6 +75,28 @@ jobs:
         inlineScript: |
           Get-AzContext | Format-List
 
+    - name: Login with explicit auth-type
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        auth-type: SERVICE_PRINCIPAL
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+        az group show --name GitHubActionGroup
+        az vm list
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzVM
+
   ParameterTest:
     strategy:
       matrix:
@@ -95,28 +117,6 @@ jobs:
       run: |
         npm install
         npm run build
-
-    # Attempt with secret will fail, Attempt with OIDC will succeed with SP2
-    - name: Login with both creds and individual parameters
-      uses: ./
-      with:
-        creds: ${{secrets.SP1}}
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
-        allow-no-subscriptions: true
-        enable-AzPSSession: true
-
-    - name: Run Azure Cli
-      run: |
-        az account show
-
-    - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
-      with:
-        azPSVersion: "latest"
-        inlineScript: |
-          Get-AzContext | Format-List
 
     - name: Login with creds, disable ps session
       uses: ./
@@ -222,9 +222,10 @@ jobs:
         npm install
         npm run build
 
-    - name: Login with system assigned managed identity
+    - name: Login with system-assigned managed identity
       uses: ./
-      # with:
+      with:
+        auth-type: IDENTITY
       #   enable-AzPSSession: true
 
     - name: Run Azure Cli
@@ -238,10 +239,11 @@ jobs:
     #     inlineScript: |
     #       Get-AzContext | Format-List
 
-    - name: Login with user assigned managed identity
+    - name: Login with user-assigned managed identity
       uses: ./
       with:
         client-id: ${{ secrets.UMI1_CLIENT_ID }}
+        auth-type: IDENTITY
         # enable-AzPSSession: true
 
     - name: Run Azure Cli
@@ -255,11 +257,12 @@ jobs:
     #     inlineScript: |
     #       Get-AzContext | Format-List
 
-    - name: Login with user assigned managed identity, subscription-id
+    - name: Login with user-assigned managed identity, subscription-id
       uses: ./
       with:
         client-id: ${{ secrets.UMI1_CLIENT_ID }}
         subscription-id: ${{ secrets.UMI1_SUBSCRIPTION_ID }}
+        auth-type: IDENTITY
         # enable-AzPSSession: true
 
     - name: Run Azure Cli
@@ -278,6 +281,7 @@ jobs:
       with:
         client-id: ${{ secrets.UMI2_CLIENT_ID }}
         allow-no-subscriptions: true
+        auth-type: IDENTITY
         # enable-AzPSSession: true
 
     - name: Run Azure Cli
