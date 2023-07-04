@@ -31,9 +31,9 @@ inputs:
     required: false
     default: 'api://AzureADTokenExchange'
   auth-type:
-    description: 'The type of authentication. Supported values are service-principal, identity. Default value is service-principal' 
+    description: 'The type of authentication. Supported values are SERVICE_PRINCIPAL, IDENTITY. Default value is SERVICE_PRINCIPAL' 
     required: false
-    default: 'service_principal'
+    default: 'SERVICE_PRINCIPAL'
 branding:
   icon: 'login.svg'
   color: 'blue'

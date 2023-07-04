@@ -28,7 +28,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
    3. Within the Job deploying to Azure, add Azure/login action and pass the `client-id` and `tenant-id` of the Azure Managed Identity/service principal associated with an OIDC Federated Identity Credential created in step (i). You also need to pass `subscription-id` or set `allow-no-subscriptions` to true.
 - To login using Managed Identities, follow [this](#configure-azure-managed-identities-with-self-hosted-runners) guidance.
 
-- The Action provides a parameter `auth-type` to identify the type of authentication.
+- The Action provides a parameter `auth-type` with value list `[SERVICE_PRINCIPAL, IDENTITY]` to identify the type of authentication.
   1. If `auth-type: SERVICE_PRINCIPAL` with `clientId`, `tenantId` and `clientSecret` detected in your input, we will attempt to login by using service principal with the secret.
   2. If `auth-type: SERVICE_PRINCIPAL` with `clientId` and `tenantId` detected in your input, we will attempt to login by using OIDC.
   3. If `auth-type: IDENTITY` with `clientId` detected in your input, we will attempt to login by using user-assigned managed identity.
