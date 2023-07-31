@@ -34,10 +34,9 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
   3. If `auth-type: IDENTITY` with `clientId` detected in your input, we will attempt to login by using user-assigned managed identity.
   4. If `auth-type: IDENTITY` without `clientId` detected in your input, we will attempt to login by using system-assigned managed identity.
 
-Note:
-
-- Ensure the CLI version is 2.30 or above to use OIDC support.
-- By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refger to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
+> **Note**
+> - Ensure the CLI version is 2.30 or above to use OIDC support.
+> - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refer to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
 ## Sample workflow that uses Azure login action to run Azure CLI
 
@@ -309,6 +308,9 @@ To get the `client-id` of a user-assigned managed identity, use the command:
 ```bash
 az vm identity show --resource-group <resource_group_name> --name <vm_name> --query userAssignedIdentities
 ```
+
+> **Warning**
+> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Azure AD tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
 
 ## Support for using `allow-no-subscriptions` flag with az login
 
