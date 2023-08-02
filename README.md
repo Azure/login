@@ -23,7 +23,7 @@ With the [Azure Login](https://github.com/Azure/login/blob/master/action.yml) Ac
 Note:
 
 - Ensure the CLI version is 2.30 or above to use OIDC support.
-- By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refger to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
+- By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refer to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
 ## Sample workflow that uses Azure login action to run az cli
 
@@ -196,19 +196,19 @@ Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com
 
 For using any credentials like Azure Service Principal, Publish Profile etc add them as [secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets) in the GitHub repository and then use them in the workflow.
 
-Follow the following steps to configure Azure Service Principal with a secret:
+Follow the following steps to configure Azure Service Principal with a secret in the scope of `resource-group` as the role of `reader`:
 
 - Define a new secret under your repository settings, Add secret menu
-- Store the output of the below [az cli](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
+- Store the output of the below [Azure CLI](https://learn.microsoft.com/cli/azure/?view=azure-cli-latest) command as the value of secret variable, for example 'AZURE_CREDENTIALS'
 
 ```bash  
 
-   az ad sp create-for-rbac --name "myApp" --role contributor \
+   az ad sp create-for-rbac --name "myApp" --role reader \
                             --scopes /subscriptions/{subscription-id}/resourceGroups/{resource-group} \
-                            --sdk-auth
+                            --json-auth
 ```
 
-Replace `{subscription-id}` and `{resource-group}` with the subscription and resource group details, respectively.
+Please assign the service principal with proper `role` and `scope` you desired. Replace `{subscription-id}` and `{resource-group}` with the subscription and resource group details, respectively.
 
 The command should output a JSON object similar to this:
 
@@ -225,7 +225,7 @@ The command should output a JSON object similar to this:
 ```
 
 - Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
-- Note: The above `az ad sp create-for-rbac` command will give you the `--sdk-auth` deprecation warning. As we are working with CLI for this deprecation process, we strongly recommend users to use this `--sdk-auth` flag as the result dictionary output changes and not accepted by login action if `--sdk-auth` is not used.
+- Note: The parameter `--json-auth` outputs the result dictionary accepted by the login action, accessible in Azure CLI versions `>= 2.51.0`. Versions prior to this use `--sdk-auth` with a deprecation warning.
 - If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) to address the [security concerns](https://docs.github.com/actions/security-guides/encrypted-secrets) for Non-OIDC login, below snippet can help with the same.
 
 ```yaml
