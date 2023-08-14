@@ -225,7 +225,7 @@ The command should output a JSON object similar to this:
 ```
 
 - Now in the workflow file in your branch: `.github/workflows/workflow.yml` replace the secret in Azure login action with your secret (Refer to the example above)
-- Note: The parameter `--json-auth` outputs the result dictionary accepted by the login action, accessible in Azure CLI versions `>= 2.51.0`. Versions prior to this use `--sdk-auth` with a deprecation warning.
+- Note: Starting from Azure CLI versions 2.51.0, the argument `--json-auth` outputs the result dictionary accepted by the login action.
 - If you want to pass Subscription ID, Tenant ID, Client ID, and Client Secret as individual parameters instead of bundling them in a single JSON object (creds) to address the [security concerns](https://docs.github.com/actions/security-guides/encrypted-secrets) for Non-OIDC login, below snippet can help with the same.
 
 ```yaml
