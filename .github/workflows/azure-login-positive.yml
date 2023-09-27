@@ -43,7 +43,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show
-        az group show --name GitHubActionGroup
+        az group show --name GitHubAction_CI_RG
         az vm list
 
     - name: Run Azure PowerShell
@@ -52,7 +52,7 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
           Get-AzVM
 
     - name: Login with individual parameters
@@ -108,7 +108,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show
-        az group show --name GitHubActionGroup
+        az group show --name GitHubAction_CI_RG
         az vm list
 
     - name: Run Azure PowerShell
@@ -117,7 +117,7 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
           Get-AzVM
 
     - name: Login with creds, disable ps session
@@ -129,7 +129,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show
-        az group show --name GitHubActionGroup
+        az group show --name GitHubAction_CI_RG
         az vm list
 
     - name: Login with creds, wrong boolean value
@@ -141,7 +141,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show
-        az group show --name GitHubActionGroup
+        az group show --name GitHubAction_CI_RG
         az vm list
 
     - name: Login with creds, allow no subscription
@@ -154,7 +154,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show
-        az group show --name GitHubActionGroup
+        az group show --name GitHubAction_CI_RG
         az vm list
  
     - name: Run Azure PowerShell
@@ -163,7 +163,7 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubActionGroup
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
           Get-AzVM
 
     - name: Login with individual parameters, no subscription, allow no subscription
