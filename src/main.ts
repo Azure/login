@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { ServicePrincipalLogin } from './PowerShell/ServicePrincipalLogin';
+import { AzPSLogin } from './PowerShell/AzPSLogin';
 import { LoginConfig } from './common/LoginConfig';
 import { AzureCliLogin } from './Cli/AzureCliLogin';
 
@@ -26,19 +26,12 @@ async function main() {
 
         //login to Azure PowerShell
         if (loginConfig.enableAzPSSession) {
-            console.log(`Running Azure PS Login`);
-            //remove the following 'if session' once the code is ready
-            if (!loginConfig.servicePrincipalKey) {
-                await loginConfig.getFederatedToken();
-            }
-            var spnlogin: ServicePrincipalLogin = new ServicePrincipalLogin(loginConfig);
-            await spnlogin.initialize();
-            await spnlogin.login();
+            var psLogin: AzPSLogin = new AzPSLogin(loginConfig);
+            await psLogin.login();
         }
-        console.log("Login successful.");
     }
     catch (error) {
-        core.setFailed(`Login failed with ${error}. Please check the credentials and auth-type, and make sure 'az' is installed on the runner. For more information refer https://github.com/Azure/login#readme.`);
+        core.setFailed(`Login failed with ${error}. Make sure 'az' is installed on the runner. If 'enable-AzPSSession' is true, make sure 'pwsh' is installed on the runner together with Azure PowerShell module. Double check if the 'auth-type' is correct. Refer to https://github.com/Azure/login#readme for more information.`);
         core.debug(error.stack);
     }
     finally {

@@ -49,18 +49,22 @@ export class LoginConfig {
 
         this.audience = core.getInput('audience', { required: false });
         this.federatedToken = null;
+
+        this.mask(this.servicePrincipalId);
+        this.mask(this.servicePrincipalKey);
     }
 
     async getFederatedToken() {
         try {
             this.federatedToken = await core.getIDToken(this.audience);
+            this.mask(this.federatedToken);
         }
         catch (error) {
             core.error(`Please make sure to give write permissions to id-token in the workflow.`);
             throw error;
         }
         let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
-        console.log("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
+        core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
     }
 
     async validate() {
@@ -74,6 +78,12 @@ export class LoginConfig {
             if (!this.servicePrincipalId || !this.tenantId) {
                 throw new Error("Using auth-type: SERVICE_PRINCIPAL. Not all values are present in the credentials. Ensure clientId and tenantId are supplied.");
             }
+        }
+    }
+
+    mask(parameterValue: string){
+        if(parameterValue){
+            core.setSecret(parameterValue);
         }
     }
 }

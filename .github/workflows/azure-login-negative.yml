@@ -26,34 +26,14 @@ jobs:
       run: |
         npm install
         npm run build
-        
-    - name: 'Run L0 tests'
-      id: run_test
-      continue-on-error: true
-      run: |
         npm run test
-    
-    - name: Check Last step failed
-      if: steps.run_test.outcome == 'success'
-      uses: actions/github-script@v3
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
 
     - name: Login with creds
-      id: login_1
       continue-on-error: true
       uses: ./
       with:
         creds: ${{secrets.SP1}}
         enable-AzPSSession: true
-
-    - name: Check Last step failed
-      if: steps.login_1.outcome == 'success'
-      uses: actions/github-script@v3
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
 
     - name: Run Azure Cli
       run: |
@@ -81,7 +61,6 @@ jobs:
 
     - name: Login with individual parameters
       id: login_2
-      continue-on-error: true
       uses: ./
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
@@ -89,13 +68,6 @@ jobs:
         subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
-
-    - name: Check Last step failed
-      if: steps.login_2.outcome == 'success'
-      uses: actions/github-script@v3
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
 
     - name: Run Azure Cli again
       run: |

@@ -15,7 +15,7 @@ export class AzureCliLogin {
     }
 
     async login() {
-        console.log(`Running Azure CLI Login`);
+        core.info(`Running Azure CLI Login.`);
         this.azPath = await io.which("az", true);
         if (!this.azPath) {
             throw new Error("Azure CLI is not found in the runner.");
@@ -37,7 +37,7 @@ export class AzureCliLogin {
         this.setAzurestackEnvIfNecessary();
 
         await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
-        console.log(`Done setting cloud: "${this.loginConfig.environment}"`);
+        core.info(`Done setting cloud: "${this.loginConfig.environment}"`);
 
         if (this.loginConfig.authType == "service_principal") {
             let args = ["--service-principal",
@@ -70,16 +70,16 @@ export class AzureCliLogin {
             throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
         }
 
-        console.log(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
+        core.info(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
         try {
             await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
             await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
         }
         catch (error) {
-            console.log(`Ignore cloud not registered error: "${error}"`);
+            core.info(`Ignore cloud not registered error: "${error}"`);
         }
 
-        console.log(`Registering cloud: "${this.loginConfig.environment}" with ARM endpoint: "${this.loginConfig.resourceManagerEndpointUrl}"`);
+        core.info(`Registering cloud: "${this.loginConfig.environment}" with ARM endpoint: "${this.loginConfig.resourceManagerEndpointUrl}"`);
         try {
             let baseUri = this.loginConfig.resourceManagerEndpointUrl;
             if (baseUri.endsWith('/')) {
@@ -95,11 +95,11 @@ export class AzureCliLogin {
             throw error;
         }
 
-        console.log(`Done registering cloud: "${this.loginConfig.environment}"`)
+        core.info(`Done registering cloud: "${this.loginConfig.environment}"`)
     }
 
     async loginWithSecret(args: string[]) {
-        console.log("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
+        core.info("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
         args.push(`--password=${this.loginConfig.servicePrincipalKey}`);
         await this.callCliLogin(args, 'service principal with secret');
     }
@@ -120,14 +120,14 @@ export class AzureCliLogin {
     }
 
     async callCliLogin(args: string[], methodName: string) {
-        console.log(`Attempting Azure CLI login by using ${methodName}...`);
+        core.info(`Attempting Azure CLI login by using ${methodName}...`);
         args.unshift("login");
         if (this.loginConfig.allowNoSubscriptionsLogin) {
             args.push("--allow-no-subscriptions");
         }
         await this.executeAzCliCommand(args, true, this.loginOptions);
         await this.setSubscription();
-        console.log(`Azure CLI login succeed by using ${methodName}.`);
+        core.info(`Azure CLI login succeeds by using ${methodName}.`);
     }
 
     async setSubscription() {
@@ -140,7 +140,7 @@ export class AzureCliLogin {
         }
         let args = ["account", "set", "--subscription", this.loginConfig.subscriptionId];
         await this.executeAzCliCommand(args, true, this.loginOptions);
-        console.log("Subscription is set successfully.");
+        core.info("Subscription is set successfully.");
     }
 
     async executeAzCliCommand(
