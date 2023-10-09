@@ -47,7 +47,7 @@ export class AzPSLogin {
         }
     }
 
-    async setPSModulePathForLatestAzAccounts() {
+    private async setPSModulePathForLatestAzAccounts() {
         let getLatestAccountsScript: string = AzPSScriptBuilder.getLatestModulePathScript(AzPSConstants.AzAccounts);
         core.debug(`The script to get the latest Az.Accounts path: ${getLatestAccountsScript}`);
         let azAccountsLatestPath: string = await AzPSLogin.runPSScript(getLatestAccountsScript);
@@ -55,7 +55,7 @@ export class AzPSLogin {
         this.pushPSModulePath(azAccountsLatestPath);
     }
 
-    pushPSModulePath(psModulePath: string) {
+    private pushPSModulePath(psModulePath: string) {
         process.env.PSModulePath = `${psModulePath}${path.delimiter}${process.env.PSModulePath}`;
         core.debug(`Set PSModulePath as ${process.env.PSModulePath}`);
     }
@@ -80,7 +80,7 @@ export class AzPSLogin {
         };
 
         let psPath:string = await io.which(AzPSConstants.PowerShell_CmdName, true);
-        await exec.exec(`"${psPath}" -Command`, [psScript], options)
+        await exec.exec(`"${psPath}"`, ["-Command", psScript], options)
         if (commandStdErr) {
             throw new Error('Azure PowerShell login failed with errors.');
         }

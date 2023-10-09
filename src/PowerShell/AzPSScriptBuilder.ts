@@ -49,13 +49,7 @@ export default class AzPSScriptBuilder {
             }
         }
 
-        if (!loginConfig.allowNoSubscriptionsLogin && loginConfig.subscriptionId) {
-            if (loginConfig.tenantId) {
-                commands += `Set-AzContext -SubscriptionId '${loginConfig.subscriptionId}' -TenantId '${loginConfig.tenantId}' | out-null;`;
-            } else {
-                commands += `Set-AzContext -SubscriptionId '${loginConfig.subscriptionId}' | out-null;`;
-            }
-        }
+        commands += AzPSScriptBuilder.setSubscription(loginConfig.allowNoSubscriptionsLogin, loginConfig.subscriptionId, loginConfig.tenantId);
 
         let script = `try {
             $ErrorActionPreference = "Stop"
@@ -73,19 +67,30 @@ export default class AzPSScriptBuilder {
         return [loginMethodName, script];
     }
 
-    static loginWithSecret(environment: string, tenantId: string, servicePrincipalId: string, servicePrincipalKey: string): string {
+    private static setSubscription(allowNoSubscriptionsLogin:boolean, subscriptionId:string, tenantId:string) {
+        if (!allowNoSubscriptionsLogin && subscriptionId) {
+            if (tenantId) {
+                return `Set-AzContext -SubscriptionId '${subscriptionId}' -TenantId '${tenantId}' | out-null;`;
+            } else {
+                return `Set-AzContext -SubscriptionId '${subscriptionId}' | out-null;`;
+            }
+        }
+        return "";
+    }
+
+    private static loginWithSecret(environment: string, tenantId: string, servicePrincipalId: string, servicePrincipalKey: string): string {
         let loginCmdlet = `$psLoginSecrets = ConvertTo-SecureString '${servicePrincipalKey}' -AsPlainText -Force; `;
         loginCmdlet += `$psLoginCredential = New-Object System.Management.Automation.PSCredential('${servicePrincipalId}', $psLoginSecrets); `;
         loginCmdlet += `Connect-AzAccount -ServicePrincipal -Environment '${environment}' -Tenant '${tenantId}' -Credential $psLoginCredential | out-null; `; //TODO: why not set environment
         return loginCmdlet;
     }
 
-    static loginWithOIDC(environment: string, tenantId: string, servicePrincipalId: string, federatedToken: string) {
+    private static loginWithOIDC(environment: string, tenantId: string, servicePrincipalId: string, federatedToken: string) {
         let loginCmdlet = `Connect-AzAccount -ServicePrincipal -ApplicationId '${servicePrincipalId}' -Tenant '${tenantId}' -FederatedToken '${federatedToken}' -Environment '${environment}' | out-null;`;
         return loginCmdlet;
     }
 
-    static loginWithSystemAssignedIdentity(environment: string): string {
+    private static loginWithSystemAssignedIdentity(environment: string): string {
         let loginCmdlet = `Connect-AzAccount -Identity -Environment '${environment}' | out-null;`;
         return loginCmdlet;
     }

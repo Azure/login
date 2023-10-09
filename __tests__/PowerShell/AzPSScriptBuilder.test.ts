@@ -31,7 +31,7 @@ describe("Getting AzLogin PS script", () => {
         let creds = {
             'clientId': 'client-id',
             'clientSecret': 'client-secret',
-            'tenantId': 'tenanat-id',
+            'tenantId': 'tenant-id',
             'subscriptionId': 'subscription-id'
         }
         setEnv('creds', JSON.stringify(creds));
@@ -39,7 +39,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenanat-id' -Credential")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Credential")).toBeTruthy();
             expect(loginScript.includes("Set-AzContext -SubscriptionId")).toBeFalsy;
         });
     });
@@ -52,7 +52,7 @@ describe("Getting AzLogin PS script", () => {
         let creds = {
             'clientId': 'client-id',
             'clientSecret': 'client-secret',
-            'tenantId': 'tenanat-id',
+            'tenantId': 'tenant-id',
             'subscriptionId': 'subscription-id'
         }
         setEnv('creds', JSON.stringify(creds));
@@ -60,7 +60,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenanat-id' -Credential")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Credential")).toBeTruthy();
             expect(loginScript.includes("Set-AzContext -SubscriptionId")).toBeTruthy();
         });
     });
