@@ -18,7 +18,7 @@ export class AzPSLogin {
     async login() {
         core.info(`Running Azure PowerShell Login.`);
         this.setPSModulePathForGitHubRunner();
-        await this.setPSModulePathForLatestAzAccounts();
+        await this.importLatestAzAccounts();
 
         const [loginMethod, loginScript] = await AzPSScriptBuilder.getAzPSLoginScript(this.loginConfig);
         core.info(`Attempting Azure PowerShell login by using ${loginMethod}...`);
@@ -47,17 +47,16 @@ export class AzPSLogin {
         }
     }
 
-    private async setPSModulePathForLatestAzAccounts() {
-        let getLatestAccountsScript: string = AzPSScriptBuilder.getLatestModulePathScript(AzPSConstants.AzAccounts);
-        core.debug(`The script to get the latest Az.Accounts path: ${getLatestAccountsScript}`);
-        let azAccountsLatestPath: string = await AzPSLogin.runPSScript(getLatestAccountsScript);
-        core.debug(`The latest Az.Accounts path used: ${azAccountsLatestPath}`);
-        this.pushPSModulePath(azAccountsLatestPath);
-    }
-
     private pushPSModulePath(psModulePath: string) {
         process.env.PSModulePath = `${psModulePath}${path.delimiter}${process.env.PSModulePath}`;
         core.debug(`Set PSModulePath as ${process.env.PSModulePath}`);
+    }
+
+    private async importLatestAzAccounts() {
+        let importLatestAccountsScript: string = AzPSScriptBuilder.getImportLatestModuleScript(AzPSConstants.AzAccounts);
+        core.debug(`The script to import the latest Az.Accounts: ${importLatestAccountsScript}`);
+        let azAccountsPath: string = await AzPSLogin.runPSScript(importLatestAccountsScript);
+        core.debug(`The latest Az.Accounts used: ${azAccountsPath}`);
     }
 
     static async runPSScript(psScript: string): Promise<string> {
@@ -79,7 +78,7 @@ export class AzPSLogin {
             }
         };
 
-        let psPath:string = await io.which(AzPSConstants.PowerShell_CmdName, true);
+        let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
         await exec.exec(`"${psPath}"`, ["-Command", psScript], options)
         if (commandStdErr) {
             throw new Error('Azure PowerShell login failed with errors.');
@@ -91,3 +90,4 @@ export class AzPSLogin {
         return result[AzPSConstants.Result];
     }
 }
+

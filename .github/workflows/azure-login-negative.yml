@@ -65,7 +65,7 @@ jobs:
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
@@ -116,7 +116,7 @@ jobs:
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
@@ -367,6 +367,22 @@ jobs:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
 
+    - name: Login by OIDC with all info in creds 
+      id: login_13
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP2}}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+      
+    - name: Check Last step failed
+      if: steps.login_13.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
   VMTest:
     strategy:
       matrix:
@@ -389,12 +405,12 @@ jobs:
         npm run build
 
     - name: Login with system-assigned managed identity without auth-type
-      id: login_13
+      id: login_14
       continue-on-error: true
       uses: ./
     
     - name: Check Last step failed
-      if: steps.login_13.outcome == 'success'
+      if: steps.login_14.outcome == 'success'
       uses: actions/github-script@v3
       with:
           script: |

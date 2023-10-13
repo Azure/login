@@ -9,3 +9,4 @@ export default class AzPSConstants {
     static readonly Error: string = "Error";
     static readonly Result: string = "Result";
 }
+

@@ -60,7 +60,7 @@ jobs:
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
@@ -142,24 +142,6 @@ jobs:
         az group show --name GitHubAction_CI_RG
         az vm list
 
-    - name: Login by OIDC with all info in creds 
-      uses: ./
-      with:
-        creds: ${{secrets.SP2}}
-        allow-no-subscriptions: true
-        enable-AzPSSession: true
-
-    - name: Run Azure Cli
-      run: |
-        az account show
-
-    - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
-      with:
-        azPSVersion: "latest"
-        inlineScript: |
-          Get-AzContext | Format-List
-
     - name: Login with creds, allow no subscription
       uses: ./
       with:
@@ -226,6 +208,7 @@ jobs:
       uses: ./
       with:
         auth-type: IDENTITY
+        allow-no-subscriptions: true
         enable-AzPSSession: true
   
     - name: Run Azure Cli

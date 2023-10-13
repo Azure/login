@@ -39,7 +39,7 @@ export class AzureCliLogin {
         await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
         core.info(`Done setting cloud: "${this.loginConfig.environment}"`);
 
-        if (this.loginConfig.authType == "service_principal") {
+        if (this.loginConfig.authType === LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL) {
             let args = ["--service-principal",
                 "--username", this.loginConfig.servicePrincipalId,
                 "--tenant", this.loginConfig.tenantId
@@ -134,10 +134,6 @@ export class AzureCliLogin {
         if (this.loginConfig.allowNoSubscriptionsLogin) {
             return;
         }
-        if (!this.loginConfig.subscriptionId) {
-            core.warning('No subscription-id is given. Skip setting subscription... If there are mutiple subscriptions under the tenant, please input subscription-id to specify which subscription to use.');
-            return;
-        }
         let args = ["account", "set", "--subscription", this.loginConfig.subscriptionId];
         await this.executeAzCliCommand(args, true, this.loginOptions);
         core.info("Subscription is set successfully.");
@@ -172,3 +168,4 @@ function defaultExecOptions(): exec.ExecOptions {
         }
     };
 }
+
