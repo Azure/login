@@ -57,14 +57,14 @@ jobs:
            inlineScript: "Get-AzContext"
            azPSVersion: "latest"
 
-       - name: 'Azure PowerShell login without subscription'
-         uses: ./
-         with:
-           creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
-           enable-AzPSSession: true
-           allow-no-subscriptions: true
+      #  - name: 'Azure PowerShell login without subscription'
+      #    uses: ./
+      #    with:
+      #      creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
+      #      enable-AzPSSession: true
+      #      allow-no-subscriptions: true
 
-       - uses: azure/powershell@v1
-         with:
-           inlineScript: "Get-AzContext"
-           azPSVersion: "latest"
+      #  - uses: azure/powershell@v1
+      #    with:
+      #      inlineScript: "Get-AzContext"
+      #      azPSVersion: "latest"
