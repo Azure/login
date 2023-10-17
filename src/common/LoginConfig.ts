@@ -17,7 +17,7 @@ export class LoginConfig {
 
     authType: string;
     servicePrincipalId: string;
-    servicePrincipalKey: string;
+    servicePrincipalSecret: string;
     tenantId: string;
     subscriptionId: string;
     resourceManagerEndpointUrl: string;
@@ -34,7 +34,7 @@ export class LoginConfig {
         this.authType = core.getInput('auth-type').toUpperCase();
 
         this.servicePrincipalId = core.getInput('client-id', { required: false });
-        this.servicePrincipalKey = null;
+        this.servicePrincipalSecret = null;
         this.tenantId = core.getInput('tenant-id', { required: false });
         this.subscriptionId = core.getInput('subscription-id', { required: false });
 
@@ -44,7 +44,7 @@ export class LoginConfig {
         this.federatedToken = null;
 
         this.mask(this.servicePrincipalId);
-        this.mask(this.servicePrincipalKey);
+        this.mask(this.servicePrincipalSecret);
     }
 
     private readParametersFromCreds() {
@@ -65,11 +65,11 @@ export class LoginConfig {
 
         core.debug('Reading creds in JSON...');
         this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.getSecret("$.clientId", false);
-        this.servicePrincipalKey = secrets.getSecret("$.clientSecret", false);
+        this.servicePrincipalSecret = secrets.getSecret("$.clientSecret", false);
         this.tenantId = this.tenantId ? this.tenantId : secrets.getSecret("$.tenantId", false);
         this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.getSecret("$.subscriptionId", false);
         this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-        if (!this.servicePrincipalId || !this.servicePrincipalKey || !this.tenantId || !this.subscriptionId) {
+        if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId || !this.subscriptionId) {
             throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'subscriptionId', 'tenantId'.");
         }
     }

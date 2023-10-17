@@ -31,7 +31,7 @@ export default class AzPSScriptBuilder {
             commands += `Add-AzEnvironment -Name '${loginConfig.environment}' -ARMEndpoint '${loginConfig.resourceManagerEndpointUrl}' | out-null;`;
         }
         if (loginConfig.authType === LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL) {
-            if (loginConfig.servicePrincipalKey) {
+            if (loginConfig.servicePrincipalSecret) {
                 commands += AzPSScriptBuilder.loginWithSecret(loginConfig);
                 loginMethodName = 'service principal with secret';
             } else {
@@ -66,8 +66,8 @@ export default class AzPSScriptBuilder {
     }
 
     private static loginWithSecret(loginConfig: LoginConfig): string {
-        let servicePrincipalKey: string = loginConfig.servicePrincipalKey.split("'").join("''");
-        let loginCmdlet = `$psLoginSecrets = ConvertTo-SecureString '${servicePrincipalKey}' -AsPlainText -Force; `;
+        let servicePrincipalSecret: string = loginConfig.servicePrincipalSecret.split("'").join("''");
+        let loginCmdlet = `$psLoginSecrets = ConvertTo-SecureString '${servicePrincipalSecret}' -AsPlainText -Force; `;
         loginCmdlet += `$psLoginCredential = New-Object System.Management.Automation.PSCredential('${loginConfig.servicePrincipalId}', $psLoginSecrets); `;
         
         let cmdletSuffix = "-Credential $psLoginCredential";

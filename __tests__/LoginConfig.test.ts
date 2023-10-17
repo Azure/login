@@ -107,7 +107,7 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.allowNoSubscriptionsLogin).toBeFalsy();
         expect(loginConfig.authType).toBe("SERVICE_PRINCIPAL");
         expect(loginConfig.servicePrincipalId).toBe("client-id");
-        expect(loginConfig.servicePrincipalKey).toBe("client-secret");
+        expect(loginConfig.servicePrincipalSecret).toBe("client-secret");
         expect(loginConfig.tenantId).toBe("tenant-id");
         expect(loginConfig.subscriptionId).toBe("subscription-id");
     });
@@ -157,7 +157,7 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.allowNoSubscriptionsLogin).toBeTruthy();
         expect(loginConfig.authType).toBe("SERVICE_PRINCIPAL");
         expect(loginConfig.servicePrincipalId).toBe("client-id-aa");
-        expect(loginConfig.servicePrincipalKey).toBeNull();
+        expect(loginConfig.servicePrincipalSecret).toBeNull();
         expect(loginConfig.tenantId).toBe("tenant-id-aa");
         expect(loginConfig.subscriptionId).toBe("subscription-id-aa");
     });
@@ -251,7 +251,7 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.allowNoSubscriptionsLogin).toBeTruthy();
         expect(loginConfig.authType).toBe("IDENTITY");
         expect(loginConfig.servicePrincipalId).toBe("");
-        expect(loginConfig.servicePrincipalKey).toBeNull();
+        expect(loginConfig.servicePrincipalSecret).toBeNull();
         expect(loginConfig.tenantId).toBe("");
         expect(loginConfig.subscriptionId).toBe("");
     });

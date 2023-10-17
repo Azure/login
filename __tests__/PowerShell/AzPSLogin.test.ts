@@ -10,7 +10,7 @@ jest.setTimeout(30000);
 beforeAll(() => {
     var loginConfig = new LoginConfig();
     loginConfig.servicePrincipalId = "servicePrincipalID";
-    loginConfig.servicePrincipalKey = "servicePrinicipalkey";
+    loginConfig.servicePrincipalSecret = "servicePrincipalSecret";
     loginConfig.tenantId = "tenantId";
     loginConfig.subscriptionId = "subscriptionId";
     azpsLogin = new AzPSLogin(loginConfig);

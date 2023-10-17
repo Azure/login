@@ -44,7 +44,7 @@ export class AzureCliLogin {
                 "--username", this.loginConfig.servicePrincipalId,
                 "--tenant", this.loginConfig.tenantId
             ];
-            if (this.loginConfig.servicePrincipalKey) {
+            if (this.loginConfig.servicePrincipalSecret) {
                 await this.loginWithSecret(args);
             }
             else {
@@ -100,7 +100,7 @@ export class AzureCliLogin {
 
     async loginWithSecret(args: string[]) {
         core.info("Note: Azure/login action also supports OIDC login mechanism. Refer https://github.com/azure/login#configure-a-service-principal-with-a-federated-credential-to-use-oidc-based-authentication for more details.")
-        args.push(`--password=${this.loginConfig.servicePrincipalKey}`);
+        args.push(`--password=${this.loginConfig.servicePrincipalSecret}`);
         await this.callCliLogin(args, 'service principal with secret');
     }
 
