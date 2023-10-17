@@ -54,16 +54,39 @@ describe('Testing runPSScript', () => {
             $ErrorActionPreference = "Stop"
             $WarningPreference = "SilentlyContinue"
             $output = @{}
-            $output['${AzPSConstants.Success}'] = "true"
-            $output['${AzPSConstants.Result}'] = $PSVersionTable.PSVersion.ToString()
+            $output['Success'] = $true
+            $output['Result'] = $PSVersionTable.PSVersion.ToString()
         }
         catch {
-            $output['${AzPSConstants.Error}'] = $_.exception.Message
+            $output['Success'] = $false
+            $output['Error'] = $_.exception.Message
         }
         return ConvertTo-Json $output`;
 
         let psVersion: string = await AzPSLogin.runPSScript(script);
         expect(psVersion === null).toBeFalsy();
+    });
+
+    test('Get PowerShell Version with Wrong Name', async () => {
+        let script = `try {
+            $ErrorActionPreference = "Stop"
+            $WarningPreference = "SilentlyContinue"
+            $output = @{}
+            $output['Success'] = $true
+            $output['Result'] = $PSVersionTableWrongName.PSVersion.ToString()
+        }
+        catch {
+            $output['Success'] = $false
+            $output['Error'] = $_.exception.Message
+        }
+        return ConvertTo-Json $output`;
+
+        try{
+            await AzPSLogin.runPSScript(script);
+            throw new Error("The last step should fail.");
+        }catch(error){
+            expect(error.message.includes("Azure PowerShell login failed with error: You cannot call a method on a null-valued expression.")).toBeTruthy();
+        }
     });
 
 });

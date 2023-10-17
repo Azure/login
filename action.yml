@@ -1,6 +1,6 @@
 # Login to Azure subscription
 name: 'Azure Login'
-description: 'Authenticate to Azure using OIDC and run your Azure CLI or Azure PowerShell based actions or scripts. github.com/Azure/Actions'
+description: 'Authenticate to Azure and run your Azure CLI or Azure PowerShell based actions or scripts.'
 inputs: 
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'

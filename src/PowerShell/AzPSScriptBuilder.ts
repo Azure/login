@@ -10,11 +10,12 @@ export default class AzPSScriptBuilder {
             $output = @{}
             $latestModulePath = (Get-Module -Name '${moduleName}' -ListAvailable | Sort-Object Version -Descending | Select-Object -First 1).Path
             Import-Module -Name $latestModulePath
-            $output['${AzPSConstants.Result}'] = $latestModulePath
-            $output['${AzPSConstants.Success}'] = "true"
+            $output['Success'] = $true
+            $output['Result'] = $latestModulePath
         }
         catch {
-            $output['${AzPSConstants.Error}'] = $_.exception.Message
+            $output['Success'] = $false
+            $output['Error'] = $_.exception.Message
         }
         return ConvertTo-Json $output`;
 
@@ -52,11 +53,12 @@ export default class AzPSScriptBuilder {
             $WarningPreference = "SilentlyContinue"
             $output = @{}
             ${commands}
-            $output['${AzPSConstants.Success}'] = "true"
-            $output['${AzPSConstants.Result}'] = ""
+            $output['Success'] = $true
+            $output['Result'] = ""
         }
         catch {
-            $output['${AzPSConstants.Error}'] = $_.exception.Message
+            $output['Success'] = $false
+            $output['Error'] = $_.exception.Message
         }
         return ConvertTo-Json $output`;
 

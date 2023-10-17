@@ -31,7 +31,7 @@ describe("Getting AzLogin PS script", () => {
         setEnv('auth-type', 'SERVICE_PRINCIPAL');
         let creds = {
             'clientId': 'client-id',
-            'clientSecret': 'client-secret',
+            'clientSecret': "client-secret",
             'tenantId': 'tenant-id',
             'subscriptionId': 'subscription-id'
         }
@@ -41,6 +41,27 @@ describe("Getting AzLogin PS script", () => {
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
             expect(loginScript.includes("Clear-AzContext -Scope Process; Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue; $psLoginSecrets = ConvertTo-SecureString 'client-secret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential | out-null;")).toBeTruthy();
+            expect(loginMethod).toBe('service principal with secret');
+        });
+    });
+
+    test('getAzPSLoginScript for SP+secret with allowNoSubscriptionsLogin=true, secret with single-quote', () => {
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        let creds = {
+            'clientId': 'client-id',
+            'clientSecret': "client-se'cret",
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        }
+        setEnv('creds', JSON.stringify(creds));
+
+        let loginConfig = new LoginConfig();
+        loginConfig.initialize();
+        return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
+            expect(loginScript.includes("Clear-AzContext -Scope Process; Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue; $psLoginSecrets = ConvertTo-SecureString 'client-se''cret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('service principal with secret');
         });
     });

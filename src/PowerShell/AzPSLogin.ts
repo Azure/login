@@ -8,6 +8,12 @@ import AzPSScriptBuilder from './AzPSScriptBuilder';
 import AzPSConstants from './AzPSConstants';
 import { LoginConfig } from '../common/LoginConfig';
 
+interface PSResultType {
+    Result: string;
+    Success: boolean;
+    Error: string;
+}
+
 export class AzPSLogin {
     loginConfig: LoginConfig;
 
@@ -83,11 +89,12 @@ export class AzPSLogin {
         if (commandStdErr) {
             throw new Error('Azure PowerShell login failed with errors.');
         }
-        const result: any = JSON.parse(outputString.trim());
-        if (!(AzPSConstants.Success in result)) {
-            throw new Error(`Azure PowerShell login failed with error: ${result[AzPSConstants.Error]}`);
+        const result: PSResultType = JSON.parse(outputString.trim());
+        console.log(result);
+        if (!(result.Success)) {
+            throw new Error(`Azure PowerShell login failed with error: ${result.Error}`);
         }
-        return result[AzPSConstants.Result];
+        return result.Result;
     }
 }
 
