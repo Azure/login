@@ -60,7 +60,7 @@ jobs:
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
@@ -74,6 +74,28 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext | Format-List
+
+    - name: Login with explicit auth-type
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        auth-type: SERVICE_PRINCIPAL
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+        az group show --name GitHubAction_CI_RG
+        az vm list
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
+          Get-AzVM
 
   ParameterTest:
     strategy:
@@ -95,30 +117,6 @@ jobs:
       run: |
         npm install
         npm run build
-
-    - name: Login with both creds and individual parameters
-      uses: ./
-      with:
-        creds: ${{secrets.SP1}}
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
-        enable-AzPSSession: true
-
-    - name: Run Azure Cli
-      run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
-
-    - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
-      with:
-        azPSVersion: "latest"
-        inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
 
     - name: Login with creds, disable ps session
       uses: ./
@@ -184,4 +182,108 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext | Format-List
+
+  VMTest:
+    strategy:
+      matrix:
+        os: [self_linux, self_windows]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v3.5.2
+
+    - name: Set Node.js 16.x for GitHub Action
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with system-assigned managed identity, no subscription-id
+      uses: ./
+      with:
+        auth-type: IDENTITY
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+  
+    - name: Run Azure Cli
+      run: |
+        az account show
+    
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+
+    - name: Login with system-assigned managed identity, with subscription id
+      uses: ./
+      with:
+        auth-type: IDENTITY
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+        az group show --name GitHubAction_CI_RG
+        az vm list
+  
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
+          Get-AzVM
+
+    - name: Login with tenant-level user-assigned managed identity with allow-no-subscriptions
+      uses: ./
+      with:
+        client-id: ${{ secrets.UMI2_CLIENT_ID }}
+        allow-no-subscriptions: true
+        auth-type: IDENTITY
+        enable-AzPSSession: true
+    
+    - name: Run Azure Cli
+      run: |
+        az account show
+    
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+
+    - name: Login with user-assigned managed identity, subscription-id
+      uses: ./
+      with:
+        client-id: ${{ secrets.UMI1_CLIENT_ID }}
+        subscription-id: ${{ secrets.UMI1_SUBSCRIPTION_ID }}
+        auth-type: IDENTITY
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show
+        az group show --name GitHubAction_CI_RG
+        az vm list
+    
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzContext | Format-List
+          Get-AzResourceGroup -Name GitHubAction_CI_RG
+          Get-AzVM
+
 
