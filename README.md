@@ -26,7 +26,7 @@ Note:
 - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by AD App (Service Principal) is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hrs. This expiration time is further configurable in Azure. Refer to [access-token lifetime](https://learn.microsoft.com/en-us/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
 > [!WARNING]
-> By default, Azure CLI commands’ output is printed to the stdout stream. Without redirecting the stdout stream, contents in it will be stored in the build logs of the action. You may configure Azure CLI to not print any output by setting the environment variable `AZURE_CORE_OUTPUT` to `none`. If you need the output of a specific command, you can add argument `--output json` to restore its output. For more information about the configuration settings and output format of Azure CLI, see [CLI configuration values and environment variables](https://learn.microsoft.com/cli/azure/azure-cli-configuration#cli-configuration-values-and-environment-variables).
+> By default, the output of Azure CLI commands print to the stdout stream and are stored in the build logs of the action. Configure Azure CLI to _not_ show output in the console screen or print in the log by setting the environment variable `AZURE_CORE_OUTPUT` to `none`. If you need the output of a specific command, override the default setting using the argument `--output` with your format of choice. For more information on output options with the Azure CLI, see [Format output](https://learn.microsoft.com/cli/azure/format-output-azure-cli).
 
 ## Sample workflow that uses Azure login action to run az cli
 
