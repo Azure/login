@@ -34,8 +34,8 @@ jobs:
             creds: ${{ secrets.AZURE_CREDENTIALS }}
           
        - run: |
-             az account show
-  #          az webapp list
+             az account show --output none
+             az vm list --output none
 
        - name: 'Az CLI login without subscription'
          uses: ./
@@ -44,7 +44,8 @@ jobs:
            allow-no-subscriptions: true
 
        - run: |
-           az account show
+             az account show --output none
+             az vm list --output none
 
        - name: 'Azure PowerShell login with subscription'
          uses: ./
@@ -54,7 +55,7 @@ jobs:
 
        - uses: azure/powershell@v1
          with:
-           inlineScript: "Get-AzContext"
+           inlineScript: "(Get-AzContext).Environment.Name"
            azPSVersion: "latest"
 
       #  - name: 'Azure PowerShell login without subscription'
