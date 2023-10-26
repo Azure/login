@@ -38,7 +38,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
       - run: |
-          az account show
+          az account show --output none
           
       - name: 'Az CLI login without subscription'
         uses: azure/login@v1
@@ -47,7 +47,7 @@ jobs:
           allow-no-subscriptions: true
           
       - run: |
-          az account show
+          az account show --output none
           
       - name: 'Az CLI login with subscription OIDC'
         uses: azure/login@v1
@@ -57,7 +57,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
         
       - run: |
-          az account show
+          az account show --output none
           
       - name: 'Az CLI login without subscription OIDC'
         uses: azure/login@v1
@@ -67,9 +67,7 @@ jobs:
           allow-no-subscriptions: true
           
       - run: |
-          az account show
-          
-   
+          az account show --output none
           
   slack-post-result:
         runs-on: ubuntu-latest
