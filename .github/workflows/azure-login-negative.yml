@@ -37,9 +37,9 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Run Azure PowerShell
       id: ps_1
@@ -48,9 +48,9 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
+          (Get-AzVM).Count -gt 0
 
     - name: Check Last step failed
       if: steps.ps_1.outcome == 'success'
@@ -71,7 +71,7 @@ jobs:
 
     - name: Run Azure Cli again
       run: |
-        az account show
+        az account show --output none
 
     - name: Run Azure PowerShell again
       id: ps_2
@@ -80,7 +80,7 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
 
     - name: Check Last step failed
       if: steps.ps_2.outcome == 'success'
@@ -124,9 +124,9 @@ jobs:
       id: cli_3
       continue-on-error: true
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Check Last step failed
       if: steps.cli_3.outcome == 'success'
@@ -142,9 +142,9 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
+          (Get-AzVM).Count -gt 0
 
     - name: Check Last step failed
       if: steps.ps_3.outcome == 'success'
@@ -259,9 +259,9 @@ jobs:
 
     - name: Run Azure Cli 
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Run Azure PowerShell
       id: ps_8
@@ -270,9 +270,9 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
+          (Get-AzVM).Count -gt 0
 
     - name: Check Last step failed
       if: steps.ps_8.outcome == 'success'
@@ -289,9 +289,9 @@ jobs:
 
     - name: Run Azure Cli 
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Run Azure PowerShell
       id: ps_9
@@ -300,9 +300,9 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
+          (Get-AzVM).Count -gt 0
 
     - name: Check Last step failed
       if: steps.ps_9.outcome == 'success'

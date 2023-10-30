@@ -42,18 +42,21 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            $checkResult = $checkResult -and ((Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG')
+            $checkResult = $checkResult -and ((Get-AzVM).Count -gt 0)
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with individual parameters
       uses: ./
@@ -66,14 +69,17 @@ jobs:
 
     - name: Run Azure Cli again
       run: |
-        az account show
+        az account show --output none
 
     - name: Run Azure PowerShell again
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with explicit auth-type
       uses: ./
@@ -84,18 +90,21 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            $checkResult = $checkResult -and ((Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG')
+            $checkResult = $checkResult -and ((Get-AzVM).Count -gt 0)
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
   ParameterTest:
     strategy:
@@ -126,9 +135,9 @@ jobs:
 
     - name: Run Azure Cli 
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Login with creds, wrong boolean value
       uses: ./
@@ -138,9 +147,9 @@ jobs:
 
     - name: Run Azure Cli 
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
 
     - name: Login with creds, allow no subscription
       uses: ./
@@ -151,18 +160,21 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
  
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            $checkResult = $checkResult -and ((Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG')
+            $checkResult = $checkResult -and ((Get-AzVM).Count -gt 0)
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with individual parameters, no subscription, allow no subscription
       uses: ./
@@ -174,14 +186,17 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
+        az account show --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
   VMTest:
     strategy:
@@ -213,14 +228,17 @@ jobs:
   
     - name: Run Azure Cli
       run: |
-        az account show
+        az account show --output none
     
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with system-assigned managed identity, with subscription id
       uses: ./
@@ -231,18 +249,21 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
   
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            $checkResult = $checkResult -and ((Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG')
+            $checkResult = $checkResult -and ((Get-AzVM).Count -gt 0)
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with tenant-level user-assigned managed identity with allow-no-subscriptions
       uses: ./
@@ -254,14 +275,17 @@ jobs:
     
     - name: Run Azure Cli
       run: |
-        az account show
+        az account show --output none
     
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
     - name: Login with user-assigned managed identity, subscription-id
       uses: ./
@@ -273,17 +297,19 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show
-        az group show --name GitHubAction_CI_RG
-        az vm list
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+        az vm list --output none
     
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
       with:
         azPSVersion: "latest"
         inlineScript: |
-          Get-AzContext | Format-List
-          Get-AzResourceGroup -Name GitHubAction_CI_RG
-          Get-AzVM
-
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            $checkResult = $checkResult -and ((Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG')
+            $checkResult = $checkResult -and ((Get-AzVM).Count -gt 0)
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
 
