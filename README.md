@@ -28,6 +28,8 @@ It's used in login with OpenID Connect (OIDC) and user-assigned managed identity
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for usage.
+
 ### Parameter `subscription-id`
 
 The input parameter `subscription-id` specifies the login subscription id.
@@ -35,6 +37,8 @@ The input parameter `subscription-id` specifies the login subscription id.
 It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
+
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for usage.
 
 ### Parameter `tenant-id`
 
@@ -44,7 +48,13 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for usage.
+
 ### Parameter `creds`
+
+> [!NOTE]
+>
+> If one of `client-id` and `subscription-id` and `tenant-id` is set, `creds` will be ignored.
 
 The value of input parameter `creds` is a string in json format, including the following values:
 
@@ -61,13 +71,14 @@ It's used in login with a Azure service principal secret.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-> [!NOTE]
->
-> If one of `client-id` and `subscription-id` and `tenant-id` is set, `creds` will be ignored.
+
+Refer to [Login With a Service Principal Secret](#login-with-a-service-principal-secret) for usage.
 
 ### Parameter `enable-AzPSSession`
 
 By default, Azure Login Action only logs in with the Azure CLI. To log in with the Azure PowerShell module, set `enable-AzPSSession` to true.
+
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for usage.
 
 ### Parameter `environment`
 
@@ -75,9 +86,13 @@ By default, Azure Login Action connects to the Azure Public Cloud (`AzureCloud`)
 
 To login to one of the Azure Government clouds or Azure Stack, set `environment` to one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureGermanCloud` or `AzureStack`.
 
+Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-cloud) for usage.
+
 ### Parameter `allow-no-subscriptions`
 
 By default, Azure Login Action requires a `subscription-id`. To login to Azure tenants without any subscriptions, set `allow-no-subscriptions` to true.
+
+Refer to [Login without subscription](#login-without-subscription) for usage.
 
 ### Parameter `audience`
 
@@ -86,6 +101,8 @@ Azure Login Action gets the JWT ID token from GitHub OIDC provider when login wi
 ### Parameter `auth-type`
 
 The input parameter `auth-type` specifies the type of authentication. The default value is `SERVICE_PRINCIPAL`. Users can specify it as `IDENTITY` for login with Managed Identity.
+
+Refer to [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for usage.
 
 ## Workflow Examples
 
@@ -447,7 +464,7 @@ jobs:
 
 Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com/azure-stack/user/ci-cd-github-action-login-cli) for more detailed instructions.
 
-### Support for using `allow-no-subscriptions` flag with az login
+### Login without subscription
 
 Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
 
