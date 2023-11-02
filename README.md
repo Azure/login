@@ -71,7 +71,6 @@ It's used in login with a Azure service principal secret.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-
 Refer to [Login With a Service Principal Secret](#login-with-a-service-principal-secret) for its usage.
 
 ### Parameter `enable-AzPSSession`
@@ -134,7 +133,7 @@ Now you can try the workflow to login with OIDC.
 >
 > In GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
 
-**The worklfow sample to only run Azure CLI**
+- **The worklfow sample to only run Azure CLI**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -158,13 +157,15 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
+  env:
+          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
-          inlineScript: |
+    inlineScript: |
             az account show
 ```
 
-**The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -189,9 +190,11 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
+  env:
+          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
-          inlineScript: |
+    inlineScript: |
             az account show
 
       - name: Azure PowerShell script
@@ -227,7 +230,7 @@ After it, create a GitHub Action secret `AZURE_CREDENTIALS` with the value like 
 
 Now you can try the workflow to login with a service principal secret.
 
-**The worklfow sample to only run Azure CLI**
+- **The worklfow sample to only run Azure CLI**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -246,12 +249,18 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
-    - run: |
-        az webapp list --query "[?state=='Running']"
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      env:
+        AZURE_CORE_OUTPUT: none
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
 
 ```
 
-**The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -271,15 +280,21 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         enable-AzPSSession: true
     
-    - run: |
-        az webapp list --query "[?state=='Running']"
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      env:
+        AZURE_CORE_OUTPUT: none
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
 
-      - name: Azure PowerShell script
-        uses: azure/powershell@v1.2.0
-        with:
-          azPSVersion: "latest"
-          inlineScript: |
-            Get-AzWebApp
+    - name: Azure PowerShell script
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          Get-AzWebApp
 ```
 
 If you want to pass subscription ID, tenant ID, client ID, and client secret as individual parameters instead of bundling them in a single JSON object to address the [security concerns](https://docs.github.com/actions/security-guides/encrypted-secrets), below snippet can help with the same.
@@ -313,7 +328,7 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 - AZURE_SUBSCRIPTION_ID: the Subscription ID.
 - AZURE_TENANT_ID: the Tenant ID.
 
-**The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -335,6 +350,8 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
+        env:
+          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -374,7 +391,7 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 - AZURE_SUBSCRIPTION_ID: the subscription ID.
 - AZURE_TENANT_ID: the tenant ID.
 
-**The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -397,6 +414,8 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
+        env:
+          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -483,9 +502,14 @@ jobs:
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
-    - name: Run Azure ClI
-      run: |
-        az account show
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      env:
+        AZURE_CORE_OUTPUT: none
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1.2.0
