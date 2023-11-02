@@ -157,11 +157,11 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-  env:
+        env:
           AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
-    inlineScript: |
+          inlineScript: |
             az account show
 ```
 
@@ -190,11 +190,11 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-  env:
+        env:
           AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
-    inlineScript: |
+          inlineScript: |
             az account show
 
       - name: Azure PowerShell script
