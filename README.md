@@ -162,7 +162,6 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az account show
-            az group list
 ```
 
 **The worklfow sample to run both Azure CLI and Azure PowerShell**
@@ -194,7 +193,6 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az account show
-            az group list
 
       - name: Azure PowerShell script
         uses: azure/powershell@v1.2.0
@@ -202,7 +200,6 @@ jobs:
           azPSVersion: "latest"
           inlineScript: |
             Get-AzContext
-            Get-AzResourceGroup
 ```
 
 ### Login With a Service Principal Secret
@@ -342,7 +339,6 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az account show
-            az group list
 
       - name: Azure PowerShell script
         uses: azure/powershell@v1.2.0
@@ -405,7 +401,6 @@ jobs:
           azcliversion: latest
           inlineScript: |
             az account show
-            az group list
 
       - name: Azure PowerShell script
         uses: azure/powershell@v1.2.0
@@ -413,7 +408,6 @@ jobs:
           azPSVersion: "latest"
           inlineScript: |
             Get-AzContext
-            Get-AzResourceGroup
 ```
 
 ### Login to Azure US Government cloud
