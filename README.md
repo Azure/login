@@ -4,7 +4,7 @@
 
 With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
 
-With the [Azure Login Action](https://github.com/Azure/login/blob/master/action.yml), you can login to Azure and run Azure CLI and Azure PowerShell scripts.
+With the [Azure Login Action](https://github.com/Azure/login), you can login to Azure and run Azure CLI and Azure PowerShell scripts.
 
 Azure Login Action support different ways of authentication with Azure.
 
@@ -273,7 +273,7 @@ If you want to pass subscription ID, tenant ID, client ID, and client secret as 
 ```yaml
   - uses: Azure/login@v1
     with:
-      creds: '{"clientId":"${{ secrets.CLIENT_ID }}","clientSecret":"${{ secrets.CLIENT_SECRET }}","subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}","tenantId":"${{ secrets.TENANT_ID }}"}'
+      creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
 ```
 
 ### Login With System-assigned Managed Identity
@@ -345,6 +345,7 @@ Before your login with User-assigned managed identity, you need to create an Azu
 - Create an Azure virtual machine
   - [Create a Windows virtual machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal)
   - [Create a Linux virtual machine](https://learn.microsoft.com/azure/virtual-machines/linux/quick-create-portal?tabs=ubuntu)
+- [Create a user-assigned managed identity and assign a role to it](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp#create-a-user-assigned-managed-identity)
 - [Configure user-assigned managed identity on the Azure virtual machine](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/qs-configure-portal-windows-vm#user-assigned-managed-identity)
 - Install required softwares on the Azure virtual machine
   - [Install PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
@@ -465,8 +466,8 @@ jobs:
     - name: Azure Login
       uses: azure/login@v1
       with:
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
