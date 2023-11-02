@@ -20,7 +20,7 @@ Azure Login Action support different ways of authentication with Azure.
 
 ## Input Parameters
 
-### Parameter `client-id`
+### `client-id`
 
 The input parameter `client-id` specifies the login client id. It could be the client id of a service principal or a user-assigned managed identity.
 
@@ -30,7 +30,7 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
-### Parameter `subscription-id`
+### `subscription-id`
 
 The input parameter `subscription-id` specifies the login subscription id.
 
@@ -40,7 +40,7 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
 
-### Parameter `tenant-id`
+### `tenant-id`
 
 The input parameter `tenant-id` specifies the login tenant id.
 
@@ -50,7 +50,7 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
 
-### Parameter `creds`
+### `creds`
 
 > [!NOTE]
 >
@@ -73,13 +73,13 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 
 Refer to [Login With a Service Principal Secret](#login-with-a-service-principal-secret) for its usage.
 
-### Parameter `enable-AzPSSession`
+### `enable-AzPSSession`
 
 By default, Azure Login Action only logs in with the Azure CLI. To log in with the Azure PowerShell module, set `enable-AzPSSession` to true.
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
 
-### Parameter `environment`
+### `environment`
 
 By default, Azure Login Action connects to the Azure Public Cloud (`AzureCloud`).
 
@@ -87,17 +87,17 @@ To login to one of the Azure Government clouds or Azure Stack, set `environment`
 
 Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-cloud) for its usage.
 
-### Parameter `allow-no-subscriptions`
+### `allow-no-subscriptions`
 
 By default, Azure Login Action requires a `subscription-id`. To login to Azure tenants without any subscriptions, set `allow-no-subscriptions` to true.
 
 Refer to [Login without subscription](#login-without-subscription) for its usage.
 
-### Parameter `audience`
+### `audience`
 
 Azure Login Action gets the JWT ID token from GitHub OIDC provider when login with OIDC. The default `audience` is `api://AzureADTokenExchange`. Users can specify a custom `audience`.
 
-### Parameter `auth-type`
+### `auth-type`
 
 The input parameter `auth-type` specifies the type of authentication. The default value is `SERVICE_PRINCIPAL`. Users can specify it as `IDENTITY` for login with Managed Identity.
 
