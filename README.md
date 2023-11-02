@@ -328,6 +328,8 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 - AZURE_SUBSCRIPTION_ID: the Subscription ID.
 - AZURE_TENANT_ID: the Tenant ID.
 
+Now you can try the workflow to login with system-assigned managed identity.
+
 - **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
@@ -390,6 +392,8 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 - AZURE_CLIENT_ID: the user-assigned managed identity client ID
 - AZURE_SUBSCRIPTION_ID: the subscription ID.
 - AZURE_TENANT_ID: the tenant ID.
+
+Now you can try the workflow to login with user-assigned managed identity.
 
 - **The worklfow sample to run both Azure CLI and Azure PowerShell**
 
