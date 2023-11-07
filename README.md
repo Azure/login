@@ -1,12 +1,8 @@
-# GitHub Actions for deploying to Azure
-
-[GitHub Actions](https://help.github.com/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
-
-With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
+# Azure Login Action
 
 With the [Azure Login Action](https://github.com/Azure/login), you can login to Azure and run Azure CLI and Azure PowerShell scripts.
 
-Azure Login Action support different ways of authentication with Azure.
+Azure Login Action supports different ways of authentication with Azure.
 
 - Login with OpenID Connect (OIDC)
 - Login with a Service Principal Secret
@@ -38,7 +34,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `tenant-id`
 
@@ -48,7 +44,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `creds`
 
@@ -67,7 +63,7 @@ The value of input parameter `creds` is a string in json format, including the f
 }
 ```
 
-It's used in login with a Azure service principal secret.
+It's used in login with an Azure service principal.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
@@ -112,7 +108,7 @@ Refer to [Login With System-assigned Managed Identity](#login-with-system-assign
 > - Ensure the CLI version is 2.30 or above to support login with OIDC.
 > - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by Service Principal is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hours. This expiration time is further configurable in Azure. Refer to [access-token lifetime](https://learn.microsoft.com/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
-Before your use Azure Login Action with OIDC, you need to configure a federated identity credential on an service principal or a managed identity.
+Before you use Azure Login Action with OIDC, you need to configure a federated identity credential on an service principal or a managed identity.
 
 - Prepare a service principal for Login with OIDC
   - [Create a service principal and assign a role to it](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal)
@@ -124,14 +120,14 @@ Before your use Azure Login Action with OIDC, you need to configure a federated 
 After it, create GitHub Action secrets for following values: (Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).)
 
 - AZURE_CLIENT_ID: the service principal client ID or user-assigned managed identity client ID
-- AZURE_SUBSCRIPTION_ID: the subscription ID.
-- AZURE_TENANT_ID: the tenant ID.
+- AZURE_SUBSCRIPTION_ID: the subscription ID
+- AZURE_TENANT_ID: the tenant ID
 
 Now you can try the workflow to login with OIDC.
 
 > [!NOTE]
 >
-> In GitHub workflow, Set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token needs to be auto-generated for all Jobs or a specific Job.
+> In GitHub workflow, you should set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token is allowed be generated for all Jobs or a specific Job.
 
 - **The worklfow sample to only run Azure CLI**
 
@@ -207,7 +203,7 @@ jobs:
 
 ### Login With a Service Principal Secret
 
-Before your login a service principal secret, you need to prepare a service principal with a secret.
+Before you login a service principal secret, you need to prepare a service principal with a secret.
 
 - [Create a service principal and assign a role to it](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal)
 - [Create a new service principal client secret](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal#option-3-create-a-new-client-secret).
@@ -311,7 +307,7 @@ If you want to pass subscription ID, tenant ID, client ID, and client secret as 
 >
 > "Login With System-assigned Managed Identity" is only supported on GitHub self-hosted runners and the self-hosted runners need to be hosted by Azure virtual machines.
 
-Before your login with system-assigned managed identity, you need to create an Azure virtual machine to host the GitHub self-hosted runner.
+Before you login with system-assigned managed identity, you need to create an Azure virtual machine to host the GitHub self-hosted runner.
 
 - Create an Azure virtual machine
   - [Create a Windows virtual machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal)
@@ -374,7 +370,7 @@ jobs:
 >
 > "Login With User-assigned Managed Identity" is only supported on GitHub self-hosted runners and the self-hosted runners need to be hosted by Azure virtual machines.
 
-Before your login with User-assigned managed identity, you need to create an Azure virtual machine to host the GitHub self-hosted runner.
+Before you login with User-assigned managed identity, you need to create an Azure virtual machine to host the GitHub self-hosted runner.
 
 - Create an Azure virtual machine
   - [Create a Windows virtual machine](https://learn.microsoft.com/azure/virtual-machines/windows/quick-create-portal)
@@ -525,7 +521,7 @@ jobs:
 
 ## Az logout and security hardening
 
-This action doesn't implement ```az logout``` by default at the end of execution. However there is no way of tampering the credentials or account information because the github hosted runner is on a VM that will get re-imaged for every customer run which gets everything deleted. But if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below. More details on security of the runners can be found [here](https://docs.github.com/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
+This action doesn't implement ```az logout``` by default at the end of execution. However, there is no way to tamper with the credentials or account information because the GitHub-hosted runner is on a VM that will get re-imaged for every customer run, which deletes everything. But if the runner is self-hosted (not provided by GitHub), it is recommended to manually log out at the end of the workflow, as shown below. More details on security of the runners can be found [here](https://docs.github.com/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
 
 ```yaml
 - name: Azure CLI script
@@ -550,6 +546,14 @@ This action doesn't implement ```az logout``` by default at the end of execution
 Internally in this action, we use azure CLI and execute `az login` with the credentials provided through secrets. In order to validate the new azure CLI releases for this action, [canary test workflow](.github/workflows/azure-login-canary.yml) is written which will execute the action on [azure CLI's edge build](https://github.com/Azure/azure-cli#edge-builds) which will fail incase of any breaking change is being introduced in the new upcoming release. The test results can be posted on a slack or teams channel using the corresponding integrations. Incase of a failure, the concern will be raised to [azure-cli](https://github.com/Azure/azure-cli) for taking a necessary action and also the latest CLI installation will be postponed in [Runner VMs](https://github.com/actions/virtual-environments) as well for hosted runner to prevent the workflows failing due to the new CLI changes.
 
 ## Reference
+
+### GitHub Action
+
+[GitHub Actions](https://help.github.com/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
+
+# GitHub Actions for deploying to Azure
+
+With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
 
 ### Azure CLI Action
 
