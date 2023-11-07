@@ -1,5 +1,33 @@
 # Azure Login Action
 
+- [Azure Login Action](#azure-login-action)
+  - [Input Parameters](#input-parameters)
+    - [`client-id`](#client-id)
+    - [`subscription-id`](#subscription-id)
+    - [`tenant-id`](#tenant-id)
+    - [`creds`](#creds)
+    - [`enable-AzPSSession`](#enable-azpssession)
+    - [`environment`](#environment)
+    - [`allow-no-subscriptions`](#allow-no-subscriptions)
+    - [`audience`](#audience)
+    - [`auth-type`](#auth-type)
+  - [Workflow Examples](#workflow-examples)
+    - [Login With OpenID Connect (OIDC) \[Recommended\]](#login-with-openid-connect-oidc-recommended)
+    - [Login With a Service Principal Secret](#login-with-a-service-principal-secret)
+    - [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity)
+    - [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity)
+    - [Login to Azure US Government cloud](#login-to-azure-us-government-cloud)
+    - [Login to Azure Stack Hub](#login-to-azure-stack-hub)
+    - [Login without subscription](#login-without-subscription)
+  - [Az logout and security hardening](#az-logout-and-security-hardening)
+  - [Azure CLI dependency](#azure-cli-dependency)
+  - [Reference](#reference)
+    - [GitHub Action](#github-action)
+    - [GitHub Actions for deploying to Azure](#github-actions-for-deploying-to-azure)
+    - [Azure CLI Action](#azure-cli-action)
+    - [Azure PowerShell Action](#azure-powershell-action)
+  - [Contributing](#contributing)
+
 With the [Azure Login Action](https://github.com/Azure/login), you can login to Azure and run Azure CLI and Azure PowerShell scripts.
 
 Azure Login Action supports different ways of authentication with Azure.
@@ -16,6 +44,18 @@ Azure Login Action supports different ways of authentication with Azure.
 
 ## Input Parameters
 
+|Parameter Name|Required?|Type|Default Value|Description|
+|---|---|---|---|---|
+|client-id|false|UUID||the client id of a service principal or a user-assigned managed identity|
+|subscription-id|false|UUID||the login subscription id|
+|tenant-id|false|UUID||the login tenant id|
+|creds|false|string||a json string for login with an Azure service principal|
+|enable-AzPSSession`|false|boolean|false|if Azure PowerShell login is enabled|
+|environment|false|string|azurecloud|the Azure Cloud environment|
+|allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
+|audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
+|auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
+
 ### `client-id`
 
 The input parameter `client-id` specifies the login client id. It could be the client id of a service principal or a user-assigned managed identity.
@@ -24,7 +64,7 @@ It's used in login with OpenID Connect (OIDC) and user-assigned managed identity
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `subscription-id`
 
@@ -34,7 +74,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `tenant-id`
 
@@ -44,7 +84,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `creds`
 
@@ -73,7 +113,7 @@ Refer to [Login With a Service Principal Secret](#login-with-a-service-principal
 
 By default, Azure Login Action only logs in with the Azure CLI. To log in with the Azure PowerShell module, set `enable-AzPSSession` to true.
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) for its usage.
 
 ### `environment`
 
@@ -101,7 +141,7 @@ Refer to [Login With System-assigned Managed Identity](#login-with-system-assign
 
 ## Workflow Examples
 
-### Login With OpenID Connect (OIDC)
+### Login With OpenID Connect (OIDC) [Recommended]
 
 > [!NOTE]
 >
@@ -220,9 +260,9 @@ After it, create a GitHub Action secret `AZURE_CREDENTIALS` with the value like 
 ```
 
 - clientSecret: the service principal client secret
-- subscriptionId: the subscription ID.
-- tenantId: the tenant ID.
-- clientId: the service principal client ID.
+- subscriptionId: the subscription ID
+- tenantId: the tenant ID
+- clientId: the service principal client ID
 
 Now you can try the workflow to login with a service principal secret.
 
@@ -321,8 +361,8 @@ Before you login with system-assigned managed identity, you need to create an Az
 
 After it, create GitHub Action secrets for following values: (Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).)
 
-- AZURE_SUBSCRIPTION_ID: the Subscription ID.
-- AZURE_TENANT_ID: the Tenant ID.
+- AZURE_SUBSCRIPTION_ID: the Subscription ID
+- AZURE_TENANT_ID: the Tenant ID
 
 Now you can try the workflow to login with system-assigned managed identity.
 
@@ -386,8 +426,8 @@ Before you login with User-assigned managed identity, you need to create an Azur
 After it, create GitHub Action secrets for following values: (Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).)
 
 - AZURE_CLIENT_ID: the user-assigned managed identity client ID
-- AZURE_SUBSCRIPTION_ID: the subscription ID.
-- AZURE_TENANT_ID: the tenant ID.
+- AZURE_SUBSCRIPTION_ID: the subscription ID
+- AZURE_TENANT_ID: the tenant ID
 
 Now you can try the workflow to login with user-assigned managed identity.
 
@@ -551,7 +591,7 @@ Internally in this action, we use azure CLI and execute `az login` with the cred
 
 [GitHub Actions](https://help.github.com/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
 
-# GitHub Actions for deploying to Azure
+### GitHub Actions for deploying to Azure
 
 With [GitHub Actions for Azure](https://github.com/Azure/actions/), you can create workflows that you can set up in your repository to build, test, package, release and **deploy** to Azure.
 
