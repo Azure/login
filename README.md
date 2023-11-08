@@ -193,8 +193,6 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-        env:
-          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -226,8 +224,6 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-        env:
-          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -287,8 +283,6 @@ jobs:
     
     - name: Azure CLI script
       uses: azure/CLI@v1
-      env:
-        AZURE_CORE_OUTPUT: none
       with:
         azcliversion: latest
         inlineScript: |
@@ -318,8 +312,6 @@ jobs:
     
     - name: Azure CLI script
       uses: azure/CLI@v1
-      env:
-        AZURE_CORE_OUTPUT: none
       with:
         azcliversion: latest
         inlineScript: |
@@ -388,8 +380,6 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-        env:
-          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -454,8 +444,6 @@ jobs:
   
       - name: Azure CLI script
         uses: azure/CLI@v1
-        env:
-          AZURE_CORE_OUTPUT: none
         with:
           azcliversion: latest
           inlineScript: |
@@ -544,8 +532,6 @@ jobs:
 
     - name: Azure CLI script
       uses: azure/CLI@v1
-      env:
-        AZURE_CORE_OUTPUT: none
       with:
         azcliversion: latest
         inlineScript: |
