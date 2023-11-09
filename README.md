@@ -28,7 +28,7 @@
     - [Azure PowerShell Action](#azure-powershell-action)
   - [Contributing](#contributing)
 
-With the [Azure Login Action](https://github.com/Azure/login), you can login to Azure and run Azure CLI and Azure PowerShell scripts.
+With the [Azure Login Action](https://github.com/Azure/login), you can login to Azure and run [Azure CLI](https://learn.microsoft.com/cli/azure/) and [Azure PowerShell](https://learn.microsoft.com/powershell/azure) scripts.
 
 Azure Login Action supports different ways of authentication with Azure.
 
@@ -41,6 +41,9 @@ Azure Login Action supports different ways of authentication with Azure.
 
 > [!WARNING]
 > By default, the output of Azure CLI commands is printed to the stdout stream. Without redirecting the stdout stream, contents in it will be stored in the build log of the action. Configure Azure CLI to _not_ show output in the console screen or print in the log by setting the environment variable `AZURE_CORE_OUTPUT` to `none`. If you need the output of a specific command, override the default setting using the argument `--output` with your format of choice. For more information on output options with the Azure CLI, see [Format output](https://learn.microsoft.com/cli/azure/format-output-azure-cli).
+
+> [!WARNING]
+> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Azure AD tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
 
 ## Input Parameters
 
