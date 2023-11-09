@@ -42,10 +42,10 @@ Azure Login Action supports different ways of authentication with Azure.
 > [!WARNING]
 > By default, the output of Azure CLI commands is printed to the stdout stream. Without redirecting the stdout stream, contents in it will be stored in the build log of the action. Configure Azure CLI to _not_ show output in the console screen or print in the log by setting the environment variable `AZURE_CORE_OUTPUT` to `none`. If you need the output of a specific command, override the default setting using the argument `--output` with your format of choice. For more information on output options with the Azure CLI, see [Format output](https://learn.microsoft.com/cli/azure/format-output-azure-cli).
 
-****
+** **
 
 > [!WARNING]
-> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Azure AD tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
+> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Microsoft Entra ID tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
 
 ## Input Parameters
 
@@ -55,7 +55,7 @@ Azure Login Action supports different ways of authentication with Azure.
 |subscription-id|false|UUID||the login subscription id|
 |tenant-id|false|UUID||the login tenant id|
 |creds|false|string||a json string for login with an Azure service principal|
-|enable-AzPSSession`|false|boolean|false|if Azure PowerShell login is enabled|
+|enable-AzPSSession|false|boolean|false|if Azure PowerShell login is enabled|
 |environment|false|string|azurecloud|the Azure Cloud environment|
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
@@ -79,7 +79,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `tenant-id`
 
@@ -89,7 +89,7 @@ It's used in login with OpenID Connect (OIDC) and managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
-Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended), [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `creds`
 
@@ -174,7 +174,7 @@ Now you can try the workflow to login with OIDC.
 >
 > In GitHub workflow, you should set `permissions:` with `id-token: write` at workflow level or job level based on whether the OIDC token is allowed be generated for all Jobs or a specific Job.
 
-- **The worklfow sample to only run Azure CLI**
+- **The workflow sample to only run Azure CLI**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -204,7 +204,7 @@ jobs:
             az account show
 ```
 
-- **The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The workflow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -247,7 +247,7 @@ jobs:
 Before you login a service principal secret, you need to prepare a service principal with a secret.
 
 - [Create a service principal and assign a role to it](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal)
-- [Create a new service principal client secret](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal#option-3-create-a-new-client-secret).
+- [Create a new service principal client secret](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal#option-3-create-a-new-client-secret)
 
 After it, create a GitHub Action secret `AZURE_CREDENTIALS` with the value like below: (Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).)
 
@@ -267,7 +267,7 @@ After it, create a GitHub Action secret `AZURE_CREDENTIALS` with the value like 
 
 Now you can try the workflow to login with a service principal secret.
 
-- **The worklfow sample to only run Azure CLI**
+- **The workflow sample to only run Azure CLI**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -295,7 +295,7 @@ jobs:
 
 ```
 
-- **The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The workflow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -363,7 +363,7 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 
 Now you can try the workflow to login with system-assigned managed identity.
 
-- **The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The workflow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
@@ -426,7 +426,7 @@ After it, create GitHub Action secrets for following values: (Refer to [Using se
 
 Now you can try the workflow to login with user-assigned managed identity.
 
-- **The worklfow sample to run both Azure CLI and Azure PowerShell**
+- **The workflow sample to run both Azure CLI and Azure PowerShell**
 
 ```yaml
 # File: .github/workflows/workflow.yml
