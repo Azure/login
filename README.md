@@ -384,7 +384,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      # Azure CLI Action only support linux self-hosted runners for now. 
+      # Azure CLI Action only supports linux self-hosted runners for now. 
       # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`.  
       - name: Azure CLI script
         uses: azure/CLI@v1
@@ -451,7 +451,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      # Azure CLI Action only support linux self-hosted runners for now. 
+      # Azure CLI Action only supports linux self-hosted runners for now. 
       # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`. 
       - name: Azure CLI script
         uses: azure/CLI@v1
