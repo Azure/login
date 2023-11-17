@@ -353,6 +353,7 @@ Before you login with system-assigned managed identity, you need to create an Az
 - Install required softwares on the Azure virtual machine
   - [Install PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
   - [Install Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)
+    - If you want to run Azure CLI Action, [Install Docker](https://docs.docker.com/engine/install/).
   - [Install Azure PowerShell](https://learn.microsoft.com/powershell/azure/install-azure-powershell)
 - [Configure the Azure virtual machine as a GitHub self-hosted runner](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners)
 
@@ -382,7 +383,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
-  
+
+      # Azure CLI Action only support linux self-hosted runners for now. 
+      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`.  
       - name: Azure CLI script
         uses: azure/CLI@v1
         with:
@@ -415,6 +418,7 @@ Before you login with User-assigned managed identity, you need to create an Azur
 - Install required softwares on the Azure virtual machine
   - [Install PowerShell](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
   - [Install Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)
+    - If you want to run Azure CLI Action, [Install Docker](https://docs.docker.com/engine/install/).
   - [Install Azure PowerShell](https://learn.microsoft.com/powershell/azure/install-azure-powershell)
 - [Configure the Azure virtual machine as a GitHub self-hosted runner](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/adding-self-hosted-runners)
 
@@ -446,7 +450,9 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
-  
+
+      # Azure CLI Action only support linux self-hosted runners for now. 
+      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`. 
       - name: Azure CLI script
         uses: azure/CLI@v1
         with:
