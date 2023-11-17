@@ -45,7 +45,7 @@ jobs:
 
        - run: |
              az account show --output none
-             az vm list --output none
+       #     az vm list --output none
 
        - name: 'Azure PowerShell login with subscription'
          uses: ./
