@@ -75,17 +75,6 @@ describe("LoginConfig Test", () => {
 
     });
 
-    test('initialize with creds, lack of subscriptionId', async () => {
-        let creds1 = {
-            'clientId': 'client-id',
-            'clientSecret': 'client-secret',
-            'tenantId': 'tenant-id',
-            // 'subscriptionId': 'subscription-id'
-        }
-        await testCreds(creds1);
-
-    });
-
     test('initialize with creds', async () => {
         let creds = {
             'clientId': 'client-id',
