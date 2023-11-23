@@ -75,6 +75,32 @@ describe("LoginConfig Test", () => {
 
     });
 
+    
+    test('initialize with creds, lack of  subscriptionId, but allowNoSubscriptionsLogin=true', async () => {
+        let creds1 = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            // 'subscriptionId': 'subscription-id'
+        }
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('creds', JSON.stringify(creds1));
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.environment).toBe("azurecloud");
+        expect(loginConfig.enableAzPSSession).toBeTruthy();
+        expect(loginConfig.allowNoSubscriptionsLogin).toBeTruthy();
+        expect(loginConfig.authType).toBe("SERVICE_PRINCIPAL");
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(loginConfig.servicePrincipalSecret).toBe("client-secret");
+        expect(loginConfig.tenantId).toBe("tenant-id");
+        expect(loginConfig.subscriptionId).toBe("");
+    });
+
+
     test('initialize with creds', async () => {
         let creds = {
             'clientId': 'client-id',

@@ -131,7 +131,7 @@ export class AzureCliLogin {
     }
 
     async setSubscription() {
-        if (this.loginConfig.allowNoSubscriptionsLogin) {
+        if (!this.loginConfig.subscriptionId) {
             return;
         }
         let args = ["account", "set", "--subscription", this.loginConfig.subscriptionId];
