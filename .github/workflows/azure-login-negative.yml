@@ -347,6 +347,11 @@ jobs:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
 
+    # logout first to avoid the conflict with SP1
+    - name: Azure CLI logout
+      run: |
+        az logout
+
     # SP1 is ignored and SP2 will be used for login, but it will failed since SP2 has no access to the given subscription
     - name: Login with both creds and individual parameters
       id: login_12

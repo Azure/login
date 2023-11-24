@@ -126,14 +126,13 @@ export class AzureCliLogin {
             args.push("--allow-no-subscriptions");
         }
         await this.executeAzCliCommand(args, true, this.loginOptions);
-        await this.setSubscription();
+        if (this.loginConfig.subscriptionId) {
+            await this.setSubscription();
+        }
         core.info(`Azure CLI login succeeds by using ${methodName}.`);
     }
 
     async setSubscription() {
-        if (!this.loginConfig.subscriptionId) {
-            return;
-        }
         let args = ["account", "set", "--subscription", this.loginConfig.subscriptionId];
         await this.executeAzCliCommand(args, true, this.loginOptions);
         core.info("Subscription is set successfully.");
@@ -160,7 +159,7 @@ function defaultExecOptions(): exec.ExecOptions {
                 if (error && error.trim().length !== 0 && !startsWithWarning) {
                     if (startsWithError) {
                         //removing the keyword 'ERROR' to avoid duplicates while throwing error
-                        error = error.slice(5);
+                        error = error.slice(7);
                     }
                     core.error(error);
                 }
