@@ -61,10 +61,9 @@ jobs:
     - name: Login with individual parameters
       uses: ./
       with:
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
-        allow-no-subscriptions: true
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
         enable-AzPSSession: true
 
     - name: Run Azure Cli again
@@ -176,11 +175,55 @@ jobs:
                 throw "Not all checks passed!"
             }
 
+    - name: Login with individual parameters, allow no subscription
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID}}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
     - name: Login with individual parameters, no subscription, allow no subscription
       uses: ./
       with:
         client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
         tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v1.2.0
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with creds, no subscription, allow no subscription
+      uses: ./
+      with:
+        creds: '{"clientId":"${{ secrets.OIDC_SP2_CLIENT_ID }}","clientSecret":"${{ secrets.SP2_CLIENT_SECRET }}","tenantId":"${{ secrets.OIDC_SP2_TENANT_ID }}"}'
         allow-no-subscriptions: true
         enable-AzPSSession: true
 

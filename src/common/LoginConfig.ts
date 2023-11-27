@@ -69,8 +69,8 @@ export class LoginConfig {
         this.tenantId = this.tenantId ? this.tenantId : secrets.getSecret("$.tenantId", false);
         this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.getSecret("$.subscriptionId", false);
         this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
-        if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId || !this.subscriptionId) {
-            throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'subscriptionId', 'tenantId'.");
+        if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId) {
+            throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'tenantId'.");
         }
     }
 
