@@ -74,9 +74,8 @@ describe("LoginConfig Test", () => {
         await testCreds(creds1);
 
     });
-
-    
-    test('initialize with creds, lack of  subscriptionId, but allowNoSubscriptionsLogin=true', async () => {
+   
+    test('initialize with creds, lack of subscriptionId, but allowNoSubscriptionsLogin=true', async () => {
         let creds1 = {
             'clientId': 'client-id',
             'clientSecret': 'client-secret',
@@ -99,7 +98,6 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.tenantId).toBe("tenant-id");
         expect(loginConfig.subscriptionId).toBe("");
     });
-
 
     test('initialize with creds', async () => {
         let creds = {

@@ -352,7 +352,7 @@ jobs:
       run: |
         az logout
 
-    # SP1 is ignored and SP2 will be used for login, but it will failed since SP2 has no access to the given subscription
+    # SP1 is ignored and SP2 will be used for login, but it will fail since SP2 has no access to the given subscription
     - name: Login with both creds and individual parameters
       id: login_12
       continue-on-error: true
@@ -383,6 +383,37 @@ jobs:
       
     - name: Check Last step failed
       if: steps.login_13.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+    
+    - name: Login with individual parameters, no subscription-id, no allow-no-subscriptions
+      id: login_14
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_14.outcome == 'success'
+      uses: actions/github-script@v3
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+    
+    - name: Login with creds, no subscription-id, no allow-no-subscriptions
+      id: login_15
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: '{"clientId":"${{ secrets.OIDC_SP2_CLIENT_ID }}","clientSecret":"${{ secrets.SP2_CLIENT_SECRET }}","tenantId":"${{ secrets.OIDC_SP2_TENANT_ID }}"}'
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_15.outcome == 'success'
       uses: actions/github-script@v3
       with:
           script: |
