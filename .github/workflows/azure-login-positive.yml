@@ -178,9 +178,9 @@ jobs:
     - name: Login with individual parameters, allow no subscription
       uses: ./
       with:
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID}}
-        subscription-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID}}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
         allow-no-subscriptions: true
         enable-AzPSSession: true
 
