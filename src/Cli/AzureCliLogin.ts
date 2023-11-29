@@ -34,12 +34,7 @@ export class AzureCliLogin {
         await this.executeAzCliCommand(["--version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
 
-        try {
-            await this.executeAzCliCommand(["account", "clear"], true, execOptions);
-        }
-        catch (error) {
-            core.debug(`Ignore account clear error: "${error}"`);
-        }
+        await this.executeAzCliCommand(["account", "clear"], true, execOptions);
 
         this.setAzurestackEnvIfNecessary();
 
