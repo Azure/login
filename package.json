@@ -21,7 +21,7 @@
     "@actions/core": "1.9.1",
     "@actions/exec": "^1.0.1",
     "@actions/io": "^1.0.1",
-    "actions-secret-parser": "^1.0.2",
+    "actions-secret-parser": "^1.0.4",
     "package-lock": "^1.0.3"
   }
 }
