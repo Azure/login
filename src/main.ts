@@ -31,7 +31,7 @@ async function main() {
         }
     }
     catch (error) {
-        core.setFailed(`Login failed with ${error}. Make sure 'az' is installed on the runner. If 'enable-AzPSSession' is true, make sure 'pwsh' is installed on the runner together with Azure PowerShell module. Double check if the 'auth-type' is correct. Refer to https://github.com/Azure/login#readme for more information.`);
+        core.setFailed(`Login failed with ${error}. If 'enable-AzPSSession' is true, make sure 'pwsh' is installed on the runner together with Azure PowerShell module. Double check if the 'auth-type' is correct. Refer to https://github.com/Azure/login#readme for more information.`);
         core.debug(error.stack);
     }
     finally {
