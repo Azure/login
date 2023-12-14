@@ -11,7 +11,7 @@ async function setup() {
         core.debug(`Azure CLI path: ${azPath}`);
 
         core.info("Clearing accounts from the local cache.")
-        await exec.exec("az", ["account", "clear"]);
+        await exec.exec(`"${azPath}"`, ["account", "clear"]);
     }
     catch (error) {
         core.setFailed(`Login setup failed with ${error}. Make sure 'az' is installed on the runner.`);
