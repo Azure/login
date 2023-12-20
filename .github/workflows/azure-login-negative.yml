@@ -44,7 +44,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_1
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -76,7 +76,7 @@ jobs:
     - name: Run Azure PowerShell again
       id: ps_2
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -138,7 +138,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_3
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -266,7 +266,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_8
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -296,7 +296,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_9
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
