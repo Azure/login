@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -102,7 +102,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -165,7 +165,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -426,7 +426,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
