@@ -54,7 +54,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_1.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -84,7 +84,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_2.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -130,7 +130,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.cli_3.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -148,7 +148,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_3.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -184,7 +184,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_4.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -199,7 +199,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_5.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -213,7 +213,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_6.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -229,7 +229,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_7.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -246,7 +246,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_8.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -276,7 +276,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_8.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -306,7 +306,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_9.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -325,7 +325,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_10.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -342,7 +342,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_11.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -362,7 +362,7 @@ jobs:
     
     - name: Check Last step failed
       if: steps.login_12.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -378,7 +378,7 @@ jobs:
       
     - name: Check Last step failed
       if: steps.login_13.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -394,7 +394,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_14.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -409,7 +409,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_15.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -442,7 +442,7 @@ jobs:
     
     - name: Check Last step failed
       if: steps.login_14.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
