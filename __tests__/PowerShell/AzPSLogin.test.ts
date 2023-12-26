@@ -1,6 +1,6 @@
 import * as os from 'os';
 
-import { AzPSLogin } from '../../src/PowerShell/AzPSLogin';
+import { AzPSLogin, setPSModulePathForGitHubRunner } from '../../src/PowerShell/AzPSLogin';
 import { LoginConfig } from '../../src/common/LoginConfig';
 import AzPSConstants from '../../src/PowerShell/AzPSConstants';
 
@@ -36,7 +36,7 @@ describe('Testing login', () => {
 
 describe('Testing set module path', () => {
     test('setDefaultPSModulePath should work', () => {
-        azpsLogin.setPSModulePathForGitHubRunner();
+        setPSModulePathForGitHubRunner();
         const runner: string = process.env.RUNNER_OS || os.type();
         if(runner.toLowerCase() === "linux"){
             expect(process.env.PSModulePath).toContain(AzPSConstants.DEFAULT_AZ_PATH_ON_LINUX);
