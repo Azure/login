@@ -1,19 +1,15 @@
 import * as core from '@actions/core';
+import * as crypto from 'crypto';
 import { AzPSLogin } from './PowerShell/AzPSLogin';
 import { LoginConfig } from './common/LoginConfig';
 import { AzureCliLogin } from './Cli/AzureCliLogin';
 
-var prefix = !!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT}` : "";
-var azPSHostEnv = !!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREPS_HOST_ENVIRONMENT}` : "";
-
 async function main() {
     try {
-        let usrAgentRepo = `${process.env.GITHUB_REPOSITORY}`;
+        let usrAgentRepo = crypto.createHash('sha256').update(`${process.env.GITHUB_REPOSITORY}`).digest('hex');
         let actionName = 'AzureLogin';
-        let userAgentString = (!!prefix ? `${prefix}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
-        let azurePSHostEnv = (!!azPSHostEnv ? `${azPSHostEnv}+` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
-        core.exportVariable('AZURE_HTTP_USER_AGENT', userAgentString);
-        core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azurePSHostEnv);
+        process.env.AZURE_HTTP_USER_AGENT = (!!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT} ` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
+        process.env.AZUREPS_HOST_ENVIRONMENT = (!!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREPS_HOST_ENVIRONMENT} ` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
 
         // prepare the login configuration
         var loginConfig = new LoginConfig();
@@ -33,11 +29,6 @@ async function main() {
     catch (error) {
         core.setFailed(`Login failed with ${error}. Double check if the 'auth-type' is correct. Refer to https://github.com/Azure/login#readme for more information.`);
         core.debug(error.stack);
-    }
-    finally {
-        // Reset AZURE_HTTP_USER_AGENT
-        core.exportVariable('AZURE_HTTP_USER_AGENT', prefix);
-        core.exportVariable('AZUREPS_HOST_ENVIRONMENT', azPSHostEnv);
     }
 }
 
