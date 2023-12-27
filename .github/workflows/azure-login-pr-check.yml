@@ -5,6 +5,10 @@ on:
     branches:
       - master
       - 'releases/*'
+
+permissions:
+  contents: read
+
 jobs:
    az-login-test:
      environment: Automation test
