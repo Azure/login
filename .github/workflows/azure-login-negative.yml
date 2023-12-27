@@ -51,6 +51,7 @@ jobs:
           (Get-AzContext).Environment.Name -eq 'AzureCloud'
           (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
           (Get-AzVM).Count -gt 0
+          exit 1
 
     - name: Check Last step failed
       if: steps.ps_1.outcome == 'success'
