@@ -12,7 +12,7 @@ jobs:
   BasicTest:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, self_linux, self_windows]
+        os: [ubuntu-latest, windows-latest, macos-latest, self_linux, self_windows]
     runs-on: ${{ matrix.os }}
     environment: Automation test
 
@@ -108,7 +108,7 @@ jobs:
   ParameterTest:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     environment: Automation test
 
