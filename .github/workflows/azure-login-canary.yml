@@ -30,7 +30,7 @@ jobs:
            az --version
            
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: 'Az CLI login with subscription'
         uses: azure/login@v1

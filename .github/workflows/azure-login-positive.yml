@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -47,7 +47,7 @@ jobs:
         az vm list --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -71,7 +71,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell again
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -94,7 +94,7 @@ jobs:
         az vm list --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -114,10 +114,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -164,7 +164,7 @@ jobs:
         az vm list --output none
  
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -189,7 +189,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell again
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -211,7 +211,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -232,7 +232,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -250,10 +250,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -274,7 +274,7 @@ jobs:
         az account show --output none
     
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -297,7 +297,7 @@ jobs:
         az vm list --output none
   
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -321,7 +321,7 @@ jobs:
         az account show --output none
     
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -345,7 +345,7 @@ jobs:
         az vm list --output none
     
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
