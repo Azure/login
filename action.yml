@@ -39,6 +39,6 @@ branding:
   color: 'blue'
 runs:
   using: 'node16'
-  pre: 'lib/setup.js'
+  pre: 'lib/cleanupjs'
   main: 'lib/main.js'
   post: 'lib/cleanup.js'
