@@ -1,15 +1,12 @@
 import * as core from '@actions/core';
-import * as crypto from 'crypto';
+import { setUserAgent } from './common/Utils'; 
 import { AzPSLogin } from './PowerShell/AzPSLogin';
 import { LoginConfig } from './common/LoginConfig';
 import { AzureCliLogin } from './Cli/AzureCliLogin';
 
 async function main() {
     try {
-        let usrAgentRepo = crypto.createHash('sha256').update(`${process.env.GITHUB_REPOSITORY}`).digest('hex');
-        let actionName = 'AzureLogin';
-        process.env.AZURE_HTTP_USER_AGENT = (!!process.env.AZURE_HTTP_USER_AGENT ? `${process.env.AZURE_HTTP_USER_AGENT} ` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
-        process.env.AZUREPS_HOST_ENVIRONMENT = (!!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREPS_HOST_ENVIRONMENT} ` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
+        setUserAgent();
 
         // prepare the login configuration
         var loginConfig = new LoginConfig();
