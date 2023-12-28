@@ -64,7 +64,7 @@ describe('Testing runPSScript', () => {
         }
         return ConvertTo-Json $output`;
 
-        let psVersion: string = await AzPSLogin.runPSScript(script);
+        let psVersion: string = await AzPSConfig.runPSScript(script);
         expect(psVersion === null).toBeFalsy();
     });
 
@@ -83,7 +83,7 @@ describe('Testing runPSScript', () => {
         return ConvertTo-Json $output`;
 
         try{
-            await AzPSLogin.runPSScript(script);
+            await AzPSConfig.runPSScript(script);
             throw new Error("The last step should fail.");
         }catch(error){
             expect(error.message.includes("Azure PowerShell login failed with error: You cannot call a method on a null-valued expression.")).toBeTruthy();

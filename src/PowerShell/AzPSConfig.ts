@@ -1,9 +1,16 @@
 import * as core from '@actions/core';
 import * as os from 'os';
 import * as path from 'path';
+import * as exec from '@actions/exec';
+import * as io from '@actions/io';
 import AzPSConstants from './AzPSConstants';
 import AzPSScriptBuilder from './AzPSScriptBuilder';
-import { AzPSLogin } from './AzPSLogin';
+
+interface PSResultType {
+    Result: string;
+    Success: boolean;
+    Error: string;
+}
 
 export default class AzPSConfig {
     static async setPSModulePathForGitHubRunner() {
@@ -34,7 +41,39 @@ export default class AzPSConfig {
     static async importLatestAzAccounts() {
         let importLatestAccountsScript: string = AzPSScriptBuilder.getImportLatestModuleScript(AzPSConstants.AzAccounts);
         core.debug(`The script to import the latest Az.Accounts: ${importLatestAccountsScript}`);
-        let azAccountsPath: string = await AzPSLogin.runPSScript(importLatestAccountsScript);
+        let azAccountsPath: string = await AzPSConfig.runPSScript(importLatestAccountsScript);
         core.debug(`The latest Az.Accounts used: ${azAccountsPath}`);
+    }
+
+    static async runPSScript(psScript: string): Promise<string> {
+        let outputString: string = "";
+        let commandStdErr = false;
+        const options: any = {
+            silent: true,
+            listeners: {
+                stdout: (data: Buffer) => {
+                    outputString += data.toString();
+                },
+                stderr: (data: Buffer) => {
+                    let error = data.toString();
+                    if (error && error.trim().length !== 0) {
+                        commandStdErr = true;
+                        core.error(error);
+                    }
+                }
+            }
+        };
+
+        let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
+        await exec.exec(`"${psPath}"`, ["-Command", psScript], options)
+        if (commandStdErr) {
+            throw new Error('Azure PowerShell login failed with errors.');
+        }
+        const result: PSResultType = JSON.parse(outputString.trim());
+        console.log(result);
+        if (!(result.Success)) {
+            throw new Error(`Azure PowerShell login failed with error: ${result.Error}`);
+        }
+        return result.Result;
     }
 }
