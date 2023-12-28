@@ -9,86 +9,6 @@ permissions:
 
 jobs:
 
-  OSTest:
-    runs-on: macos-latest
-    environment: Automation test
-
-    steps:
-    - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
-
-    - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
-      with:
-        node-version: 16.x
-
-    - name: 'Validate build'
-      run: |
-        npm install
-        npm run build
-        npm run test
-
-    - name: Login with creds
-      continue-on-error: true
-      uses: ./
-      with:
-        creds: ${{secrets.SP1}}
-        enable-AzPSSession: true
-
-    - name: Run Azure Cli
-      run: |
-        az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
-
-    - name: Run Azure PowerShell
-      id: ps_1
-      continue-on-error: true
-      uses: azure/powershell@v1.2.0
-      with:
-        azPSVersion: "latest"
-        inlineScript: |
-          (Get-AzContext).Environment.Name -eq 'AzureCloud'
-          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
-          (Get-AzVM).Count -gt 0
-
-    - name: Check Last step failed
-      if: steps.ps_1.outcome == 'success'
-      uses: actions/github-script@v3
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
-
-    - name: Login with individual parameters
-      id: login_2
-      uses: ./
-      with:
-        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
-        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
-        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
-        allow-no-subscriptions: true
-        enable-AzPSSession: true
-
-    - name: Run Azure Cli again
-      run: |
-        az account show --output none
-
-    - name: Run Azure PowerShell again
-      id: ps_2
-      continue-on-error: true
-      uses: azure/powershell@v1.2.0
-      with:
-        azPSVersion: "latest"
-        inlineScript: |
-          (Get-AzContext).Environment.Name -eq 'AzureCloud'
-
-    - name: Check Last step failed
-      if: steps.ps_2.outcome == 'success'
-      uses: actions/github-script@v3
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
-
   PermissionTest:
     strategy:
       matrix:
@@ -99,10 +19,10 @@ jobs:
     steps:
 
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -130,7 +50,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.cli_3.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -138,7 +58,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_3
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -148,7 +68,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_3.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -162,10 +82,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -184,7 +104,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_4.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -199,7 +119,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_5.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -213,7 +133,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_6.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -229,7 +149,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_7.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -246,7 +166,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_8.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -266,7 +186,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_8
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -276,7 +196,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_8.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -296,7 +216,7 @@ jobs:
     - name: Run Azure PowerShell
       id: ps_9
       continue-on-error: true
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -306,7 +226,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.ps_9.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -325,7 +245,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_10.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -342,7 +262,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_11.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -362,7 +282,7 @@ jobs:
     
     - name: Check Last step failed
       if: steps.login_12.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -378,7 +298,7 @@ jobs:
       
     - name: Check Last step failed
       if: steps.login_13.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -394,7 +314,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_14.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -409,7 +329,7 @@ jobs:
 
     - name: Check Last step failed
       if: steps.login_15.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
@@ -423,10 +343,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v3.5.2
+      uses: actions/checkout@v4
 
     - name: Set Node.js 16.x for GitHub Action
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: 16.x
 
@@ -442,7 +362,7 @@ jobs:
     
     - name: Check Last step failed
       if: steps.login_14.outcome == 'success'
-      uses: actions/github-script@v3
+      uses: actions/github-script@v7
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')

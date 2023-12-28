@@ -235,7 +235,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1.2.0
+        uses: azure/powershell@v1
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -323,7 +323,7 @@ jobs:
           az account show
 
     - name: Azure PowerShell script
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -394,7 +394,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1.2.0
+        uses: azure/powershell@v1
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -461,7 +461,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1.2.0
+        uses: azure/powershell@v1
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -549,7 +549,7 @@ jobs:
           az account show
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1.2.0
+      uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -570,7 +570,7 @@ This action doesn't implement ```az logout``` by default at the end of execution
       az account clear
 
 - name: Azure PowerShell script
-  uses: azure/powershell@v1.2.0
+  uses: azure/powershell@v1
   with:
     azPSVersion: "latest"
     inlineScript: |
