@@ -12,7 +12,7 @@ export function setUserAgent(): void {
     process.env.AZUREPS_HOST_ENVIRONMENT = (!!process.env.AZUREPS_HOST_ENVIRONMENT ? `${process.env.AZUREPS_HOST_ENVIRONMENT} ` : '') + `GITHUBACTIONS/${actionName}@v1_${usrAgentRepo}`;
 }
 
-export async function cleanupAccounts(): Promise<void> {
+export async function cleanupAzCLIAccounts(): Promise<void> {
     let azPath = await io.which("az", true);
     if (!azPath) {
         throw new Error("Azure CLI is not found in the runner.");
@@ -20,18 +20,19 @@ export async function cleanupAccounts(): Promise<void> {
     core.debug(`Azure CLI path: ${azPath}`);
     core.info("Clearing azure cli accounts from the local cache.");
     await exec.exec(`"${azPath}"`, ["account", "clear"]);
+        
+}
 
-    if(core.getInput('enable-AzPSSession').toLowerCase() === "true"){
-        let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
-        if (!psPath) {
-            throw new Error("PowerShell is not found in the runner.");
-        }
-        core.debug(`PowerShell path: ${psPath}`);
-        core.debug("Importing Azure PowerShell module.");
-        setPSModulePathForGitHubRunner();
-        await importLatestAzAccounts();
-        core.info("Clearing azure powershell accounts from the local cache.");
-        await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "Process"]);
-        await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "CurrentUser", "-Force", "-ErrorAction", "SilentlyContinue"]);
+export async function cleanupAzPSAccounts(): Promise<void> {
+    let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
+    if (!psPath) {
+        throw new Error("PowerShell is not found in the runner.");
     }
+    core.debug(`PowerShell path: ${psPath}`);
+    core.debug("Importing Azure PowerShell module.");
+    setPSModulePathForGitHubRunner();
+    await importLatestAzAccounts();
+    core.info("Clearing azure powershell accounts from the local cache.");
+    await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "Process"]);
+    await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "CurrentUser", "-Force", "-ErrorAction", "SilentlyContinue"]);
 }
