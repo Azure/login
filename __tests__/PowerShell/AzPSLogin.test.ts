@@ -1,9 +1,8 @@
 import * as os from 'os';
 
 import { AzPSLogin } from '../../src/PowerShell/AzPSLogin';
-import AzPSConfig from '../../src/PowerShell/AzPSConfig';
 import { LoginConfig } from '../../src/common/LoginConfig';
-import AzPSConstants from '../../src/PowerShell/AzPSConstants';
+import { AzPSConstants, AzPSUtils } from '../../src/PowerShell/AzPSUtils';
 
 let azpsLogin: AzPSLogin;
 jest.setTimeout(30000);
@@ -37,7 +36,7 @@ describe('Testing login', () => {
 
 describe('Testing set module path', () => {
     test('setDefaultPSModulePath should work', () => {
-        AzPSConfig.setPSModulePathForGitHubRunner();
+        AzPSUtils.setPSModulePathForGitHubRunner();
         const runner: string = process.env.RUNNER_OS || os.type();
         if(runner.toLowerCase() === "linux"){
             expect(process.env.PSModulePath).toContain(AzPSConstants.DEFAULT_AZ_PATH_ON_LINUX);
@@ -64,7 +63,7 @@ describe('Testing runPSScript', () => {
         }
         return ConvertTo-Json $output`;
 
-        let psVersion: string = await AzPSConfig.runPSScript(script);
+        let psVersion: string = await AzPSUtils.runPSScript(script);
         expect(psVersion === null).toBeFalsy();
     });
 
@@ -83,7 +82,7 @@ describe('Testing runPSScript', () => {
         return ConvertTo-Json $output`;
 
         try{
-            await AzPSConfig.runPSScript(script);
+            await AzPSUtils.runPSScript(script);
             throw new Error("The last step should fail.");
         }catch(error){
             expect(error.message.includes("Azure PowerShell login failed with error: You cannot call a method on a null-valued expression.")).toBeTruthy();

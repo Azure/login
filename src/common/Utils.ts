@@ -2,8 +2,7 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
 import * as crypto from 'crypto';
-import AzPSConstants from '../PowerShell/AzPSConstants';
-import AzPSConfig from '../PowerShell/AzPSConfig';
+import { AzPSConstants, AzPSUtils } from '../PowerShell/AzPSUtils';
 
 export function setUserAgent(): void {
     let usrAgentRepo = crypto.createHash('sha256').update(`${process.env.GITHUB_REPOSITORY}`).digest('hex');
@@ -29,8 +28,8 @@ export async function cleanupAzPSAccounts(): Promise<void> {
     }
     core.debug(`PowerShell path: ${psPath}`);
     core.debug("Importing Azure PowerShell module.");
-    AzPSConfig.setPSModulePathForGitHubRunner();
-    await AzPSConfig.importLatestAzAccounts();
+    AzPSUtils.setPSModulePathForGitHubRunner();
+    await AzPSUtils.importLatestAzAccounts();
     core.info("Clearing azure powershell accounts from the local cache.");
     await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "Process"]);
     await exec.exec(`"${psPath}"`, ["-Command", "Clear-AzContext", "-Scope", "CurrentUser", "-Force", "-ErrorAction", "SilentlyContinue"]);

@@ -3,7 +3,6 @@ import * as os from 'os';
 import * as path from 'path';
 import * as exec from '@actions/exec';
 import * as io from '@actions/io';
-import AzPSConstants from './AzPSConstants';
 import AzPSScriptBuilder from './AzPSScriptBuilder';
 
 interface PSResultType {
@@ -12,16 +11,23 @@ interface PSResultType {
     Error: string;
 }
 
-export default class AzPSConfig {
+export class AzPSConstants {
+    static readonly DEFAULT_AZ_PATH_ON_LINUX: string = '/usr/share';
+    static readonly DEFAULT_AZ_PATH_ON_WINDOWS: string = 'C:\\Modules';
+    static readonly AzAccounts: string = "Az.Accounts";
+    static readonly PowerShell_CmdName = "pwsh";
+}
+
+export class AzPSUtils {
     static async setPSModulePathForGitHubRunner() {
         const runner: string = process.env.RUNNER_OS || os.type();
         switch (runner.toLowerCase()) {
             case "linux":
-                AzPSConfig.pushPSModulePath(AzPSConstants.DEFAULT_AZ_PATH_ON_LINUX);
+                AzPSUtils.pushPSModulePath(AzPSConstants.DEFAULT_AZ_PATH_ON_LINUX);
                 break;
             case "windows":
             case "windows_nt":
-                AzPSConfig.pushPSModulePath(AzPSConstants.DEFAULT_AZ_PATH_ON_WINDOWS);
+                AzPSUtils.pushPSModulePath(AzPSConstants.DEFAULT_AZ_PATH_ON_WINDOWS);
                 break;
             case "macos":
             case "darwin":
@@ -41,7 +47,7 @@ export default class AzPSConfig {
     static async importLatestAzAccounts() {
         let importLatestAccountsScript: string = AzPSScriptBuilder.getImportLatestModuleScript(AzPSConstants.AzAccounts);
         core.debug(`The script to import the latest Az.Accounts: ${importLatestAccountsScript}`);
-        let azAccountsPath: string = await AzPSConfig.runPSScript(importLatestAccountsScript);
+        let azAccountsPath: string = await AzPSUtils.runPSScript(importLatestAccountsScript);
         core.debug(`The latest Az.Accounts used: ${azAccountsPath}`);
     }
 

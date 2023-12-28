@@ -1,4 +1,3 @@
-import AzPSConstants from "./AzPSConstants";
 import { LoginConfig } from '../common/LoginConfig';
 
 export default class AzPSScriptBuilder {
