@@ -207,15 +207,22 @@ jobs:
         enable-AzPSSession: true
 
     - name: Run Azure Cli
+      shell: pwsh
       run: |
-        az account list
+        $checkResult = (az account list --output json | ConvertFrom-Json).Count -eq 2
+        if(-not $checkResult){
+            throw "Not all checks passed!"
+        }
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
-            Get-AzContext -ListAvailable
+            $checkResult = (Get-AzContext -ListAvailable).Count -eq 2
+            if(-not $checkResult){
+              throw "Not all checks passed!"
+            }
 
     - name: Login with creds, no subscription, allow no subscription
       uses: ./
