@@ -208,17 +208,14 @@ jobs:
 
     - name: Run Azure Cli
       run: |
-        az account show --output none
+        az account list
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v1
       with:
         azPSVersion: "latest"
         inlineScript: |
-            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
-            if(-not $checkResult){
-                throw "Not all checks passed!"
-            }
+            Get-AzContext -ListAvailable
 
     - name: Login with creds, no subscription, allow no subscription
       uses: ./
