@@ -560,6 +560,9 @@ jobs:
 
 This action doesn't implement ```az logout``` by default at the end of execution. However, there is no way to tamper with the credentials or account information because the GitHub-hosted runner is on a VM that will get re-imaged for every customer run, which deletes everything. But if the runner is self-hosted (not provided by GitHub), it is recommended to manually log out at the end of the workflow, as shown below. More details on security of the runners can be found [here](https://docs.github.com/actions/learn-github-actions/security-hardening-for-github-actions#hardening-for-self-hosted-runners).
 
+> [!WARNING]
+> When using self hosted runners it is possible to have multiple runners on a single VM. Currently if your runners share a single user on the VM each runner will share the same credentials. That means in detail that each runner is able to change the permissions of another run. As a workaround we propose to use one single VM user per runner. If you start the runner as a service, do not forget to add the [optional user argument](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service#installing-the-service)
+
 ```yaml
 - name: Azure CLI script
   uses: azure/CLI@v1
