@@ -71,6 +71,9 @@ export class AzPSUtils {
         };
 
         let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
+        if (!psPath) {
+            throw new Error("PowerShell is not found in the runner.");
+        }
         await exec.exec(`"${psPath}"`, ["-Command", psScript], options)
         if (commandStdErr) {
             throw new Error('Azure PowerShell login failed with errors.');
