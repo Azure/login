@@ -13,10 +13,6 @@ export function setUserAgent(): void {
 
 export async function cleanupAzCLIAccounts(): Promise<void> {
     let azPath = await io.which("az", true);
-    if (!azPath) {
-        core.warning("Azure CLI is not found in the runner.");
-        return;
-    }
     core.debug(`Azure CLI path: ${azPath}`);
     core.info("Clearing azure cli accounts from the local cache.");
     await exec.exec(`"${azPath}"`, ["account", "clear"]);  
@@ -24,10 +20,6 @@ export async function cleanupAzCLIAccounts(): Promise<void> {
 
 export async function cleanupAzPSAccounts(): Promise<void> {
     let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
-    if (!psPath) {
-        core.warning("PowerShell is not found in the runner.");
-        return;
-    }
     core.debug(`PowerShell path: ${psPath}`);
     core.debug("Importing Azure PowerShell module.");
     AzPSUtils.setPSModulePathForGitHubRunner();
