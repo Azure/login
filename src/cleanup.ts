@@ -10,7 +10,7 @@ async function cleanup() {
         }
     }
     catch (error) {
-        core.setFailed(`Login cleanup failed with ${error}. Make sure 'az' is installed on the runner. If 'enable-AzPSSession' is true, make sure 'pwsh' is installed on the runner together with Azure PowerShell module.`);
+        core.warning(`Login cleanup failed with ${error}. Cleanup will be skipped.`);
         core.debug(error.stack);
     }
 }
