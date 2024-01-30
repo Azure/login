@@ -17,9 +17,6 @@ export class AzureCliLogin {
     async login() {
         core.info(`Running Azure CLI Login.`);
         this.azPath = await io.which("az", true);
-        if (!this.azPath) {
-            throw new Error("Azure CLI is not found in the runner.");
-        }
         core.debug(`Azure CLI path: ${this.azPath}`);
 
         let output: string = "";
@@ -33,8 +30,6 @@ export class AzureCliLogin {
 
         await this.executeAzCliCommand(["--version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
-
-        await this.executeAzCliCommand(["account", "clear"], true, execOptions);
 
         this.setAzurestackEnvIfNecessary();
 

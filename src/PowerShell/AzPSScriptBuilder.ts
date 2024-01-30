@@ -1,4 +1,3 @@
-import AzPSConstants from "./AzPSConstants";
 import { LoginConfig } from '../common/LoginConfig';
 
 export default class AzPSScriptBuilder {
@@ -24,8 +23,7 @@ export default class AzPSScriptBuilder {
 
     static async getAzPSLoginScript(loginConfig: LoginConfig) {
         let loginMethodName = "";
-        let commands = 'Clear-AzContext -Scope Process; ';
-        commands += 'Clear-AzContext -Scope CurrentUser -Force -ErrorAction SilentlyContinue; ';
+        let commands = "";
 
         if (loginConfig.environment.toLowerCase() == "azurestack") {
             commands += `Add-AzEnvironment -Name '${loginConfig.environment}' -ARMEndpoint '${loginConfig.resourceManagerEndpointUrl}' | out-null;`;
