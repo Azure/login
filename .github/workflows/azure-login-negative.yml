@@ -21,10 +21,10 @@ jobs:
     - name: 'Checking out repo code'
       uses: actions/checkout@v4
 
-    - name: Set Node.js 16.x for GitHub Action
+    - name: Set Node.js 20.x for GitHub Action
       uses: actions/setup-node@v4
       with:
-        node-version: 16.x
+        node-version: 20.x
 
     - name: 'Validate build'
       run: |
@@ -84,10 +84,10 @@ jobs:
     - name: 'Checking out repo code'
       uses: actions/checkout@v4
 
-    - name: Set Node.js 16.x for GitHub Action
+    - name: Set Node.js 20.x for GitHub Action
       uses: actions/setup-node@v4
       with:
-        node-version: 16.x
+        node-version: 20.x
 
     - name: 'Validate build'
       run: |
@@ -345,10 +345,10 @@ jobs:
     - name: 'Checking out repo code'
       uses: actions/checkout@v4
 
-    - name: Set Node.js 16.x for GitHub Action
+    - name: Set Node.js 20.x for GitHub Action
       uses: actions/setup-node@v4
       with:
-        node-version: 16.x
+        node-version: 20.x
 
     - name: 'Validate build'
       run: |

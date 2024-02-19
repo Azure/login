@@ -38,7 +38,7 @@ branding:
   icon: 'login.svg'
   color: 'blue'
 runs:
-  using: 'node16'
+  using: 'node20'
   pre: 'lib/cleanup.js'
   main: 'lib/main.js'
   post: 'lib/cleanup.js'
