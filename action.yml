@@ -1,7 +1,7 @@
 # Login to Azure subscription
 name: 'Azure Login'
 description: 'Authenticate to Azure and run your Azure CLI or Azure PowerShell based actions or scripts.'
-inputs: 
+inputs:
   creds:
     description: 'Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS'
     required: false
@@ -14,7 +14,7 @@ inputs:
   subscription-id:
     description: 'Azure subscriptionId'
     required: false
-  enable-AzPSSession: 
+  enable-AzPSSession:
     description: 'Set this value to true to enable Azure PowerShell Login in addition to Azure CLI login'
     required: false
     default: false
@@ -27,18 +27,18 @@ inputs:
     required: false
     default: false
   audience:
-    description: 'Provide audience field for access-token. Default value is api://AzureADTokenExchange' 
+    description: 'Provide audience field for access-token. Default value is api://AzureADTokenExchange'
     required: false
     default: 'api://AzureADTokenExchange'
   auth-type:
-    description: 'The type of authentication. Supported values are SERVICE_PRINCIPAL, IDENTITY. Default value is SERVICE_PRINCIPAL' 
+    description: 'The type of authentication. Supported values are SERVICE_PRINCIPAL, IDENTITY. Default value is SERVICE_PRINCIPAL'
     required: false
     default: 'SERVICE_PRINCIPAL'
 branding:
   icon: 'login.svg'
   color: 'blue'
 runs:
-  using: 'node16'
+  using: 'node20'
   pre: 'lib/cleanup.js'
   main: 'lib/main.js'
   post: 'lib/cleanup.js'
