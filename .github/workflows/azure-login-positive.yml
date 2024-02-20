@@ -219,7 +219,7 @@ jobs:
       with:
         azPSVersion: "latest"
         inlineScript: |
-            $checkResult = (Get-AzContext -ListAvailable).Count -eq 2
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
             if(-not $checkResult){
               throw "Not all checks passed!"
             }
