@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { FormatType, SecretParser } from 'actions-secret-parser';
+import jsonpath from 'jsonpath';
 
 export class LoginConfig {
     static readonly AUTH_TYPE_SERVICE_PRINCIPAL = "SERVICE_PRINCIPAL";
@@ -49,10 +49,10 @@ export class LoginConfig {
 
     private readParametersFromCreds() {
         let creds = core.getInput('creds', { required: false });
-        let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
-        if (!secrets) {
+        if (!creds) {
             return;
         }
+        let secrets = JSON.parse(creds);
 
         if(this.authType != LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL){
             return;
@@ -64,11 +64,11 @@ export class LoginConfig {
         }
 
         core.debug('Reading creds in JSON...');
-        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.getSecret("$.clientId", false);
-        this.servicePrincipalSecret = secrets.getSecret("$.clientSecret", false);
-        this.tenantId = this.tenantId ? this.tenantId : secrets.getSecret("$.tenantId", false);
-        this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.getSecret("$.subscriptionId", false);
-        this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : getKey(secrets, "$.clientId");
+        this.servicePrincipalSecret = getKey(secrets, "$.clientSecret");
+        this.tenantId = this.tenantId ? this.tenantId : getKey(secrets, "$.tenantId"); 
+        this.subscriptionId = this.subscriptionId ? this.subscriptionId : getKey(secrets, "$.subscriptionId"); 
+        this.resourceManagerEndpointUrl = getKey(secrets, "$.resourceManagerEndpointUrl");
         if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId) {
             throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'tenantId'.");
         }
@@ -118,3 +118,15 @@ async function jwtParser(federatedToken: string) {
     return [decodedPayload['iss'], decodedPayload['sub']];
 }
 
+function getKey(json: JSON, key: string): string {
+    let value = jsonpath.query(json, key);
+    if (value.length == 0) {
+        core.debug("Cannot find key: " + key);
+        return "";
+    }
+    else if (value.length > 1) {
+        core.debug("Multiple values found for key: " + key + ". Please give jsonPath which points to a single value.");
+        return "";
+    }
+    return value[0];
+}
