@@ -96,7 +96,7 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.servicePrincipalId).toBe("client-id");
         expect(loginConfig.servicePrincipalSecret).toBe("client-secret");
         expect(loginConfig.tenantId).toBe("tenant-id");
-        expect(loginConfig.subscriptionId).toBe("");
+        expect(loginConfig.subscriptionId).toBe(undefined);
     });
 
     test('initialize with creds', async () => {

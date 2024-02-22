@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import jsonpath from 'jsonpath';
 
 export class LoginConfig {
     static readonly AUTH_TYPE_SERVICE_PRINCIPAL = "SERVICE_PRINCIPAL";
@@ -64,11 +63,11 @@ export class LoginConfig {
         }
 
         core.debug('Reading creds in JSON...');
-        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : getKey(secrets, "$.clientId");
-        this.servicePrincipalSecret = getKey(secrets, "$.clientSecret");
-        this.tenantId = this.tenantId ? this.tenantId : getKey(secrets, "$.tenantId"); 
-        this.subscriptionId = this.subscriptionId ? this.subscriptionId : getKey(secrets, "$.subscriptionId"); 
-        this.resourceManagerEndpointUrl = getKey(secrets, "$.resourceManagerEndpointUrl");
+        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.clientId;
+        this.servicePrincipalSecret = secrets.clientSecret;
+        this.tenantId = this.tenantId ? this.tenantId : secrets.tenantId; 
+        this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.subscriptionId;
+        this.resourceManagerEndpointUrl = secrets.resourceManagerEndpointUrl;
         if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId) {
             throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'tenantId'.");
         }
@@ -116,17 +115,4 @@ async function jwtParser(federatedToken: string) {
     let bufferObj = Buffer.from(tokenPayload, "base64");
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
     return [decodedPayload['iss'], decodedPayload['sub']];
-}
-
-function getKey(json: JSON, key: string): string {
-    let value = jsonpath.query(json, key);
-    if (value.length == 0) {
-        core.debug("Cannot find key: " + key);
-        return "";
-    }
-    else if (value.length > 1) {
-        core.debug("Multiple values found for key: " + key + ". Please give jsonPath which points to a single value.");
-        return "";
-    }
-    return value[0];
 }
