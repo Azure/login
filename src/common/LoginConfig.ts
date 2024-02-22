@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { FormatType, SecretParser } from 'actions-secret-parser';
 
 export class LoginConfig {
     static readonly AUTH_TYPE_SERVICE_PRINCIPAL = "SERVICE_PRINCIPAL";
@@ -49,10 +48,10 @@ export class LoginConfig {
 
     private readParametersFromCreds() {
         let creds = core.getInput('creds', { required: false });
-        let secrets = creds ? new SecretParser(creds, FormatType.JSON) : null;
-        if (!secrets) {
+        if (!creds) {
             return;
         }
+        let secrets = JSON.parse(creds);
 
         if(this.authType != LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL){
             return;
@@ -64,11 +63,11 @@ export class LoginConfig {
         }
 
         core.debug('Reading creds in JSON...');
-        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.getSecret("$.clientId", false);
-        this.servicePrincipalSecret = secrets.getSecret("$.clientSecret", false);
-        this.tenantId = this.tenantId ? this.tenantId : secrets.getSecret("$.tenantId", false);
-        this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.getSecret("$.subscriptionId", false);
-        this.resourceManagerEndpointUrl = secrets.getSecret("$.resourceManagerEndpointUrl", false);
+        this.servicePrincipalId = this.servicePrincipalId ? this.servicePrincipalId : secrets.clientId;
+        this.servicePrincipalSecret = secrets.clientSecret;
+        this.tenantId = this.tenantId ? this.tenantId : secrets.tenantId; 
+        this.subscriptionId = this.subscriptionId ? this.subscriptionId : secrets.subscriptionId;
+        this.resourceManagerEndpointUrl = secrets.resourceManagerEndpointUrl;
         if (!this.servicePrincipalId || !this.servicePrincipalSecret || !this.tenantId) {
             throw new Error("Not all parameters are provided in 'creds'. Double-check if all keys are defined in 'creds': 'clientId', 'clientSecret', 'tenantId'.");
         }
@@ -117,4 +116,3 @@ async function jwtParser(federatedToken: string) {
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
     return [decodedPayload['iss'], decodedPayload['sub']];
 }
-
