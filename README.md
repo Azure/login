@@ -19,7 +19,7 @@
     - [Login to Azure US Government cloud](#login-to-azure-us-government-cloud)
     - [Login to Azure Stack Hub](#login-to-azure-stack-hub)
     - [Login without subscription](#login-without-subscription)
-  - [Az logout and security hardening](#az-logout-and-security-hardening)
+  - [Security hardening](#security-hardening)
   - [Azure CLI dependency](#azure-cli-dependency)
   - [Reference](#reference)
     - [GitHub Action](#github-action)
@@ -560,7 +560,6 @@ jobs:
 
 > [!WARNING]
 > When using self hosted runners it is possible to have multiple runners on a single VM. Currently if your runners share a single user on the VM each runner will share the same credentials. That means in detail that each runner is able to change the permissions of another run. As a workaround we propose to use one single VM user per runner. If you start the runner as a service, do not forget to add the [optional user argument](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/configuring-the-self-hosted-runner-application-as-a-service#installing-the-service)
-
 
 ## Azure CLI dependency
 
