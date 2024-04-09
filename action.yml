@@ -40,7 +40,7 @@ branding:
 runs:
   using: 'node20'
   pre: 'lib/cleanup/index.js'
-  pre-if: ${{ ! startsWith( runner.name, 'GitHub Actions' ) }}
+  pre-if: (! startsWith(runner.name, 'GitHub Actions'))
   main: 'lib/main/index.js'
   post: 'lib/cleanup/index.js'
-  post-if: ${{ ! startsWith( runner.name, 'GitHub Actions' ) }}
+  post-if: (! startsWith(runner.name, 'GitHub Actions'))
