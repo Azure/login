@@ -1,7 +1,7 @@
 name: pr-check
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - master
       - 'releases/*'
@@ -28,44 +28,5 @@ jobs:
        - name: Build GitHub Action
          run: npm run build
          
-       - name: 'Az CLI login with subscription'
-         uses: ./
-         with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
-       - run: |
-             az account show --output none
-             az vm list --output none
-
-       - name: 'Az CLI login without subscription'
-         uses: ./
-         with:
-           creds: ${{ secrets.AZURE_CREDENTIALS_NO_SUB }}
-           allow-no-subscriptions: true
-
-       - run: |
-             az account show --output none
-       #     az vm list --output none
-
-       - name: 'Azure PowerShell login with subscription'
-         uses: ./
-         with:
-           creds: ${{ secrets.AZURE_CREDENTIALS }}
-           enable-AzPSSession: true
-
-       - uses: azure/powershell@v1
-         with:
-           inlineScript: "(Get-AzContext).Environment.Name"
-           azPSVersion: "latest"
-
-      #  - name: 'Azure PowerShell login without subscription'
-      #    uses: ./
-      #    with:
-      #      creds: ${{secrets.AZURE_CREDENTIALS_NO_SUB}}
-      #      enable-AzPSSession: true
-      #      allow-no-subscriptions: true
-
-      #  - uses: azure/powershell@v1
-      #    with:
-      #      inlineScript: "Get-AzContext"
-      #      azPSVersion: "latest"
+       - name: Run mock test
+         run: npm run test
