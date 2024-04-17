@@ -7,7 +7,6 @@ on:
       - 'releases/*'
 jobs:
    az-login-test:
-     environment: Automation test
      runs-on: windows-latest
      steps:
        - name: Checkout from PR branch  
