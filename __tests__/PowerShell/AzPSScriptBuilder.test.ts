@@ -40,7 +40,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-secret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential | out-null;")).toBeTruthy();
+            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-secret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('service principal with secret');
         });
     });
@@ -61,7 +61,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-se''cret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential | out-null;")).toBeTruthy();
+            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-se''cret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('service principal with secret');
         });
     });
@@ -82,7 +82,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-secret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential | out-null;")).toBeTruthy();
+            expect(loginScript.includes("$psLoginSecrets = ConvertTo-SecureString 'client-secret' -AsPlainText -Force; $psLoginCredential = New-Object System.Management.Automation.PSCredential('client-id', $psLoginSecrets); Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -Credential $psLoginCredential -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('service principal with secret');
         });
     });
@@ -100,7 +100,7 @@ describe("Getting AzLogin PS script", () => {
         loginConfig.initialize();
         jest.spyOn(loginConfig, 'getFederatedToken').mockImplementation(async () => {loginConfig.federatedToken = "fake-token";});
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -ApplicationId 'client-id' -FederatedToken 'fake-token' | out-null;")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -ServicePrincipal -Environment 'azurecloud' -Tenant 'tenant-id' -Subscription 'subscription-id' -ApplicationId 'client-id' -FederatedToken 'fake-token' -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('OIDC');
         });
     });
@@ -115,7 +115,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud' -Subscription 'subscription-id'  | out-null;")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud' -Subscription 'subscription-id'  -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('system-assigned managed identity');
         });
     });
@@ -130,7 +130,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud'  | out-null;")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud'  -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('system-assigned managed identity');
         });
     });
@@ -145,7 +145,7 @@ describe("Getting AzLogin PS script", () => {
         let loginConfig = new LoginConfig();
         loginConfig.initialize();
         return AzPSSCriptBuilder.getAzPSLoginScript(loginConfig).then(([loginMethod, loginScript]) => {
-            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud' -AccountId 'client-id' | out-null;")).toBeTruthy();
+            expect(loginScript.includes("Connect-AzAccount -Identity -Environment 'azurecloud' -AccountId 'client-id' -InformationAction Ignore | out-null;")).toBeTruthy();
             expect(loginMethod).toBe('user-assigned managed identity');
         });
     });
