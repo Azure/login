@@ -28,7 +28,7 @@ export class AzureCliLogin {
             }
         };
 
-        await this.executeAzCliCommand(["--version"], true, execOptions);
+        await this.executeAzCliCommand(["version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
 
         this.setAzurestackEnvIfNecessary();
