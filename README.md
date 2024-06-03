@@ -56,7 +56,7 @@ Azure Login Action supports different ways of authentication with Azure.
 |tenant-id|false|UUID||the login tenant id|
 |creds|false|string||a json string for login with an Azure service principal|
 |enable-AzPSSession|false|boolean|false|if Azure PowerShell login is enabled|
-|environment|false|string|azurecloud|the Azure Cloud environment|
+|environment|false|string|azurecloud|the Azure Cloud environment. For cloud environments other than the public cloud, the `audience` will also need to be updated.|
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
 |auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
@@ -126,7 +126,11 @@ By default, Azure Login Action connects to the Azure Public Cloud (`AzureCloud`)
 
 To login to one of the Azure Government clouds or Azure Stack, set `environment` to one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureGermanCloud` or `AzureStack`.
 
+The default [`audience`](#audience) for each of these clouds is different and will also need to be set if using anything other than the public environment.
+
 Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-cloud) for its usage.
+
+
 
 ### `allow-no-subscriptions`
 
