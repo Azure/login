@@ -130,8 +130,6 @@ The default [`audience`](#audience) for each of these clouds is different and wi
 
 Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-cloud) for its usage.
 
-
-
 ### `allow-no-subscriptions`
 
 By default, Azure Login Action requires a `subscription-id`. To login to Azure tenants without any subscriptions, set `allow-no-subscriptions` to true.
