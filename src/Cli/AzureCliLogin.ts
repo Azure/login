@@ -85,7 +85,7 @@ export class AzureCliLogin {
             let suffixKeyvault = ".vault" + baseUri.substring(baseUri.indexOf('.')); // keyvault suffix starts with .
             let suffixStorage = baseUri.substring(baseUri.indexOf('.') + 1); // storage suffix starts without .
             let profileVersion = "2019-03-01-hybrid";
-            await this.executeAzCliCommand(["cloud", "register", "-n", this.loginConfig.environment, "--endpoint-resource-manager", `"${this.loginConfig.resourceManagerEndpointUrl}"`, "--suffix-keyvault-dns", `"${suffixKeyvault}"`, "--suffix-storage-endpoint", `"${suffixStorage}"`, "--profile", `"${profileVersion}"`], false);
+            await this.executeAzCliCommand(["cloud", "register", "-n", this.loginConfig.environment, "--endpoint-resource-manager", this.loginConfig.resourceManagerEndpointUrl, "--suffix-keyvault-dns", suffixKeyvault, "--suffix-storage-endpoint", suffixStorage, "--profile", profileVersion], false);
         }
         catch (error) {
             core.error(`Error while trying to register cloud "${this.loginConfig.environment}"`);
