@@ -67,14 +67,14 @@ export class AzureCliLogin {
             throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
         }
 
-        core.info(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
-        try {
-            await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
-            await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
-        }
-        catch (error) {
-            core.info(`Ignore cloud not registered error: "${error}"`);
-        }
+        // core.info(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
+        // try {
+        //     await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
+        //     await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
+        // }
+        // catch (error) {
+        //     core.info(`Ignore cloud not registered error: "${error}"`);
+        // }
 
         core.info(`Registering cloud: "${this.loginConfig.environment}" with ARM endpoint: "${this.loginConfig.resourceManagerEndpointUrl}"`);
         try {
