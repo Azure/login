@@ -31,7 +31,7 @@ export class AzureCliLogin {
         await this.executeAzCliCommand(["version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
 
-        this.setAzurestackEnvIfNecessary();
+        await this.registerAzurestackEnvIfNecessary();
 
         await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
         core.info(`Done setting cloud: "${this.loginConfig.environment}"`);
@@ -59,7 +59,7 @@ export class AzureCliLogin {
         }
     }
 
-    async setAzurestackEnvIfNecessary() {
+    async registerAzurestackEnvIfNecessary() {
         if (this.loginConfig.environment != "azurestack") {
             return;
         }
@@ -67,14 +67,14 @@ export class AzureCliLogin {
             throw new Error("resourceManagerEndpointUrl is a required parameter when environment is defined.");
         }
 
-        // core.info(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
-        // try {
-        //     await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
-        //     await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
-        // }
-        // catch (error) {
-        //     core.info(`Ignore cloud not registered error: "${error}"`);
-        // }
+        core.info(`Unregistering cloud: "${this.loginConfig.environment}" first if it exists`);
+        try {
+            await this.executeAzCliCommand(["cloud", "set", "-n", "AzureCloud"], true);
+            await this.executeAzCliCommand(["cloud", "unregister", "-n", this.loginConfig.environment], false);
+        }
+        catch (error) {
+            core.info(`Ignore cloud not registered error: "${error}"`);
+        }
 
         core.info(`Registering cloud: "${this.loginConfig.environment}" with ARM endpoint: "${this.loginConfig.resourceManagerEndpointUrl}"`);
         try {
