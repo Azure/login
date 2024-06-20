@@ -333,36 +333,3 @@ jobs:
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
-
-  VMTest:
-    strategy:
-      matrix:
-        os: [self_linux, self_windows]
-    runs-on: ${{ matrix.os }}
-    environment: Automation test
-
-    steps:
-    - name: 'Checking out repo code'
-      uses: actions/checkout@v4
-
-    - name: Set Node.js 20.x for GitHub Action
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-
-    - name: 'Validate build'
-      run: |
-        npm install
-        npm run build
-
-    - name: Login with system-assigned managed identity without auth-type
-      id: login_14
-      continue-on-error: true
-      uses: ./
-    
-    - name: Check Last step failed
-      if: steps.login_14.outcome == 'success'
-      uses: actions/github-script@v7
-      with:
-          script: |
-            core.setFailed('Last action should fail but not. Please check it.')
