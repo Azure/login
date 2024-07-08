@@ -99,7 +99,7 @@ export class LoginConfig {
             }
         }
         if (!this.subscriptionId && !this.allowNoSubscriptionsLogin) {
-            throw new Error("Ensure subscriptionId is supplied.");
+            throw new Error("Ensure 'subscription-id' is supplied or 'allow-no-subscriptions' is 'true'.");
         }
     }
 
