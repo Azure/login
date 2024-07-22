@@ -28,10 +28,10 @@ export class AzureCliLogin {
             }
         };
 
-        await this.executeAzCliCommand(["--version"], true, execOptions);
+        await this.executeAzCliCommand(["version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
 
-        this.setAzurestackEnvIfNecessary();
+        await this.registerAzurestackEnvIfNecessary();
 
         await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
         core.info(`Done setting cloud: "${this.loginConfig.environment}"`);
@@ -59,7 +59,7 @@ export class AzureCliLogin {
         }
     }
 
-    async setAzurestackEnvIfNecessary() {
+    async registerAzurestackEnvIfNecessary() {
         if (this.loginConfig.environment != "azurestack") {
             return;
         }
@@ -85,7 +85,7 @@ export class AzureCliLogin {
             let suffixKeyvault = ".vault" + baseUri.substring(baseUri.indexOf('.')); // keyvault suffix starts with .
             let suffixStorage = baseUri.substring(baseUri.indexOf('.') + 1); // storage suffix starts without .
             let profileVersion = "2019-03-01-hybrid";
-            await this.executeAzCliCommand(["cloud", "register", "-n", this.loginConfig.environment, "--endpoint-resource-manager", `"${this.loginConfig.resourceManagerEndpointUrl}"`, "--suffix-keyvault-dns", `"${suffixKeyvault}"`, "--suffix-storage-endpoint", `"${suffixStorage}"`, "--profile", `"${profileVersion}"`], false);
+            await this.executeAzCliCommand(["cloud", "register", "-n", this.loginConfig.environment, "--endpoint-resource-manager", this.loginConfig.resourceManagerEndpointUrl, "--suffix-keyvault-dns", suffixKeyvault, "--suffix-storage-endpoint", suffixStorage, "--profile", profileVersion], false);
         }
         catch (error) {
             core.error(`Error while trying to register cloud "${this.loginConfig.environment}"`);

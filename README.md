@@ -56,7 +56,7 @@ Azure Login Action supports different ways of authentication with Azure.
 |tenant-id|false|UUID||the login tenant id|
 |creds|false|string||a json string for login with an Azure service principal|
 |enable-AzPSSession|false|boolean|false|if Azure PowerShell login is enabled|
-|environment|false|string|azurecloud|the Azure Cloud environment|
+|environment|false|string|azurecloud|the Azure Cloud environment. For cloud environments other than the public cloud, the `audience` will also need to be updated.|
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
 |auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
@@ -126,6 +126,8 @@ By default, Azure Login Action connects to the Azure Public Cloud (`AzureCloud`)
 
 To login to one of the Azure Government clouds or Azure Stack, set `environment` to one of the supported values `AzureUSGovernment` or `AzureChinaCloud` or `AzureGermanCloud` or `AzureStack`.
 
+The default [`audience`](#audience) for each of these clouds is different and will also need to be set if using anything other than the public environment.
+
 Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-cloud) for its usage.
 
 ### `allow-no-subscriptions`
@@ -183,9 +185,9 @@ name: Run Azure Login with OIDC
 on: [push]
 
 permissions:
-      id-token: write
-      contents: read
-jobs: 
+  id-token: write
+  contents: read
+jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
@@ -195,9 +197,9 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  
+
       - name: Azure CLI script
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: latest
           inlineScript: |
@@ -213,9 +215,9 @@ name: Run Azure Login with OIDC
 on: [push]
 
 permissions:
-      id-token: write
-      contents: read
-jobs: 
+  id-token: write
+  contents: read
+jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
@@ -226,16 +228,16 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
-  
+
       - name: Azure CLI script
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: latest
           inlineScript: |
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1
+        uses: azure/powershell@v2
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -281,18 +283,17 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    
+
     - uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
+
     - name: Azure CLI script
-      uses: azure/CLI@v1
+      uses: azure/cli@v2
       with:
         azcliversion: latest
         inlineScript: |
           az account show
-
 ```
 
 - **The workflow sample to run both Azure CLI and Azure PowerShell**
@@ -309,21 +310,21 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    
+
     - uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         enable-AzPSSession: true
-    
+
     - name: Azure CLI script
-      uses: azure/CLI@v1
+      uses: azure/cli@v2
       with:
         azcliversion: latest
         inlineScript: |
           az account show
 
     - name: Azure PowerShell script
-      uses: azure/powershell@v1
+      uses: azure/powershell@v2
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -372,29 +373,29 @@ Now you can try the workflow to login with system-assigned managed identity.
 name: Run Azure Login with System-assigned Managed Identity
 on: [push]
 
-jobs: 
+jobs:
   build-and-deploy:
     runs-on: self-hosted
     steps:
       - name: Azure login
         uses: azure/login@v2
         with:
-          auth-type: IDENTITY          
+          auth-type: IDENTITY
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      # Azure CLI Action only supports linux self-hosted runners for now. 
-      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`.  
+      # Azure CLI Action only supports linux self-hosted runners for now.
+      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`.
       - name: Azure CLI script
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: latest
           inlineScript: |
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1
+        uses: azure/powershell@v2
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -438,7 +439,7 @@ Now you can try the workflow to login with user-assigned managed identity.
 name: Run Azure Login with User-assigned Managed Identity
 on: [push]
 
-jobs: 
+jobs:
   build-and-deploy:
     runs-on: self-hosted
     steps:
@@ -446,22 +447,22 @@ jobs:
         uses: azure/login@v2
         with:
           auth-type: IDENTITY
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}          
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           enable-AzPSSession: true
 
-      # Azure CLI Action only supports linux self-hosted runners for now. 
-      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`. 
+      # Azure CLI Action only supports linux self-hosted runners for now.
+      # If you want to execute the Azure CLI script on a windows self-hosted runner, you can execute it directly in `run`.
       - name: Azure CLI script
-        uses: azure/CLI@v1
+        uses: azure/cli@v2
         with:
           azcliversion: latest
           inlineScript: |
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v1
+        uses: azure/powershell@v2
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -482,13 +483,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    
+
     - uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureUSGovernment'
         enable-AzPSSession: true
-    
 ```
 
 ### Login to Azure Stack Hub
@@ -505,13 +505,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    
+
     - uses: azure/login@v2
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureStack'
         enable-AzPSSession: true
-    
 ```
 
 Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com/azure-stack/user/ci-cd-github-action-login-cli) for more detailed instructions.
@@ -542,14 +541,14 @@ jobs:
         enable-AzPSSession: true
 
     - name: Azure CLI script
-      uses: azure/CLI@v1
+      uses: azure/cli@v2
       with:
         azcliversion: latest
         inlineScript: |
           az account show
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v1
+      uses: azure/powershell@v2
       with:
         azPSVersion: "latest"
         inlineScript: |

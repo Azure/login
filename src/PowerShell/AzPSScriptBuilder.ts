@@ -104,7 +104,7 @@ export default class AzPSScriptBuilder {
         if(subscriptionId){
             loginCmdlet += `-Subscription '${subscriptionId}' `;
         }
-        loginCmdlet += `${cmdletSuffix} | out-null;`;
+        loginCmdlet += `${cmdletSuffix} -InformationAction Ignore | out-null;`;
         return loginCmdlet;
     }
 }
