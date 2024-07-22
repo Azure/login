@@ -40,7 +40,7 @@ branding:
 runs:
   using: 'node20'
   pre: 'lib/cleanup/index.js'
-  pre-if: (! startsWith(runner.name, 'GitHub Actions'))
+  pre-if: (! env.AZURE_LOGIN_PRE_CLEANUP_OFF)
   main: 'lib/main/index.js'
   post: 'lib/cleanup/index.js'
-  post-if: (! startsWith(runner.name, 'GitHub Actions'))
+  post-if: (! env.AZURE_LOGIN_POST_CLEANUP_OFF)
