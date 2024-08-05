@@ -75,7 +75,7 @@ Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-reco
 
 The input parameter `subscription-id` specifies the login subscription id.
 
-It's used in login with OpenID Connect (OIDC) and managed identity.
+It's used in login with OpenID Connect (OIDC), especially for managed identity.
 
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
@@ -132,7 +132,7 @@ Refer to [Login to Azure US Government cloud](#login-to-azure-us-government-clou
 
 ### `allow-no-subscriptions`
 
-By default, Azure Login Action requires a `subscription-id`. To login to Azure tenants without any subscriptions, set `allow-no-subscriptions` to true.
+By default, Azure Login Action requires a `subscription-id`. To login to Azure tenants without any subscriptions, or to Microsoft Entra ID only, set `allow-no-subscriptions` to true.
 
 Refer to [Login without subscription](#login-without-subscription) for its usage.
 
@@ -167,7 +167,7 @@ Before you use Azure Login Action with OIDC, you need to configure a federated i
 After it, create GitHub Action secrets for following values: (Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).)
 
 - AZURE_CLIENT_ID: the service principal client ID or user-assigned managed identity client ID
-- AZURE_SUBSCRIPTION_ID: the subscription ID
+- AZURE_SUBSCRIPTION_ID \[optional\]: the subscription ID, especially for managed identities and accessing Azure resources. Not necessary for accessing Microsoft Entra ID only: use `allow-no-subscriptions`
 - AZURE_TENANT_ID: the tenant ID
 
 Now you can try the workflow to login with OIDC.
@@ -263,7 +263,7 @@ After it, create a GitHub Action secret `AZURE_CREDENTIALS` with the value like 
 ```
 
 - clientSecret: the service principal client secret
-- subscriptionId: the subscription ID
+- subscriptionId: the subscription ID, especially for accessing Azure resources. Not necessary for accessing Microsoft Entra ID only: use `allow-no-subscriptions`
 - tenantId: the tenant ID
 - clientId: the service principal client ID
 
@@ -517,7 +517,7 @@ Refer to the [Azure Stack Hub Login Action Tutorial](https://learn.microsoft.com
 
 ### Login without subscription
 
-Capability has been added to support access to tenants without subscriptions for both OIDC and non-OIDC. This can be useful to run tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
+Capability has been added to support access to Entra tenants without Azure subscriptions for both OIDC and non-OIDC. This can be useful to run Microsoft Entra tenant level commands, such as `az ad`. The action accepts an optional parameter `allow-no-subscriptions` which is `false` by default.
 
 ```yaml
 # File: .github/workflows/workflow.yml
