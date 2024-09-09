@@ -155,7 +155,7 @@ Refer to [Login With System-assigned Managed Identity](#login-with-system-assign
 > - Ensure the CLI version is 2.30 or above to support login with OIDC.
 > - By default, Azure access tokens issued during OIDC based login could have limited validity. Azure access token issued by Service Principal is expected to have an expiration of 1 hour by default. And with Managed Identities, it would be 24 hours. This expiration time is further configurable in Azure. Refer to [access-token lifetime](https://learn.microsoft.com/azure/active-directory/develop/access-tokens#access-token-lifetime) for more details.
 
-Before you use Azure Login Action with OIDC, you need to configure a federated identity credential on an service principal or a managed identity.
+Before you use Azure Login Action with OIDC, you need to configure a federated identity credential on a service principal or a managed identity.
 
 - Prepare a service principal for Login with OIDC
   - [Create a service principal and assign a role to it](https://learn.microsoft.com/entra/identity-platform/howto-create-service-principal-portal)
