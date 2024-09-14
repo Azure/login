@@ -251,15 +251,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 20.x
-
-    - name: 'Validate build'
-      run: |
-        npm install
-        npm run build
-        
-    - name: 'Run L0 tests'
-      run: |
-        npm run test
       
     - name: Install Azure CLI
       run: |
@@ -294,7 +285,16 @@ jobs:
       shell: pwsh
       run: |
         Get-Module -ListAvailable Az
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
         
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
     - name: Login with individual parameters
       uses: ./
       with:
