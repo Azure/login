@@ -560,7 +560,7 @@ jobs:
 
 In Azure Login Action, "cleanup" means cleaning up the login context. For security reasons, we recommend users run cleanup every time. But in some scenarios, users need flexible control over cleanup.
 
-Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`. Azure Login Action only implement 2 steps: `main:` and `post:`. 
+Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`. Azure Login Action only implement 2 steps: `main:` and `post:`.
 
 There are 2 "cleanup" steps in Azure Login Action:
 
@@ -572,6 +572,7 @@ There are 2 "cleanup" steps in Azure Login Action:
   - Users can disable it by setting an env variable `AZURE_LOGIN_POST_CLEANUP` to `false`.
 
 Azure Login Action use env variables to enable or disable cleanup steps. In GitHub Actions, there are three valid scopes for env variables.
+
 - [env](https://docs.github.com/actions/writing-workflows/workflow-syntax-for-github-actions#env)
   - valid for all jobs in this workflow.
 - [jobs.<job_id>.env](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idenv)
