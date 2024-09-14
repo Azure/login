@@ -558,11 +558,11 @@ jobs:
 
 ### Skip the cleanup steps
 
-In Azure Login Action, "cleanup" means means cleaning up the login context. For security reasons, we recommend users run cleanup every time before and after login.
+In Azure Login Action, "cleanup" means cleaning up the login context. For security reasons, we recommend users run cleanup every time before and after login.
 
-Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:`, `post:`.
+Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`.
 
-Azure Login Action only implement 2 steps: `main:`, `post:`.
+Azure Login Action only implement 2 steps: `main:` and `post:`.
 
 There are 2 "cleanup" steps in Azure Login Action:
 
@@ -573,9 +573,9 @@ There are 2 "cleanup" steps in Azure Login Action:
   - It's **enabled** by default.
   - Users can disable it by setting an env variable `AZURE_LOGIN_POST_CLEANUP` to `false`.
 
-In GitHub Actions, there are three valid scopes for env variables.
+Azure Login Action use env variables to enable or disable cleanup steps. In GitHub Actions, there are three valid scopes for env variables.
 - [env](https://docs.github.com/actions/writing-workflows/workflow-syntax-for-github-actions#env)
-  - valid for all the jobs in this workflow. 
+  - valid for all jobs in this workflow.
 - [jobs.<job_id>.env](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idenv)
   - valid for all the steps in the job.
 - [jobs.<job_id>.steps[*].env](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsenv)
@@ -624,7 +624,7 @@ jobs:
 
     # run other actions
 
-    # disable cleanup for the next Azure Login
+    # disable cleanup for all other Azure Login
     - name: Azure Login 3
       uses: azure/login@v2
       env:
