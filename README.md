@@ -558,13 +558,11 @@ jobs:
 
 ### Enable/Disable the cleanup steps
 
-In Azure Login Action, "cleanup" means cleaning up the login context. For security reasons, we recommend users run cleanup every time.
+In Azure Login Action, "cleanup" means cleaning up the login context. For security reasons, we recommend users run cleanup every time. But in some scenarios, users need flexible control over cleanup.
 
-But in some scenarios, users need flexible control over cleanup.
+Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`. Azure Login Action only implement 2 steps: `main:` and `post:`. 
 
-Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`.
-
-Azure Login Action only implement 2 steps: `main:` and `post:`. There are 2 "cleanup" steps in Azure Login Action:
+There are 2 "cleanup" steps in Azure Login Action:
 
 - cleanup in `main:`
   - It's **disabled** by default.
