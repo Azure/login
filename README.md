@@ -19,6 +19,7 @@
     - [Login to Azure US Government cloud](#login-to-azure-us-government-cloud)
     - [Login to Azure Stack Hub](#login-to-azure-stack-hub)
     - [Login without subscription](#login-without-subscription)
+    - [Enable/Disable the cleanup steps](#enabledisable-the-cleanup-steps)
   - [Security hardening](#security-hardening)
   - [Azure CLI dependency](#azure-cli-dependency)
   - [Reference](#reference)
@@ -553,6 +554,116 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           Get-AzContext
+```
+
+### Enable/Disable the cleanup steps
+
+In Azure Login Action, "cleanup" means cleaning up the login context. For security reasons, we recommend users run cleanup every time. But in some scenarios, users need flexible control over cleanup.
+
+Referring to [`runs` for JavaScript actions](https://docs.github.com/actions/sharing-automations/creating-actions/metadata-syntax-for-github-actions#runs-for-javascript-actions), there are 3 steps in an action: `pre:`, `main:` and `post:`. Azure Login Action only implement 2 steps: `main:` and `post:`.
+
+There are 2 "cleanup" steps in Azure Login Action:
+
+- cleanup in `main:`
+  - It's **disabled** by default.
+  - Users can enable it by setting an env variable `AZURE_LOGIN_PRE_CLEANUP` to `true`.
+- cleanup in `post:`
+  - It's **enabled** by default.
+  - Users can disable it by setting an env variable `AZURE_LOGIN_POST_CLEANUP` to `false`.
+
+Azure Login Action use env variables to enable or disable cleanup steps. In GitHub Actions, there are three valid scopes for env variables.
+
+- [env](https://docs.github.com/actions/writing-workflows/workflow-syntax-for-github-actions#env)
+  - valid for all jobs in this workflow.
+- [jobs.<job_id>.env](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idenv)
+  - valid for all the steps in the job.
+- [jobs.<job_id>.steps[*].env](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsenv)
+  - only valid for the step in a job.
+
+We set `jobs.<job_id>.steps[*].env` for example. Users can set `env` or `jobs.<job_id>.env` for a wider scope.
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Cleanup examples for Multiple Azure Login
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    # enable cleanup for the 1st Azure Login
+    - name: Azure Login
+      uses: azure/login@v2
+      env:
+        AZURE_LOGIN_PRE_CLEANUP: true
+        AZURE_LOGIN_POST_CLEANUP: true
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true    
+
+    # run some actions
+
+    # disable cleanup for all other Azure Login
+    - name: Azure Login 2
+      uses: azure/login@v2
+      env:
+        AZURE_LOGIN_PRE_CLEANUP: false
+        AZURE_LOGIN_POST_CLEANUP: false
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID_2 }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID_2 }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID_2 }}
+        enable-AzPSSession: true   
+
+    # run other actions
+
+    # disable cleanup for all other Azure Login
+    - name: Azure Login 3
+      uses: azure/login@v2
+      env:
+        AZURE_LOGIN_PRE_CLEANUP: false
+        AZURE_LOGIN_POST_CLEANUP: false
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID_3 }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID_3 }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID_3 }}
+        enable-AzPSSession: true   
+
+    # run other actions
+```
+
+```yaml
+# File: .github/workflows/workflow.yml
+
+on: [push]
+
+name: Disable cleanup for GitHub Hosted Runners
+
+jobs:
+
+  deploy:
+    runs-on: [ubuntu-latest, self-hosted]
+    steps:
+
+    - name: Azure Login
+      uses: azure/login@v2
+      env:
+        AZURE_LOGIN_PRE_CLEANUP: ${{ startsWith(runner.name, 'GitHub Actions') }}
+        AZURE_LOGIN_POST_CLEANUP: ${{ startsWith(runner.name, 'GitHub Actions') }}
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true    
+
+    # run some actions
+
 ```
 
 ## Security hardening
