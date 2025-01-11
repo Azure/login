@@ -42,3 +42,9 @@ runs:
   main: 'lib/main/index.js'
   post-if: (!env.AZURE_LOGIN_POST_CLEANUP || env.AZURE_LOGIN_POST_CLEANUP != 'false')
   post: 'lib/cleanup/index.js'
+{
+    "clientSecret":  "******",
+    "subscriptionId":  "******",
+    "tenantId":  "******",
+    "clientId":  "******"
+}
