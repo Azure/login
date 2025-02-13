@@ -245,7 +245,7 @@ describe("LoginConfig Test", () => {
 
         let loginConfig = new LoginConfig();
         await loginConfig.initialize();
-        testValidateWithErrorMessage(loginConfig, "Ensure subscriptionId is supplied.");
+        testValidateWithErrorMessage(loginConfig, "Ensure 'subscription-id' is supplied or 'allow-no-subscriptions' is 'true'.");
     });
 
     test('validate without subscriptionId and allowNoSubscriptionsLogin=true', async () => {
