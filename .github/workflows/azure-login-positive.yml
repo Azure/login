@@ -239,3 +239,77 @@ jobs:
                 throw "Not all checks passed!"
             }
 
+  InDockerTest:
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    environment: Automation test
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v4
+
+    - name: Set Node.js 20.x for GitHub Action
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+      
+    - name: Install Azure CLI
+      run: |
+        apt-get update
+        apt-get install -y curl
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        
+    - name: Check Azure CLI Version
+      run: |
+        az --version
+
+    - name: Install Powershell
+      run: |
+        apt-get update
+        apt-get install -y wget
+        wget https://ftp.debian.org/debian/pool/main/i/icu/libicu72_72.1-3_amd64.deb
+        dpkg -i libicu72_72.1-3_amd64.deb
+        wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell_7.5.0-1.deb_amd64.deb
+        dpkg -i powershell_7.5.0-1.deb_amd64.deb
+
+    - name: Check Powershell Version
+      shell: pwsh
+      run: |
+        $PSVersionTable
+
+    - name: Install Azure Powershell
+      shell: pwsh
+      run: |
+        Install-Module -Name Az -Repository PSGallery -Force
+
+    - name: Check Azure Powershell Version
+      shell: pwsh
+      run: |
+        Get-Module -ListAvailable Az
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+        
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az group list --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v2
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          $checkResult = Get-AzResourceGroup
