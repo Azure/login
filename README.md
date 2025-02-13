@@ -679,7 +679,7 @@ Internally in this action, we use azure CLI and execute `az login` with the cred
 
 ### GitHub Action
 
-[GitHub Actions](https://help.github.com/articles/about-github-actions) gives you the flexibility to build an automated software development lifecycle workflow.
+[GitHub Actions](https://docs.github.com/actions) gives you the flexibility to build an automated software development lifecycle workflow.
 
 ### GitHub Actions for deploying to Azure
 
