@@ -266,8 +266,8 @@ jobs:
       run: |
         apt-get update
         apt-get install -y wget
-        apt install libicu72
-        dpkg -s libicu72
+        wget https://ftp.debian.org/debian/pool/main/i/icu/libicu72_72.1-3_amd64.deb
+        dpkg -i libicu72_72.1-3_amd64.deb
         wget https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell_7.5.0-1.deb_amd64.deb
         dpkg -i powershell_7.5.0-1.deb_amd64.deb
 
