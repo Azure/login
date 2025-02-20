@@ -8,6 +8,7 @@ export class AzureCliLogin {
     loginConfig: LoginConfig;
     azPath: string;
     loginOptions: ExecOptions;
+    azVersion: string;
 
     constructor(loginConfig: LoginConfig) {
         this.loginConfig = loginConfig;
@@ -30,6 +31,7 @@ export class AzureCliLogin {
 
         await this.executeAzCliCommand(["version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
+        this.azVersion = JSON.parse(output)["azure-cli"];
 
         await this.registerAzurestackEnvIfNecessary();
 
@@ -108,7 +110,14 @@ export class AzureCliLogin {
     }
 
     async loginWithUserAssignedIdentity(args: string[]) {
-        args.push("--username", this.loginConfig.servicePrincipalId);
+        const azcliMinorVersion = parseInt(this.azVersion.split('.')[1], 10);
+        //From Azure-cli v2.69.0, `--username` is replaced with `--client-id`, `--object-id` or `--resource-id`: https://github.com/Azure/azure-cli/pull/30525
+        if (azcliMinorVersion < 69) {
+            args.push("--username", this.loginConfig.servicePrincipalId);
+        }
+        else {
+            args.push("--client-id", this.loginConfig.servicePrincipalId);
+        }
         await this.callCliLogin(args, 'user-assigned managed identity');
     }
 
