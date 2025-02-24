@@ -1,0 +1,33 @@
+name: Azure Login Action Test User-MI
+on:
+  workflow_dispatch:
+  push:
+
+permissions:
+  id-token: write
+
+jobs:
+  TestforAzclilatest:
+    runs-on: self-hosted
+    container: ubuntu:22.04
+    steps:
+    - name: Install Azure CLI
+      run: |
+        apt-get update
+        apt-get install -y curl
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        
+    - name: Check Azure CLI Version
+      run: |
+        az --version
+
+    - name: Login with tenant-level user-assigned managed identity with allow-no-subscriptions
+      uses: azure/login@sy/mi-clientid
+      with:
+        client-id: ${{ secrets.UMI_TEMP_CLIENT_ID }}
+        subscription-id: ${{ secrets.UMI_TEMP_SUBSCRIPTIONID }}
+        auth-type: IDENTITY
+
+    - name: Run Azure Cli again
+      run: |
+        az group list --output none
