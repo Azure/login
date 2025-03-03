@@ -87,9 +87,8 @@ export class LoginConfig {
             core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim + "\n audience - " + audience + "\n job_workflow_ref - " + jobWorkflowRef);
         }
         catch (error) {
-            core.warning("Failed to parse the federated token. Missing necessary claims.");
+            core.warning(`Failed to parse the federated token. Error: ${error}`);
         }
-        
     }
 
     validate() {
@@ -120,5 +119,11 @@ async function jwtParser(federatedToken: string) {
     let tokenPayload = federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
+    const requiredClaims = ['iss', 'sub', 'aud', 'job_workflow_ref'];
+    for (const claim of requiredClaims) {
+        if (!decodedPayload[claim]) {
+            throw new Error(`The claim '${claim}' is missing from the token payload`);
+        }
+    }
     return [decodedPayload['iss'], decodedPayload['sub'], decodedPayload['aud'], decodedPayload['job_workflow_ref']];
 }
