@@ -79,11 +79,16 @@ export class LoginConfig {
             this.mask(this.federatedToken);
         }
         catch (error) {
-            core.error(`Please make sure to give write permissions to id-token in the workflow.`);
+            core.error("Failed to fetch federated token from GitHub. Please make sure to give write permissions to id-token in the workflow.");
             throw error;
         }
-        let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
-        core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
+        try {
+            let [issuer, subjectClaim, audience, jobWorkflowRef] = await jwtParser(this.federatedToken);
+            core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim + "\n audience - " + audience + "\n job_workflow_ref - " + jobWorkflowRef);
+        }
+        catch (error) {
+            core.warning(`Failed to parse the federated token. Error: ${error}`);
+        }
     }
 
     validate() {
@@ -114,5 +119,20 @@ async function jwtParser(federatedToken: string) {
     let tokenPayload = federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
-    return [decodedPayload['iss'], decodedPayload['sub']];
-}
+    const JWT_CLAIM_ISSUER = 'iss';
+    const JWT_CLAIM_SUBJECT = 'sub';
+    const JWT_CLAIM_AUDIENCE = 'aud';
+    const JWT_CLAIM_JOB_WORKFLOW_REF = 'job_workflow_ref';
+    const requiredClaims = [
+        JWT_CLAIM_ISSUER,
+        JWT_CLAIM_SUBJECT,
+        JWT_CLAIM_AUDIENCE,
+        JWT_CLAIM_JOB_WORKFLOW_REF
+    ];
+    for (const claim of requiredClaims) {
+        if (!decodedPayload[claim]) {
+            throw new Error(`The claim '${claim}' is missing from the token payload`);
+        }
+    }
+    return [decodedPayload[JWT_CLAIM_ISSUER], decodedPayload[JWT_CLAIM_SUBJECT], decodedPayload[JWT_CLAIM_AUDIENCE], decodedPayload[JWT_CLAIM_JOB_WORKFLOW_REF]];   
+}   
