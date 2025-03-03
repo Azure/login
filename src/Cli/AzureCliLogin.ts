@@ -31,8 +31,12 @@ export class AzureCliLogin {
 
         await this.executeAzCliCommand(["version"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
-        this.azVersion = JSON.parse(output)["azure-cli"];
-
+        try {
+            this.azVersion = JSON.parse(output)["azure-cli"];
+        }
+        catch (error) {
+            core.warning("Failed to parse Azure CLI version.");
+        }
         await this.registerAzurestackEnvIfNecessary();
 
         await this.executeAzCliCommand(["cloud", "set", "-n", this.loginConfig.environment], false);
