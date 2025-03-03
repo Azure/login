@@ -79,11 +79,17 @@ export class LoginConfig {
             this.mask(this.federatedToken);
         }
         catch (error) {
-            core.error(`Please make sure to give write permissions to id-token in the workflow.`);
+            core.error("Failed to fetch federated token from GitHub. Please make sure to give write permissions to id-token in the workflow.");
             throw error;
         }
-        let [issuer, subjectClaim] = await jwtParser(this.federatedToken);
-        core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim);
+        try {
+            let [issuer, subjectClaim, audience, jobWorkflowRef] = await jwtParser(this.federatedToken);
+            core.info("Federated token details:\n issuer - " + issuer + "\n subject claim - " + subjectClaim + "\n audience - " + audience + "\n job_workflow_ref - " + jobWorkflowRef);
+        }
+        catch (error) {
+            core.warning("Failed to parse the federated token. Missing necessary claims.");
+        }
+        
     }
 
     validate() {
@@ -114,5 +120,5 @@ async function jwtParser(federatedToken: string) {
     let tokenPayload = federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
-    return [decodedPayload['iss'], decodedPayload['sub']];
+    return [decodedPayload['iss'], decodedPayload['sub'], decodedPayload['aud'], decodedPayload['job_workflow_ref']];
 }
