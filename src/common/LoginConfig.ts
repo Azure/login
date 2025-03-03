@@ -119,11 +119,20 @@ async function jwtParser(federatedToken: string) {
     let tokenPayload = federatedToken.split('.')[1];
     let bufferObj = Buffer.from(tokenPayload, "base64");
     let decodedPayload = JSON.parse(bufferObj.toString("utf8"));
-    const requiredClaims = ['iss', 'sub', 'aud', 'job_workflow_ref'];
+    const JWT_CLAIM_ISSUER = 'iss';
+    const JWT_CLAIM_SUBJECT = 'sub';
+    const JWT_CLAIM_AUDIENCE = 'aud';
+    const JWT_CLAIM_JOB_WORKFLOW_REF = 'job_workflow_ref';
+    const requiredClaims = [
+        JWT_CLAIM_ISSUER,
+        JWT_CLAIM_SUBJECT,
+        JWT_CLAIM_AUDIENCE,
+        JWT_CLAIM_JOB_WORKFLOW_REF
+    ];
     for (const claim of requiredClaims) {
         if (!decodedPayload[claim]) {
             throw new Error(`The claim '${claim}' is missing from the token payload`);
         }
     }
-    return [decodedPayload['iss'], decodedPayload['sub'], decodedPayload['aud'], decodedPayload['job_workflow_ref']];
-}
+    return [decodedPayload[JWT_CLAIM_ISSUER], decodedPayload[JWT_CLAIM_SUBJECT], decodedPayload[JWT_CLAIM_AUDIENCE], decodedPayload[JWT_CLAIM_JOB_WORKFLOW_REF]];   
+}   
