@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as io from "@actions/io";
 
 export class LoginConfig {
     static readonly AUTH_TYPE_SERVICE_PRINCIPAL = "SERVICE_PRINCIPAL";
@@ -25,6 +26,8 @@ export class LoginConfig {
     enableAzPSSession: boolean;
     audience: string;
     federatedToken: string;
+    azPath: string;
+    azPathOverridden: boolean;
 
     async initialize() {
         this.environment = core.getInput("environment").toLowerCase();
@@ -41,9 +44,21 @@ export class LoginConfig {
 
         this.audience = core.getInput('audience', { required: false });
         this.federatedToken = null;
+        await this.getAzPath();
 
         this.mask(this.servicePrincipalId);
         this.mask(this.servicePrincipalSecret);
+    }
+
+    private async getAzPath(): Promise<void> {
+        this.azPath = core.getInput('az-path', { required: false });
+        if (this.azPath) {
+            this.azPathOverridden = true
+            return;
+        }
+
+        this.azPath = await io.which('az', true);
+        this.azPathOverridden = false
     }
 
     private readParametersFromCreds() {
