@@ -105,7 +105,7 @@ The value of input parameter `creds` is a string in json format, including the f
     "clientSecret":  "******",
     "subscriptionId":  "******",
     "tenantId":  "******",
-    "clientId":  "******"
+    "servicePrincipalId":  "******"
 }
 ```
 
