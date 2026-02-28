@@ -1,4 +1,0 @@
-interface IAzurePowerShellSession {
-    initialize();
-    login();
-}
