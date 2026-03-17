@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set Node.js 24.x for GitHub Action
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24.x
 
@@ -110,10 +110,10 @@ jobs:
 
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set Node.js 24.x for GitHub Action
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24.x
 
@@ -245,10 +245,10 @@ jobs:
     environment: Automation test
     steps:
     - name: 'Checking out repo code'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set Node.js 24.x for GitHub Action
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 24.x
       
@@ -314,3 +314,5 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           $checkResult = Get-AzResourceGroup
+
+

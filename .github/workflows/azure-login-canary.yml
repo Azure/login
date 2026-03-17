@@ -30,7 +30,7 @@ jobs:
            az --version
            
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         
       - name: 'Az CLI login with subscription'
         uses: azure/login@v1
@@ -89,4 +89,5 @@ jobs:
           - name: Post to slack
             shell: bash
             run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${{SECRETS.SLACK_CHANNEL_SECRET}}
+
 
