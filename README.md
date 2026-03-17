@@ -193,7 +193,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Azure login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -223,7 +223,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Azure login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -285,7 +285,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v2
+    - uses: azure/login@v3
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -312,7 +312,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v2
+    - uses: azure/login@v3
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         enable-AzPSSession: true
@@ -335,7 +335,7 @@ jobs:
 If you want to pass subscription ID, tenant ID, client ID, and client secret as individual parameters instead of bundling them in a single JSON object to address the [security concerns](https://docs.github.com/actions/security-guides/encrypted-secrets), below snippet can help with the same.
 
 ```yaml
-  - uses: azure/login@v2
+  - uses: azure/login@v3
     with:
       creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
 ```
@@ -379,7 +379,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Azure login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           auth-type: IDENTITY
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -445,7 +445,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Azure login
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           auth-type: IDENTITY
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -485,7 +485,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v2
+    - uses: azure/login@v3
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureUSGovernment'
@@ -507,7 +507,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: azure/login@v2
+    - uses: azure/login@v3
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         environment: 'AzureStack'
@@ -534,7 +534,7 @@ jobs:
     steps:
 
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@v3
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -597,7 +597,7 @@ jobs:
 
     # enable cleanup for the 1st Azure Login
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@v3
       env:
         AZURE_LOGIN_PRE_CLEANUP: true
         AZURE_LOGIN_POST_CLEANUP: true
@@ -611,7 +611,7 @@ jobs:
 
     # disable cleanup for all other Azure Login
     - name: Azure Login 2
-      uses: azure/login@v2
+      uses: azure/login@v3
       env:
         AZURE_LOGIN_PRE_CLEANUP: false
         AZURE_LOGIN_POST_CLEANUP: false
@@ -625,7 +625,7 @@ jobs:
 
     # disable cleanup for all other Azure Login
     - name: Azure Login 3
-      uses: azure/login@v2
+      uses: azure/login@v3
       env:
         AZURE_LOGIN_PRE_CLEANUP: false
         AZURE_LOGIN_POST_CLEANUP: false
@@ -652,7 +652,7 @@ jobs:
     steps:
 
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@v3
       env:
         AZURE_LOGIN_PRE_CLEANUP: ${{ startsWith(runner.name, 'GitHub Actions') }}
         AZURE_LOGIN_POST_CLEANUP: ${{ startsWith(runner.name, 'GitHub Actions') }}
