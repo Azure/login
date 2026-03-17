@@ -333,5 +333,3 @@ jobs:
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
-
-

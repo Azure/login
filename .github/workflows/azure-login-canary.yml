@@ -89,5 +89,3 @@ jobs:
           - name: Post to slack
             shell: bash
             run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${{SECRETS.SLACK_CHANNEL_SECRET}}
-
-

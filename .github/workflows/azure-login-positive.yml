@@ -314,5 +314,3 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           $checkResult = Get-AzResourceGroup
-
-

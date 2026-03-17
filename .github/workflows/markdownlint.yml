@@ -16,5 +16,3 @@ jobs:
         run: |
           npm i -g markdownlint-cli2
           markdownlint-cli2 "**/*.md"
-
-
