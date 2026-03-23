@@ -238,7 +238,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v2
+        uses: azure/powershell@v3
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -325,7 +325,7 @@ jobs:
           az account show
 
     - name: Azure PowerShell script
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -396,7 +396,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v2
+        uses: azure/powershell@v3
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -463,7 +463,7 @@ jobs:
             az account show
 
       - name: Azure PowerShell script
-        uses: azure/powershell@v2
+        uses: azure/powershell@v3
         with:
           azPSVersion: "latest"
           inlineScript: |
@@ -549,7 +549,7 @@ jobs:
           az account show
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |

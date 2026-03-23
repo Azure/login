@@ -37,7 +37,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
           
-      - uses: azure/powershell@v1
+      - uses: azure/powershell@v3
         with:
           inlineScript: "(Get-AzContext).Environment.Name"
           azPSVersion: "latest"
@@ -49,7 +49,7 @@ jobs:
           enable-AzPSSession: true
           allow-no-subscriptions: true
         
-      - uses: azure/powershell@v1
+      - uses: azure/powershell@v3
         with:
           inlineScript: "(Get-AzContext).Environment.Name"
           azPSVersion: "latest"
@@ -87,7 +87,7 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }} 
           enable-AzPSSession: true
           
-      - uses: azure/powershell@v1
+      - uses: azure/powershell@v3
         with:
           inlineScript: "(Get-AzContext).Environment.Name"
           azPSVersion: "latest"
@@ -100,7 +100,7 @@ jobs:
           enable-AzPSSession: true
           allow-no-subscriptions: true
         
-      - uses: azure/powershell@v1
+      - uses: azure/powershell@v3
         with:
           inlineScript: "(Get-AzContext).Environment.Name"
           azPSVersion: "latest"

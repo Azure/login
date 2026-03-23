@@ -47,7 +47,7 @@ jobs:
         az vm list --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -69,7 +69,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell again
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -92,7 +92,7 @@ jobs:
         az vm list --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -160,7 +160,7 @@ jobs:
         az vm list --output none
  
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -183,7 +183,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell again
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -209,7 +209,7 @@ jobs:
         }
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -230,7 +230,7 @@ jobs:
         az account show --output none
 
     - name: Run Azure PowerShell
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
@@ -309,7 +309,7 @@ jobs:
         az group list --output none
 
     - name: Run Azure PowerShell again
-      uses: azure/powershell@v2
+      uses: azure/powershell@v3
       with:
         azPSVersion: "latest"
         inlineScript: |
