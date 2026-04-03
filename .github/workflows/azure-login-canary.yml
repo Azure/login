@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v6
         
       - name: 'Az CLI login with subscription'
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
@@ -41,7 +41,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login without subscription'
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           allow-no-subscriptions: true
@@ -50,7 +50,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login with subscription OIDC'
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -60,7 +60,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login without subscription OIDC'
-        uses: azure/login@v1
+        uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -88,4 +88,6 @@ jobs:
               echo "report=$REPORT" >> $GITHUB_OUTPUT
           - name: Post to slack
             shell: bash
-            run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${{SECRETS.SLACK_CHANNEL_SECRET}}
+            run: curl -X POST -H 'Content-type:application/json' --data '{"blocks":[{"type":"section","text":{"type":"mrkdwn","text":"${{steps.slack_report.outputs.report}}"}}]}' https://hooks.slack.com/services/${SLACK_CHANNEL_SECRET}
+            env:
+              SLACK_CHANNEL_SECRET: ${{SECRETS.SLACK_CHANNEL_SECRET}}
