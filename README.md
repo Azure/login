@@ -48,6 +48,16 @@ Azure Login Action supports different ways of authentication with Azure.
 > [!WARNING]
 > Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Microsoft Entra ID tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
 
+** **
+
+> [!WARNING]
+> Only pass values from `${{ secrets.* }}` into `client-id`, `tenant-id`, `subscription-id`, and `creds`. Do not pipe values from `${{ github.event.* }}` (pull request titles, issue comments, `workflow_dispatch` inputs, branch names, etc.) into these inputs. Untrusted values in these fields can allow attackers to influence the Azure identity the action logs in as.
+
+** **
+
+> [!WARNING]
+> Only set `enable-AzPSSession: true` if your workflow runs Azure PowerShell (`Az.*`) cmdlets. If your workflow only uses the Azure CLI (`az ...`), leave `enable-AzPSSession` unset (the default is `false`). Enabling it launches an additional PowerShell login step that is unnecessary for CLI-only workflows.
+
 ## Input Parameters
 
 |Parameter Name|Required?|Type|Default Value|Description|
