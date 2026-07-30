@@ -52,6 +52,14 @@ export class AzPSUtils {
     }
 
     static async runPSScript(psScript: string): Promise<string> {
+        return AzPSUtils.runPwsh(['-Command', psScript]);
+    }
+
+    static async runPSFile(args: string[], extraEnv: Record<string, string> = {}): Promise<string> {
+        return AzPSUtils.runPwsh(args, extraEnv);
+    }
+
+    private static async runPwsh(args: string[], extraEnv: Record<string, string> = {}): Promise<string> {
         let outputString: string = "";
         let commandStdErr = false;
         const options: any = {
@@ -69,9 +77,12 @@ export class AzPSUtils {
                 }
             }
         };
+        if (Object.keys(extraEnv).length > 0) {
+            options.env = { ...process.env, ...extraEnv };
+        }
 
         let psPath: string = await io.which(AzPSConstants.PowerShell_CmdName, true);
-        await exec.exec(`"${psPath}"`, ["-Command", psScript], options)
+        await exec.exec(`"${psPath}"`, args, options)
         if (commandStdErr) {
             throw new Error('Azure PowerShell login failed with errors.');
         }

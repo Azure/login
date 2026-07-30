@@ -4,7 +4,7 @@
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main/index.js",
   "scripts": {
-    "build:main": "ncc build src/main.ts -o lib/main",
+    "build:main": "ncc build src/main.ts -o lib/main && node scripts/copy-ps-assets.js",
     "build:cleanup": "ncc build src/cleanup.ts -o lib/cleanup",
     "build": "npm run build:main && npm run build:cleanup",
     "test": "jest"
