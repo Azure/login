@@ -1,5 +1,4 @@
-# Azure Login Action
-
+# Azure Login Action 
 - [Azure Login Action](#azure-login-action)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
@@ -23,7 +22,7 @@
   - [Security hardening](#security-hardening)
   - [Azure CLI dependency](#azure-cli-dependency)
   - [Reference](#reference)
-    - [GitHub Action](#github-action)
+    - [GitHub Action](#github-action/pathum25)
     - [GitHub Actions for deploying to Azure](#github-actions-for-deploying-to-azure)
     - [Azure CLI Action](#azure-cli-action)
     - [Azure PowerShell Action](#azure-powershell-action)
@@ -46,7 +45,7 @@ Azure Login Action supports different ways of authentication with Azure.
 ** **
 
 > [!WARNING]
-> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Microsoft Entra ID tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
+> Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Microsoft Entra ID tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/pathum25/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
 
 ## Input Parameters
 
