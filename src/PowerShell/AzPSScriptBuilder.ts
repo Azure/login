@@ -21,12 +21,20 @@ export default class AzPSScriptBuilder {
         return script;
     }
 
+    // Doubles single quotes for safe interpolation into a PowerShell '...' literal.
+    private static escapePSSingleQuoted(value: string): string {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        return String(value).split("'").join("''");
+    }
+
     static async getAzPSLoginScript(loginConfig: LoginConfig) {
         let loginMethodName = "";
         let commands = "";
 
         if (loginConfig.environment.toLowerCase() == "azurestack") {
-            commands += `Add-AzEnvironment -Name '${loginConfig.environment}' -ARMEndpoint '${loginConfig.resourceManagerEndpointUrl}' | out-null;`;
+            commands += `Add-AzEnvironment -Name '${loginConfig.environment}' -ARMEndpoint '${AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.resourceManagerEndpointUrl)}' | out-null;`;
         }
         if (loginConfig.authType === LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL) {
             if (loginConfig.servicePrincipalSecret) {
@@ -64,10 +72,11 @@ export default class AzPSScriptBuilder {
     }
 
     private static loginWithSecret(loginConfig: LoginConfig): string {
-        let servicePrincipalSecret: string = loginConfig.servicePrincipalSecret.split("'").join("''");
+        let servicePrincipalSecret: string = AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.servicePrincipalSecret);
+        let servicePrincipalId: string = AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.servicePrincipalId);
         let loginCmdlet = `$psLoginSecrets = ConvertTo-SecureString '${servicePrincipalSecret}' -AsPlainText -Force; `;
-        loginCmdlet += `$psLoginCredential = New-Object System.Management.Automation.PSCredential('${loginConfig.servicePrincipalId}', $psLoginSecrets); `;
-        
+        loginCmdlet += `$psLoginCredential = New-Object System.Management.Automation.PSCredential('${servicePrincipalId}', $psLoginSecrets); `;
+
         let cmdletSuffix = "-Credential $psLoginCredential";
         loginCmdlet += AzPSScriptBuilder.psLoginCmdlet(loginConfig.authType, loginConfig.environment, loginConfig.tenantId, loginConfig.subscriptionId, cmdletSuffix);
 
@@ -76,7 +85,9 @@ export default class AzPSScriptBuilder {
 
     private static async loginWithOIDC(loginConfig: LoginConfig) {
         await loginConfig.getFederatedToken();
-        let cmdletSuffix = `-ApplicationId '${loginConfig.servicePrincipalId}' -FederatedToken '${loginConfig.federatedToken}'`;
+        let servicePrincipalId: string = AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.servicePrincipalId);
+        let federatedToken: string = AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.federatedToken);
+        let cmdletSuffix = `-ApplicationId '${servicePrincipalId}' -FederatedToken '${federatedToken}'`;
         return AzPSScriptBuilder.psLoginCmdlet(loginConfig.authType, loginConfig.environment, loginConfig.tenantId, loginConfig.subscriptionId, cmdletSuffix);
     }
 
@@ -86,7 +97,8 @@ export default class AzPSScriptBuilder {
     }
 
     static loginWithUserAssignedIdentity(loginConfig: LoginConfig): string {
-        let cmdletSuffix = `-AccountId '${loginConfig.servicePrincipalId}'`;
+        let servicePrincipalId: string = AzPSScriptBuilder.escapePSSingleQuoted(loginConfig.servicePrincipalId);
+        let cmdletSuffix = `-AccountId '${servicePrincipalId}'`;
         return AzPSScriptBuilder.psLoginCmdlet(loginConfig.authType, loginConfig.environment, loginConfig.tenantId, loginConfig.subscriptionId, cmdletSuffix);
     }
 
@@ -99,10 +111,10 @@ export default class AzPSScriptBuilder {
         }
         loginCmdlet += `-Environment '${environment}' `;
         if(tenantId){
-            loginCmdlet += `-Tenant '${tenantId}' `;
+            loginCmdlet += `-Tenant '${AzPSScriptBuilder.escapePSSingleQuoted(tenantId)}' `;
         }
         if(subscriptionId){
-            loginCmdlet += `-Subscription '${subscriptionId}' `;
+            loginCmdlet += `-Subscription '${AzPSScriptBuilder.escapePSSingleQuoted(subscriptionId)}' `;
         }
         loginCmdlet += `${cmdletSuffix} -InformationAction Ignore | out-null;`;
         return loginCmdlet;
