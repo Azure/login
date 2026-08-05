@@ -7,6 +7,7 @@ import * as io from '@actions/io';
 export class AzureCliLogin {
     loginConfig: LoginConfig;
     azPath: string;
+    azPathOverridden: boolean;
     loginOptions: ExecOptions;
     azVersion: string;
 
@@ -17,7 +18,8 @@ export class AzureCliLogin {
 
     async login() {
         core.info(`Running Azure CLI Login.`);
-        this.azPath = await io.which("az", true);
+        this.azPath = this.loginConfig.azPath;
+        this.azPathOverridden = this.loginConfig.azPathOverridden;
         core.debug(`Azure CLI path: ${this.azPath}`);
 
         let output: string = "";
@@ -159,7 +161,8 @@ export class AzureCliLogin {
         silent?: boolean,
         execOptions: any = {}) {
         execOptions.silent = !!silent;
-        await exec.exec(`"${this.azPath}"`, args, execOptions);
+        const azPath = this.azPathOverridden ? this.azPath : `"${this.azPath}`;
+        await exec.exec(azPath, args, execOptions);
     }
 }
 
