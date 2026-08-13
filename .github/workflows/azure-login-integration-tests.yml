@@ -14,7 +14,7 @@ jobs:
 #     continue-on-error: true
     steps:
       - name: 'Az CLI login with subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
@@ -23,7 +23,7 @@ jobs:
           az vm list --output none
           
       - name: 'Az CLI login without subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           allow-no-subscriptions: true
@@ -32,7 +32,7 @@ jobs:
           az account show --output none
           
       - name: 'Azure PowerShell login with subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
@@ -43,7 +43,7 @@ jobs:
           azPSVersion: "latest"
           
       - name: 'Azure PowerShell login without subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           creds: ${{secrets.AZURE_CREDENTIALS}}
           enable-AzPSSession: true
@@ -59,7 +59,7 @@ jobs:
 #     continue-on-error: true
     steps:
       - name: 'Az CLI login with subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -70,7 +70,7 @@ jobs:
           az vm list --output none
           
       - name: 'Az CLI login without subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -80,7 +80,7 @@ jobs:
           az account show --output none
           
       - name: 'Azure PowerShell login with subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -93,7 +93,7 @@ jobs:
           azPSVersion: "latest"
           
       - name: 'Azure PowerShell login without subscription'
-        uses: azure/login@v1
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
