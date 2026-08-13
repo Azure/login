@@ -241,4 +241,24 @@ describe("Building the Az PS login invocation", () => {
         });
     });
 
+    test('SECURITY: federated token rides in env var only, never in argv', () => {
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'false');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        const nasty = "abc' ; Start-Process calc ; $x='";
+
+        const loginConfig = new LoginConfig();
+        loginConfig.initialize();
+        jest.spyOn(loginConfig, 'getFederatedToken').mockImplementation(async () => { loginConfig.federatedToken = nasty; });
+
+        return AzPSScriptBuilder.getAzPSLoginInvocation(loginConfig).then(({ args, env }) => {
+            expect(env[AzPSScriptBuilder.ENV_FEDERATED_TOKEN]).toBe(nasty);
+            expect(args.some(a => a.includes(nasty))).toBe(false);
+        });
+    });
+
 });
