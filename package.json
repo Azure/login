@@ -1,6 +1,5 @@
 {
   "name": "login",
-  "version": "3.0.0",
   "description": "Login Azure wraps the az login, allowing for Azure actions to log into Azure",
   "main": "lib/main/index.js",
   "scripts": {
