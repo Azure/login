@@ -1,4 +1,4 @@
-name: Azure Login Action Negative Test
+name: Azure Login Action Live Tests
 on:
   workflow_dispatch:
   pull_request:
@@ -9,38 +9,349 @@ permissions:
   id-token: write
   contents: read
 
-# Positive and negative live tests share the same resource group name, so
-# serialize them across workflows to avoid one run tearing down another's group.
+# One resource group is shared by every job in this run, so serialize runs to
+# avoid one run tearing down another's group.
 concurrency:
   group: azure-login-live-tests
   cancel-in-progress: false
 
 env:
-  # Created in setup; the embedded "can access" assertions target this group.
+  # Created once in setup; the positive and embedded "can access" assertions
+  # target this group.
   RG_POSITIVE: GitHubAction_CI_Group
   LOCATION: eastus
-  # Intentionally NEVER created: the permission/not-found assertions target this
-  # name so they fail as expected (the test SP would otherwise have access).
+  # Intentionally NEVER created: the negative permission/not-found assertions
+  # target this name so they fail as expected.
   RG_NEGATIVE: GitHubAction_CI_RG
 
 jobs:
-
-  # Provision the resource group the embedded "can access" assertions target,
-  # using the stable released action. Torn down in teardown.
+  # ---------------------------------------------------------------- setup
+  # Provision the resource group the "can access" assertions target. Uses a
+  # repo-level provisioning credential (PROVISION_CREDS) and does NOT declare an
+  # environment, so it is not subject to the Automation test approval gate -
+  # setup/teardown are provisioning, not part of the gated test surface.
   setup:
     runs-on: ubuntu-latest
-    environment: Automation test
     steps:
     - name: Azure login (provisioning)
       uses: azure/login@v3
       with:
-        creds: ${{ secrets.SP1 }}
+        creds: ${{ secrets.PROVISION_CREDS }}
     - name: Create resource group
       run: az group create --name "$RG_POSITIVE" --location "$LOCATION" --output none
 
-  PermissionTest:
+  # ================================================================ POSITIVE
+  Positive_BasicTest:
     needs: setup
     strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
+    - name: Login with creds
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with explicit auth-type
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        auth-type: SERVICE_PRINCIPAL
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+  Positive_ParameterTest:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with creds, disable ps session
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: false
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Login with creds, wrong boolean value
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: notboolean
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Login with creds, allow no subscription
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+ 
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters, allow no subscription
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID}}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters, no subscription, allow no subscription
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      shell: pwsh
+      run: |
+        $checkResult = (az account list --output json | ConvertFrom-Json).Count -eq 2
+        if(-not $checkResult){
+            throw "Not all checks passed!"
+        }
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+              throw "Not all checks passed!"
+            }
+
+    - name: Login with creds, no subscription, allow no subscription
+      uses: ./
+      with:
+        creds: '{"clientId":"${{ secrets.OIDC_SP2_CLIENT_ID }}","clientSecret":"${{ secrets.SP2_CLIENT_SECRET }}","tenantId":"${{ secrets.OIDC_SP2_TENANT_ID }}"}'
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+  Positive_InDockerTest:
+    needs: setup
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    environment: Automation test
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+      
+    - name: Install Azure CLI
+      run: |
+        apt-get update
+        apt-get install -y curl
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        
+    - name: Check Azure CLI Version
+      run: |
+        az --version
+
+    - name: Install Powershell
+      run: |
+        apt-get update
+        apt-get install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb"
+        dpkg -i packages-microsoft-prod.deb
+        rm packages-microsoft-prod.deb
+        apt-get update
+        apt-get install -y powershell
+
+    - name: Check Powershell Version
+      shell: pwsh
+      run: |
+        $PSVersionTable
+
+    - name: Install Azure Powershell
+      shell: pwsh
+      run: |
+        Install-Module -Name Az -Repository PSGallery -Force
+
+    - name: Check Azure Powershell Version
+      shell: pwsh
+      run: |
+        Get-Module -ListAvailable Az
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+        
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az group list --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          $checkResult = Get-AzResourceGroup
+
+  # ================================================================ NEGATIVE
+  Negative_PermissionTest:
+    needs: setup
+    strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -101,9 +412,10 @@ jobs:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
 
-  ParameterTest:
+  Negative_ParameterTest:
     needs: setup
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -359,17 +671,20 @@ jobs:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
 
-  # Always remove the resource group created in setup, even on failure, so
-  # nothing is left running (cost) between the infrequent live-test runs.
+  # ---------------------------------------------------------------- teardown
+  # Always delete the resource group created in setup, even if gate jobs failed,
+  # so nothing is left running (cost) between the infrequent runs. Runs
+  # synchronously (no --no-wait) so the group is fully gone before the run ends
+  # and the concurrency lock releases, preventing a delete from a finished run
+  # racing the setup of the next one.
   teardown:
-    needs: [setup, PermissionTest, ParameterTest]
+    needs: [setup, Positive_BasicTest, Positive_ParameterTest, Positive_InDockerTest, Negative_PermissionTest, Negative_ParameterTest]
     if: always()
     runs-on: ubuntu-latest
-    environment: Automation test
     steps:
     - name: Azure login (provisioning)
       uses: azure/login@v3
       with:
-        creds: ${{ secrets.SP1 }}
+        creds: ${{ secrets.PROVISION_CREDS }}
     - name: Delete resource group
-      run: az group delete --name "$RG_POSITIVE" --yes --no-wait || true
+      run: az group delete --name "$RG_POSITIVE" --yes --output none || true
