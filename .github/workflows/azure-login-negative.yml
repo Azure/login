@@ -9,9 +9,37 @@ permissions:
   id-token: write
   contents: read
 
+# Positive and negative live tests share the same resource group name, so
+# serialize them across workflows to avoid one run tearing down another's group.
+concurrency:
+  group: azure-login-live-tests
+  cancel-in-progress: false
+
+env:
+  # Created in setup; the embedded "can access" assertions target this group.
+  RG_POSITIVE: GitHubAction_CI_Group
+  LOCATION: eastus
+  # Intentionally NEVER created: the permission/not-found assertions target this
+  # name so they fail as expected (the test SP would otherwise have access).
+  RG_NEGATIVE: GitHubAction_CI_RG
+
 jobs:
 
+  # Provision the resource group the embedded "can access" assertions target,
+  # using the stable released action. Torn down in teardown.
+  setup:
+    runs-on: ubuntu-latest
+    environment: Automation test
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.SP1 }}
+    - name: Create resource group
+      run: az group create --name "$RG_POSITIVE" --location "$LOCATION" --output none
+
   PermissionTest:
+    needs: setup
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -48,7 +76,6 @@ jobs:
       run: |
         az account show --output none
         az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
 
     - name: Check Last step failed
       if: steps.cli_3.outcome == 'success'
@@ -66,7 +93,6 @@ jobs:
         inlineScript: |
           (Get-AzContext).Environment.Name -eq 'AzureCloud'
           (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
-          (Get-AzVM).Count -gt 0
 
     - name: Check Last step failed
       if: steps.ps_3.outcome == 'success'
@@ -76,6 +102,7 @@ jobs:
             core.setFailed('Last action should fail but not. Please check it.')
 
   ParameterTest:
+    needs: setup
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -182,8 +209,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Run Azure PowerShell
       id: ps_8
@@ -193,8 +219,7 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           (Get-AzContext).Environment.Name -eq 'AzureCloud'
-          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
-          (Get-AzVM).Count -gt 0
+          (Get-AzResourceGroup -Name GitHubAction_CI_Group).ResourceGroupName -eq 'GitHubAction_CI_Group'
 
     - name: Check Last step failed
       if: steps.ps_8.outcome == 'success'
@@ -212,8 +237,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Run Azure PowerShell
       id: ps_9
@@ -223,8 +247,7 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           (Get-AzContext).Environment.Name -eq 'AzureCloud'
-          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
-          (Get-AzVM).Count -gt 0
+          (Get-AzResourceGroup -Name GitHubAction_CI_Group).ResourceGroupName -eq 'GitHubAction_CI_Group'
 
     - name: Check Last step failed
       if: steps.ps_9.outcome == 'success'
@@ -335,3 +358,18 @@ jobs:
       with:
           script: |
             core.setFailed('Last action should fail but not. Please check it.')
+
+  # Always remove the resource group created in setup, even on failure, so
+  # nothing is left running (cost) between the infrequent live-test runs.
+  teardown:
+    needs: [setup, PermissionTest, ParameterTest]
+    if: always()
+    runs-on: ubuntu-latest
+    environment: Automation test
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.SP1 }}
+    - name: Delete resource group
+      run: az group delete --name "$RG_POSITIVE" --yes --no-wait || true

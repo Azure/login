@@ -9,9 +9,33 @@ permissions:
   id-token: write
   contents: read
 
+# Positive and negative live tests share the same resource group name, so
+# serialize them across workflows to avoid one run tearing down another's group.
+concurrency:
+  group: azure-login-live-tests
+  cancel-in-progress: false
+
+env:
+  RG_POSITIVE: GitHubAction_CI_Group
+  LOCATION: eastus
+
 jobs:
 
+  # Provision the resource group the "can access" assertions target, using the
+  # stable released action (not the code under test). Torn down in teardown.
+  setup:
+    runs-on: ubuntu-latest
+    environment: Automation test
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.SP1 }}
+    - name: Create resource group
+      run: az group create --name "$RG_POSITIVE" --location "$LOCATION" --output none
+
   BasicTest:
+    needs: setup
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -45,8 +69,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -90,8 +113,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -104,6 +126,7 @@ jobs:
             }
 
   ParameterTest:
+    needs: setup
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -133,8 +156,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Login with creds, wrong boolean value
       uses: ./
@@ -145,8 +167,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
 
     - name: Login with creds, allow no subscription
       uses: ./
@@ -158,8 +179,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name GitHubAction_CI_RG --output none
-        az vm list --output none
+        az group show --name GitHubAction_CI_Group --output none
  
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -242,6 +262,7 @@ jobs:
             }
 
   InDockerTest:
+    needs: setup
     runs-on: ubuntu-latest
     container: ubuntu:24.04
     environment: Automation test
@@ -316,3 +337,18 @@ jobs:
         azPSVersion: "latest"
         inlineScript: |
           $checkResult = Get-AzResourceGroup
+
+  # Always remove the resource group created in setup, even on failure, so
+  # nothing is left running (cost) between the infrequent live-test runs.
+  teardown:
+    needs: [setup, BasicTest, ParameterTest, InDockerTest]
+    if: always()
+    runs-on: ubuntu-latest
+    environment: Automation test
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.SP1 }}
+    - name: Delete resource group
+      run: az group delete --name "$RG_POSITIVE" --yes --no-wait || true
