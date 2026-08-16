@@ -1,0 +1,162 @@
+name: Release
+
+# Manually triggered by a maintainer. Reproduces the Azure Login Action
+# release runbook: build -> commit built lib to a release branch -> tag ->
+# publish GitHub Release -> move the major tag (e.g. v3).
+#
+# ADMIN-ONLY: GitHub cannot restrict workflow_dispatch to admins at the trigger
+# level (any user with write access can dispatch). Admin-only is enforced two ways:
+#   1. environment: release  -> requires an admin reviewer to approve the run
+#      (configure required reviewers under Settings > Environments > release).
+#      This is the real gate: the destructive steps cannot run without approval.
+#   2. The "Ensure triggered by an admin" step below fails fast for non-admins.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. v3.1.0"
+        required: true
+      ref:
+        description: "Branch/tag/SHA to release from. Use master for v3, releases/v2 for v2 maintenance."
+        required: false
+        default: master
+      latest:
+        description: "Mark as the latest release (only for the highest major, e.g. v3)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # push branch/tag, force-move major tag, create the Release
+
+# Serialize releases: never let two release runs push tags/branches at once.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Admin gate: this environment must have required reviewers (admins) configured
+    # in repo settings. The run pauses here until an admin approves.
+    environment: release
+    steps:
+      - name: Ensure triggered by an admin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERM=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission')
+          echo "Actor '$ACTOR' has repository permission: $PERM"
+          if [[ "$PERM" != "admin" ]]; then
+            echo "::error::Release must be triggered by a repository admin (actor has '$PERM')."
+            exit 1
+          fi
+
+      - name: Validate version input
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          if [[ ! "$V" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like v3.1.0 (got '$V')"
+            exit 1
+          fi
+
+      - name: Validate release ref
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          # Only allow releasing from vetted lines: master (current major) and
+          # the v2 maintenance branch. Prevents shipping arbitrary unreviewed
+          # branches straight to consumers via the moved major tag.
+          case "$REF" in
+            master|releases/v2|hotfix/*) echo "ref '$REF' allowed" ;;
+            *) echo "::error::ref '$REF' not permitted for release (allowed: master, releases/v2, hotfix/*)"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}   # v3 releases from master; v2 from releases/v2
+          fetch-depth: 0
+          # fetch tags so the 'latest' guard can find the highest major
+          fetch-tags: true
+
+      - name: Guard 'latest' against back-major releases
+        env:
+          V: ${{ inputs.version }}
+          LATEST: ${{ inputs.latest }}
+        run: |
+          # 'latest' controls only the "Latest" badge on the Releases page, of
+          # which there is one per repo. Refuse to move it onto an older major
+          # (e.g. a v2 hotfix must not steal the badge from v3).
+          MAJOR="${V%%.*}"                                                   # v2.3.2 -> v2
+          # Highest major among existing tags AND this release, so a brand-new
+          # top major (e.g. first v4.0.0) is still allowed to be latest.
+          HIGHEST=$(printf '%s\n' $(git tag -l 'v*' | grep -E '^v[0-9]+$') "$MAJOR" | sort -V | tail -1)
+          echo "Release major: $MAJOR   Highest major: $HIGHEST   latest=$LATEST"
+          if [[ "$LATEST" == "true" && "$MAJOR" != "$HIGHEST" ]]; then
+            echo "::error::Refusing to mark $V as latest: $MAJOR is not the highest major ($HIGHEST). Re-run with latest=false for back-major releases."
+            exit 1
+          fi
+
+      - name: Ensure version is new
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$V" >/dev/null 2>&1; then
+            echo "::error::tag $V already exists"; exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "refs/heads/releases/$V" >/dev/null 2>&1; then
+            echo "::error::branch releases/$V already exists"; exit 1
+          fi
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24   # matches action.yml runs.using: node24
+          cache: npm
+
+      - name: Install, build, test
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+      - name: Create release branch with built lib
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "releases/$V"
+          git add -f lib
+          git commit -m "prepare release $V"
+          git push --set-upstream origin "releases/$V"
+
+      - name: Create and push tag
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          git tag -a -m "$V" "$V"
+          git push origin "$V"
+
+      - name: Move major tag (e.g. v3)
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          MAJOR="${V%%.*}"          # v3.1.0 -> v3
+          git tag -d "$MAJOR" || true
+          git tag -a "$MAJOR" -m "Update $MAJOR to $V"
+          git push origin "$MAJOR" -f
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ inputs.version }}
+          LATEST: ${{ inputs.latest }}
+        run: |
+          LATEST_FLAG="--latest=false"
+          [[ "$LATEST" == "true" ]] && LATEST_FLAG="--latest"
+          gh release create "$V" \
+            --title "Azure Login Action $V" \
+            --generate-notes \
+            "$LATEST_FLAG"
