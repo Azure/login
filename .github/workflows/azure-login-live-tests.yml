@@ -41,7 +41,7 @@ jobs:
       with:
         creds: ${{ secrets.PROVISION_CREDS }}
     - name: Create resource group
-      run: az group create --name "$RG_POSITIVE" --location "$LOCATION" --output none
+      run: az group create --name "${{ env.RG_POSITIVE }}" --location "${{ env.LOCATION }}" --output none
 
   # ================================================================ POSITIVE
   Positive_BasicTest:
@@ -80,7 +80,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -124,7 +124,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -168,7 +168,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Login with creds, wrong boolean value
       uses: ./
@@ -179,7 +179,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Login with creds, allow no subscription
       uses: ./
@@ -191,7 +191,7 @@ jobs:
     - name: Run Azure Cli
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
  
     - name: Run Azure PowerShell
       uses: azure/powershell@v3
@@ -524,7 +524,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Run Azure PowerShell
       id: ps_8
@@ -552,7 +552,7 @@ jobs:
     - name: Run Azure Cli 
       run: |
         az account show --output none
-        az group show --name "$RG_POSITIVE" --output none
+        az group show --name "${{ env.RG_POSITIVE }}" --output none
 
     - name: Run Azure PowerShell
       id: ps_9
@@ -690,4 +690,4 @@ jobs:
       with:
         creds: ${{ secrets.PROVISION_CREDS }}
     - name: Delete resource group
-      run: az group delete --name "$RG_POSITIVE" --yes --output none || true
+      run: az group delete --name "${{ env.RG_POSITIVE }}" --yes --output none || true
