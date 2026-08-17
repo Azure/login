@@ -1,0 +1,132 @@
+name: Rollback
+
+# Manually triggered by a maintainer to undo a bad release. A release moves the
+# major tag (e.g. v3) forward to the new version; consumers pinned to
+# `azure/login@v3` immediately get it. If that release is broken, rollback
+# re-points the major tag back to a known-good, already-published version tag
+# (e.g. v3.0.1), which contains the built lib/. This is the fast consumer-facing
+# fix. It does NOT delete the bad tag/branch/release by default - deletion is
+# destructive (someone may have pinned the exact version) and is left to a
+# deliberate manual step if ever needed.
+#
+# ADMIN-ONLY: enforced the same two ways as release.yml:
+#   1. environment: release -> requires an admin reviewer to approve the run.
+#   2. The "Ensure triggered by an admin" step fails fast for non-admins.
+on:
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: "Known-good version to roll the major tag back to, e.g. v3.0.1 (must be an existing tag)"
+        required: true
+      set_latest:
+        description: "Also reset the GitHub 'Latest' release badge to target_version"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # force-move the major tag, update the Release
+
+# Share the 'release' concurrency group so a rollback can never race an
+# in-flight release (both push the same major tag).
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    # Admin gate: this environment must have required reviewers (admins)
+    # configured in repo settings. The run pauses here until an admin approves.
+    environment: release
+    steps:
+      - name: Ensure triggered by an admin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERM=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission')
+          echo "Actor '$ACTOR' has repository permission: $PERM"
+          if [[ "$PERM" != "admin" ]]; then
+            echo "::error::Rollback must be triggered by a repository admin (actor has '$PERM')."
+            exit 1
+          fi
+
+      - name: Validate target_version input
+        env:
+          V: ${{ inputs.target_version }}
+        run: |
+          if [[ ! "$V" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::target_version must look like v3.0.1 (got '$V')"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Verify target tag exists and contains built lib
+        env:
+          V: ${{ inputs.target_version }}
+        run: |
+          # The target must be an existing published version tag...
+          if ! git rev-parse -q --verify "refs/tags/$V" >/dev/null; then
+            echo "::error::tag $V does not exist - can only roll back to an already-published version"
+            exit 1
+          fi
+          # ...and it must carry the built entry points (main + post), or
+          # consumers would break worse than before (the major tag must always
+          # point at runnable code). action.yml uses lib/main/index.js and
+          # lib/cleanup/index.js.
+          git checkout --quiet "$V"
+          missing=""
+          [[ -f lib/main/index.js ]]    || missing="$missing lib/main/index.js"
+          [[ -f lib/cleanup/index.js ]] || missing="$missing lib/cleanup/index.js"
+          if [[ -n "$missing" ]]; then
+            echo "::error::tag $V is missing built entry point(s):$missing - refusing to point the major tag at unbuilt code"
+            exit 1
+          fi
+
+      - name: Re-point major tag to target
+        env:
+          V: ${{ inputs.target_version }}
+        run: |
+          MAJOR="${V%%.*}"                     # v3.0.1 -> v3
+          CURRENT=$(git rev-parse "refs/tags/$MAJOR^{commit}" 2>/dev/null || echo "none")
+          TARGET=$(git rev-parse "$V^{commit}")
+          echo "Rolling major $MAJOR: $CURRENT -> $TARGET ($V)"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -d "$MAJOR" || true
+          git tag -a "$MAJOR" -m "Rollback $MAJOR to $V" "$V"
+          git push origin "$MAJOR" -f
+
+      - name: Reset 'Latest' release badge to target
+        if: ${{ inputs.set_latest }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          V: ${{ inputs.target_version }}
+        run: |
+          # Point the repo's single "Latest" badge back at the good version, so
+          # the Releases page and /releases/latest stop advertising the bad one.
+          # A tag can exist without a published Release, so tolerate a missing
+          # release object: the critical tag rollback already succeeded above,
+          # and the badge is cosmetic - warn rather than fail the whole rollback.
+          if gh release view "$V" --repo "$REPO" >/dev/null 2>&1; then
+            gh release edit "$V" --latest --repo "$REPO"
+            echo "Set '$V' as the Latest release."
+          else
+            echo "::warning::No GitHub Release exists for $V, so the 'Latest' badge was not changed. The major tag rollback still succeeded. Create/publish a Release for $V if you want the badge updated."
+          fi
+
+      - name: Summary
+        env:
+          V: ${{ inputs.target_version }}
+        run: |
+          MAJOR="${V%%.*}"
+          echo "### Rollback complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Major tag \`$MAJOR\` now points at \`$V\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Consumers using \`azure/login@$MAJOR\` now get \`$V\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- The bad tag/branch/release were NOT deleted (delete manually if required)." >> "$GITHUB_STEP_SUMMARY"
