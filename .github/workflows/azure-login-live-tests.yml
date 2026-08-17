@@ -1,0 +1,690 @@
+name: Azure Login Action Live Tests
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
+
+# One resource group is shared by every job in this run, so serialize runs to
+# avoid one run tearing down another's group.
+concurrency:
+  group: azure-login-live-tests
+  cancel-in-progress: false
+
+env:
+  # Created once in setup; the positive and embedded "can access" assertions
+  # target this group.
+  RG_POSITIVE: GitHubAction_CI_Group
+  LOCATION: eastus
+  # Intentionally NEVER created: the negative permission/not-found assertions
+  # target this name so they fail as expected.
+  RG_NEGATIVE: GitHubAction_CI_RG
+
+jobs:
+  # ---------------------------------------------------------------- setup
+  # Provision the resource group the "can access" assertions target. Uses a
+  # repo-level provisioning credential (PROVISION_CREDS) and does NOT declare an
+  # environment, so it is not subject to the Automation test approval gate -
+  # setup/teardown are provisioning, not part of the gated test surface.
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.PROVISION_CREDS }}
+    - name: Create resource group
+      run: az group create --name "$RG_POSITIVE" --location "$LOCATION" --output none
+
+  # ================================================================ POSITIVE
+  Positive_BasicTest:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
+    - name: Login with creds
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with explicit auth-type
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        auth-type: SERVICE_PRINCIPAL
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+  Positive_ParameterTest:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with creds, disable ps session
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: false
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Login with creds, wrong boolean value
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: notboolean
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Login with creds, allow no subscription
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+ 
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters, allow no subscription
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID}}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+    - name: Login with individual parameters, no subscription, allow no subscription
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      shell: pwsh
+      run: |
+        $checkResult = (az account list --output json | ConvertFrom-Json).Count -eq 2
+        if(-not $checkResult){
+            throw "Not all checks passed!"
+        }
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+              throw "Not all checks passed!"
+            }
+
+    - name: Login with creds, no subscription, allow no subscription
+      uses: ./
+      with:
+        creds: '{"clientId":"${{ secrets.OIDC_SP2_CLIENT_ID }}","clientSecret":"${{ secrets.SP2_CLIENT_SECRET }}","tenantId":"${{ secrets.OIDC_SP2_TENANT_ID }}"}'
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      run: |
+        az account show --output none
+
+    - name: Run Azure PowerShell
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+            $checkResult = (Get-AzContext).Environment.Name -eq 'AzureCloud'
+            if(-not $checkResult){
+                throw "Not all checks passed!"
+            }
+
+  Positive_InDockerTest:
+    needs: setup
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    environment: Automation test
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+      
+    - name: Install Azure CLI
+      run: |
+        apt-get update
+        apt-get install -y curl
+        curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+        
+    - name: Check Azure CLI Version
+      run: |
+        az --version
+
+    - name: Install Powershell
+      run: |
+        apt-get update
+        apt-get install -y wget apt-transport-https software-properties-common
+        wget -q "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb"
+        dpkg -i packages-microsoft-prod.deb
+        rm packages-microsoft-prod.deb
+        apt-get update
+        apt-get install -y powershell
+
+    - name: Check Powershell Version
+      shell: pwsh
+      run: |
+        $PSVersionTable
+
+    - name: Install Azure Powershell
+      shell: pwsh
+      run: |
+        Install-Module -Name Az -Repository PSGallery -Force
+
+    - name: Check Azure Powershell Version
+      shell: pwsh
+      run: |
+        Get-Module -ListAvailable Az
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+        
+    - name: 'Run L0 tests'
+      run: |
+        npm run test
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.SP1_CLIENT_ID }}
+        tenant-id: ${{ secrets.SP1_TENANT_ID }}
+        subscription-id: ${{ secrets.SP1_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli again
+      run: |
+        az group list --output none
+
+    - name: Run Azure PowerShell again
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          $checkResult = Get-AzResourceGroup
+
+  # ================================================================ NEGATIVE
+  Negative_PermissionTest:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with individual parameters
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        # subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Run Azure Cli
+      id: cli_3
+      continue-on-error: true
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_RG --output none
+
+    - name: Check Last step failed
+      if: steps.cli_3.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Run Azure PowerShell
+      id: ps_3
+      continue-on-error: true
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_RG).ResourceGroupName -eq 'GitHubAction_CI_RG'
+
+    - name: Check Last step failed
+      if: steps.ps_3.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+  Negative_ParameterTest:
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    environment: Automation test
+
+    steps:
+    - name: 'Checking out repo code'
+      uses: actions/checkout@v6
+
+    - name: Set Node.js 24.x for GitHub Action
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+
+    - name: 'Validate build'
+      run: |
+        npm install
+        npm run build
+
+    - name: Login with creds, missing parameters in creds
+      id: login_4
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP3_NO_Secret}}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_4.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, wrong keys
+      id: login_5
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP4_Wrong_Key}}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_5.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, no creds or individual parameters
+      id: login_6
+      continue-on-error: true
+      uses: ./
+      with:
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_6.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, only client-id, no tenant-id, subscription-id
+      id: login_7
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_7.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, only tenant-id, subscription-id, no client-id
+      id: login_8
+      continue-on-error: true
+      uses: ./
+      with:
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_8.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, disable ps session
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: false
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      id: ps_8
+      continue-on-error: true
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_Group).ResourceGroupName -eq 'GitHubAction_CI_Group'
+
+    - name: Check Last step failed
+      if: steps.ps_8.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with creds, wrong boolean value
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        enable-AzPSSession: notboolean
+
+    - name: Run Azure Cli 
+      run: |
+        az account show --output none
+        az group show --name GitHubAction_CI_Group --output none
+
+    - name: Run Azure PowerShell
+      id: ps_9
+      continue-on-error: true
+      uses: azure/powershell@v3
+      with:
+        azPSVersion: "latest"
+        inlineScript: |
+          (Get-AzContext).Environment.Name -eq 'AzureCloud'
+          (Get-AzResourceGroup -Name GitHubAction_CI_Group).ResourceGroupName -eq 'GitHubAction_CI_Group'
+
+    - name: Check Last step failed
+      if: steps.ps_9.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with individual parameters, with a wrong audience
+      id: login_10
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        audience: "https://github.com/actions"
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_10.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login with tenant-level account, without allow-no-subscriptions
+      id: login_11
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_11.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    # SP1 is ignored and SP2 will be used for login, but it will fail since SP2 has no access to the given subscription
+    - name: Login with both creds and individual parameters
+      id: login_12
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP1}}
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        subscription-id: ${{ secrets.OIDC_SP2_SUBSCRIPTION_ID }}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+    
+    - name: Check Last step failed
+      if: steps.login_12.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+    - name: Login by OIDC with all info in creds 
+      id: login_13
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: ${{secrets.SP2}}
+        allow-no-subscriptions: true
+        enable-AzPSSession: true
+      
+    - name: Check Last step failed
+      if: steps.login_13.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+    
+    - name: Login with individual parameters, no subscription-id, no allow-no-subscriptions
+      id: login_14
+      continue-on-error: true
+      uses: ./
+      with:
+        client-id: ${{ secrets.OIDC_SP2_CLIENT_ID }}
+        tenant-id: ${{ secrets.OIDC_SP2_TENANT_ID }}
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_14.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+    
+    - name: Login with creds, no subscription-id, no allow-no-subscriptions
+      id: login_15
+      continue-on-error: true
+      uses: ./
+      with:
+        creds: '{"clientId":"${{ secrets.OIDC_SP2_CLIENT_ID }}","clientSecret":"${{ secrets.SP2_CLIENT_SECRET }}","tenantId":"${{ secrets.OIDC_SP2_TENANT_ID }}"}'
+        enable-AzPSSession: true
+
+    - name: Check Last step failed
+      if: steps.login_15.outcome == 'success'
+      uses: actions/github-script@v7
+      with:
+          script: |
+            core.setFailed('Last action should fail but not. Please check it.')
+
+  # ---------------------------------------------------------------- teardown
+  # Always delete the resource group created in setup, even if gate jobs failed,
+  # so nothing is left running (cost) between the infrequent runs. Runs
+  # synchronously (no --no-wait) so the group is fully gone before the run ends
+  # and the concurrency lock releases, preventing a delete from a finished run
+  # racing the setup of the next one.
+  teardown:
+    needs: [setup, Positive_BasicTest, Positive_ParameterTest, Positive_InDockerTest, Negative_PermissionTest, Negative_ParameterTest]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Azure login (provisioning)
+      uses: azure/login@v3
+      with:
+        creds: ${{ secrets.PROVISION_CREDS }}
+    - name: Delete resource group
+      run: az group delete --name "$RG_POSITIVE" --yes --output none || true
