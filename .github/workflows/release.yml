@@ -110,9 +110,16 @@ jobs:
             echo "::error::branch releases/$V already exists"; exit 1
           fi
 
+      - name: Determine runtime node from action.yml
+        id: node
+        shell: bash
+        run: |
+          ver=$(grep "using:" action.yml | grep -oE "node[0-9]+" | grep -oE "[0-9]+" | head -1)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
       - uses: actions/setup-node@v6
         with:
-          node-version: 24   # matches action.yml runs.using: node24
+          node-version: ${{ steps.node.outputs.version }}   # matches action.yml runs.using
           cache: npm
 
       - name: Install, build, test
