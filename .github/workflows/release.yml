@@ -20,10 +20,6 @@ on:
         description: "Branch to release from. Use master for the current major (v3). For a back-major release (e.g. v2), branch a hotfix off the latest release tag (git checkout -b hotfix/v2.3.2 v2.3.1) and pass that hotfix/* branch."
         required: false
         default: master
-      latest:
-        description: "Mark as the latest release (only for the highest major, e.g. v3)"
-        type: boolean
-        default: true
 
 permissions:
   contents: write   # push branch/tag, force-move major tag, create the Release
@@ -78,26 +74,7 @@ jobs:
         with:
           ref: ${{ inputs.ref }}   # master for the current major; a hotfix/* branch for a back-major release
           fetch-depth: 0
-          # fetch tags so the 'latest' guard can find the highest major
           fetch-tags: true
-
-      - name: Guard 'latest' against back-major releases
-        env:
-          V: ${{ inputs.version }}
-          LATEST: ${{ inputs.latest }}
-        run: |
-          # 'latest' controls only the "Latest" badge on the Releases page, of
-          # which there is one per repo. Refuse to move it onto an older major
-          # (e.g. a v2 hotfix must not steal the badge from v3).
-          MAJOR="${V%%.*}"                                                   # v2.3.2 -> v2
-          # Highest major among existing tags AND this release, so a brand-new
-          # top major (e.g. first v4.0.0) is still allowed to be latest.
-          HIGHEST=$(printf '%s\n' $(git tag -l 'v*' | grep -E '^v[0-9]+$') "$MAJOR" | sort -V | tail -1)
-          echo "Release major: $MAJOR   Highest major: $HIGHEST   latest=$LATEST"
-          if [[ "$LATEST" == "true" && "$MAJOR" != "$HIGHEST" ]]; then
-            echo "::error::Refusing to mark $V as latest: $MAJOR is not the highest major ($HIGHEST). Re-run with latest=false for back-major releases."
-            exit 1
-          fi
 
       - name: Ensure version is new
         env:
@@ -159,11 +136,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           V: ${{ inputs.version }}
-          LATEST: ${{ inputs.latest }}
         run: |
-          LATEST_FLAG="--latest=false"
-          [[ "$LATEST" == "true" ]] && LATEST_FLAG="--latest"
+          # No --latest flag: GitHub automatically marks the highest-version
+          # release as "Latest", so a back-major release (e.g. a v2 hotfix) does
+          # not steal the badge from the current major.
           gh release create "$V" \
             --title "Azure Login Action $V" \
-            --generate-notes \
-            "$LATEST_FLAG"
+            --generate-notes

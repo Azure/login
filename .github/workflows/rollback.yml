@@ -18,10 +18,6 @@ on:
       target_version:
         description: "Known-good version to roll the major tag back to, e.g. v3.0.1 (must be an existing tag)"
         required: true
-      set_latest:
-        description: "Also reset the GitHub 'Latest' release badge to target_version"
-        type: boolean
-        default: true
 
 permissions:
   contents: write   # force-move the major tag, update the Release
@@ -101,25 +97,6 @@ jobs:
           git tag -d "$MAJOR" || true
           git tag -a "$MAJOR" -m "Rollback $MAJOR to $V" "$V"
           git push origin "$MAJOR" -f
-
-      - name: Reset 'Latest' release badge to target
-        if: ${{ inputs.set_latest }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          V: ${{ inputs.target_version }}
-        run: |
-          # Point the repo's single "Latest" badge back at the good version, so
-          # the Releases page and /releases/latest stop advertising the bad one.
-          # A tag can exist without a published Release, so tolerate a missing
-          # release object: the critical tag rollback already succeeded above,
-          # and the badge is cosmetic - warn rather than fail the whole rollback.
-          if gh release view "$V" --repo "$REPO" >/dev/null 2>&1; then
-            gh release edit "$V" --latest --repo "$REPO"
-            echo "Set '$V' as the Latest release."
-          else
-            echo "::warning::No GitHub Release exists for $V, so the 'Latest' badge was not changed. The major tag rollback still succeeded. Create/publish a Release for $V if you want the badge updated."
-          fi
 
       - name: Summary
         env:
