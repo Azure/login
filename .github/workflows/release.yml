@@ -17,7 +17,7 @@ on:
         description: "Release version, e.g. v3.1.0"
         required: true
       ref:
-        description: "Branch/tag/SHA to release from. Use master for v3, releases/v2 for v2 maintenance."
+        description: "Branch to release from. Use master for the current major (v3). For a back-major release (e.g. v2), branch a hotfix off the latest release tag (git checkout -b hotfix/v2.3.2 v2.3.1) and pass that hotfix/* branch."
         required: false
         default: master
       latest:
@@ -70,13 +70,13 @@ jobs:
           # the v2 maintenance branch. Prevents shipping arbitrary unreviewed
           # branches straight to consumers via the moved major tag.
           case "$REF" in
-            master|releases/v2|hotfix/*) echo "ref '$REF' allowed" ;;
-            *) echo "::error::ref '$REF' not permitted for release (allowed: master, releases/v2, hotfix/*)"; exit 1 ;;
+            master|hotfix/*) echo "ref '$REF' allowed" ;;
+            *) echo "::error::ref '$REF' not permitted for release (allowed: master, or a hotfix/* branch based on the latest release tag for a back-major release)"; exit 1 ;;
           esac
 
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}   # v3 releases from master; v2 from releases/v2
+          ref: ${{ inputs.ref }}   # master for the current major; a hotfix/* branch for a back-major release
           fetch-depth: 0
           # fetch tags so the 'latest' guard can find the highest major
           fetch-tags: true
