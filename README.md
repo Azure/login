@@ -145,6 +145,9 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
+> [!NOTE]
+> The action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked.
+
 ### `subscription-id`
 
 The input parameter `subscription-id` specifies the login subscription id.
