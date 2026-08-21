@@ -27,6 +27,8 @@
     - [Login to Azure Stack Hub](#login-to-azure-stack-hub)
     - [Login without subscription](#login-without-subscription)
     - [Enable/Disable the cleanup steps](#enabledisable-the-cleanup-steps)
+  - [Troubleshooting](#troubleshooting)
+    - [OIDC login fails with `AADSTS700213` / `AADSTS7002138` (no matching federated identity record)](#oidc-login-fails-with-aadsts700213--aadsts7002138-no-matching-federated-identity-record)
   - [Security hardening](#security-hardening)
   - [Azure CLI dependency](#azure-cli-dependency)
   - [Reference](#reference)
@@ -736,6 +738,29 @@ jobs:
     # run some actions
 
 ```
+
+## Troubleshooting
+
+### OIDC login fails with `AADSTS700213` / `AADSTS7002138` (no matching federated identity record)
+
+When logging in with OIDC, the login may fail with an error similar to:
+
+```text
+Error: AADSTS700213: No matching federated identity record found for presented assertion subject 'repo:<org>/<repo>:environment:production'.
+```
+
+or:
+
+```text
+Error: AADSTS7002138: No matching federated identity record found for presented assertion subject 'repo:<org>/<repo>:ref:refs/heads/main'. The subject matches with case-insensitive comparison, but not with case-sensitive comparison.
+```
+
+This means Microsoft Entra ID could not find a federated identity credential whose **Subject** exactly matches the subject in the OIDC token that GitHub presented. The token's subject is shown in the run log under `Federated token details` as `subject claim`. Two common causes:
+
+- **Case mismatch.** Federated credential subjects are matched **case-sensitively**. If your organization, repository, branch, or environment name uses uppercase characters (for example `repo:My-Org/My-Repo`), the federated credential Subject must use the exact same casing as the `subject claim` in the run log.
+- **Subject includes GitHub numeric IDs.** When you create the federated credential in the Azure portal and fill in the optional GitHub owner/repository ID fields, the portal generates a Subject of the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. The OIDC token GitHub sends does **not** include those numeric IDs (its subject is `repo:<org>/<repo>:<entity>:<value>`), so it will never match. Create or edit the federated credential **without** the owner/repository IDs so the Subject matches the token exactly.
+
+In both cases, set the federated credential Subject to exactly match the `subject claim` shown in your run's `Federated token details`. See [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) for details.
 
 ## Security hardening
 
