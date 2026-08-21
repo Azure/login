@@ -570,6 +570,9 @@ jobs:
 
 ### Login to Azure Stack Hub
 
+> [!NOTE]
+> Azure CLI versions newer than 2.66.x no longer support Azure Stack Hub. To use `environment: 'AzureStack'`, pin Azure CLI to 2.66.x (LTS), for example via the [Azure CLI action](https://github.com/Azure/cli) with `azcliversion: 2.66.0`. See the [Azure CLI notice for Azure Stack Hub customers](https://learn.microsoft.com/cli/azure/whats-new-overview?view=azure-cli-latest#important-notice-for-azure-stack-hub-customers).
+
 ```yaml
 # File: .github/workflows/workflow.yml
 
