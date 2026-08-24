@@ -94,6 +94,12 @@ typings/
 .DS_Store
 Thumbs.db
 
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.swp
+
 # Ignore built ts files
 __tests__/runner/*
 lib/**/*

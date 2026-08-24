@@ -1,6 +1,13 @@
 # Azure Login Action
 
 - [Azure Login Action](#azure-login-action)
+  - [Supported Versions](#supported-versions)
+  - [Version Selection](#version-selection)
+    - [Major-version tag](#major-version-tag)
+    - [Exact version tag](#exact-version-tag)
+    - [Branch reference](#branch-reference)
+    - [Commit SHA](#commit-sha)
+  - [Security Updates](#security-updates)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
     - [`subscription-id`](#subscription-id)
@@ -47,6 +54,70 @@ Azure Login Action supports different ways of authentication with Azure.
 
 > [!WARNING]
 > Avoid using managed identity login on self-hosted runners in public repositories. Managed identities enable secure authentication with Azure resources and obtain Microsoft Entra ID tokens without the need for explicit credential management. Any user can open pull requests against your repository and access your self-hosted runners without credentials. See more details in [self-hosted runner security](https://docs.github.com/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security).
+
+## Supported Versions
+
+Azure Login follows a major-version support model.
+
+| Version | Status |
+| --- | --- |
+| v3 | Supported |
+| v2 | Maintenance mode (security fixes only) |
+| v1 | End of Life (EOL) |
+
+New features are released only to supported versions. Security fixes are released to supported versions and versions in maintenance mode.
+
+Customers are strongly encouraged to use the latest v3 release.
+
+## Version Selection
+
+GitHub Actions users can reference Azure Login using several forms.
+
+### Major-version tag
+
+```yaml
+uses: azure/login@v3
+```
+
+Receives compatible updates, including security fixes, released to the referenced major version.
+
+### Exact version tag
+
+```yaml
+uses: azure/login@v2.4.0
+```
+
+Remains pinned to that specific release and does not automatically receive future fixes or updates.
+
+### Branch reference
+
+```yaml
+uses: azure/login@master
+```
+
+Receives updates from the referenced branch. For stable workflows, use a supported major-version tag or pin to a full-length commit SHA.
+
+### Commit SHA
+
+```yaml
+uses: azure/login@<full-length-commit-sha>
+```
+
+Remains pinned to that commit and does not automatically receive future fixes or updates.
+
+## Security Updates
+
+Security fixes are released to supported versions and versions in maintenance mode. Customers using exact version tags or commit SHA references must explicitly upgrade to a patched release to receive security fixes.
+
+```yaml
+# Automatically receives future v3 security updates
+uses: azure/login@v3
+
+# Does not automatically receive future updates
+uses: azure/login@v2.4.0
+```
+
+Customers using v1 should migrate to v3. End-of-life releases no longer receive updates or security fixes.
 
 ## Input Parameters
 
