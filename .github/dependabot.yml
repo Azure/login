@@ -5,9 +5,20 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
+    labels: ["dependencies"]
     groups:
       dev-dependencies:
         dependency-type: "development"
+        update-types: ["minor", "patch"]
+    ignore:
+      # ts-jest currently supports "typescript >=4.3 <7", so cap TypeScript
+      # below 7 (the native compiler rewrite) until ts-jest supports it.
+      - dependency-name: "typescript"
+        versions: [">=7"]
+      # @actions/io 3.x is ESM-only, which breaks the CommonJS ncc build.
+      # Stay on 2.x (CommonJS, Node 24 support) until the action moves to ESM.
+      - dependency-name: "@actions/io"
+        versions: [">=3"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
