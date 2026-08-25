@@ -10,6 +10,7 @@
   - [Security Updates](#security-updates)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
+    - [`mask-client-id](#mask-client-id)
     - [`subscription-id`](#subscription-id)
     - [`tenant-id`](#tenant-id)
     - [`creds`](#creds)
@@ -144,6 +145,7 @@ Customers using v1 should migrate to v3. End-of-life releases no longer receive 
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
 |auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
+|mask-client-id|false|boolean|true|if the `client-id` value is masked in workflow logs|
 
 ### `client-id`
 
@@ -156,7 +158,26 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 > [!NOTE]
-> The action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked.
+> By default the action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked. Set [`mask-client-id`](#mask-client-id) to `false`to opt out of the masking.
+
+### `mask-client-id
+
+The input parameter `mask-client-id` controls whether the login client id is registered as a secret and masked in the workflow logs. It defaults to `true`.
+
+Set it to `false`when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
+
+``yaml
+  - name: Azure login
+    uses: azure/login@v3
+    with:
+      tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      client-id: ${{ vars.AZURE_CLIENT_ID }}
+      mask-client-id: false
+```
+
+> [!NOTE]
+> The value is only unmasked when it is not a Github Action secret. A value passed omfr `${{ secrets.* }}`is still masked by Github itself, regardless of this input.
 
 ### `subscription-id`
 
