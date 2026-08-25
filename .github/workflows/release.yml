@@ -1,0 +1,145 @@
+name: Release
+
+# Manually triggered by a maintainer. Reproduces the Azure Login Action
+# release runbook: build -> commit built lib to a release branch -> tag ->
+# publish GitHub Release -> move the major tag (e.g. v3).
+#
+# ADMIN-ONLY: GitHub cannot restrict workflow_dispatch to admins at the trigger
+# level (any user with write access can dispatch). Admin-only is enforced two ways:
+#   1. environment: release  -> requires an admin reviewer to approve the run
+#      (configure required reviewers under Settings > Environments > release).
+#      This is the real gate: the destructive steps cannot run without approval.
+#   2. The "Ensure triggered by an admin" step below fails fast for non-admins.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. v3.1.0"
+        required: true
+      ref:
+        description: "Branch to release from. Use master for the current major (v3). For a back-major release (e.g. v2), branch a hotfix off the latest release tag (git checkout -b hotfix/v2.3.2 v2.3.1) and pass that hotfix/* branch."
+        required: false
+        default: master
+
+permissions:
+  contents: write   # push branch/tag, force-move major tag, create the Release
+
+# Serialize releases: never let two release runs push tags/branches at once.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Admin gate: this environment must have required reviewers (admins) configured
+    # in repo settings. The run pauses here until an admin approves.
+    environment: release
+    steps:
+      - name: Ensure triggered by an admin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          PERM=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission')
+          echo "Actor '$ACTOR' has repository permission: $PERM"
+          if [[ "$PERM" != "admin" ]]; then
+            echo "::error::Release must be triggered by a repository admin (actor has '$PERM')."
+            exit 1
+          fi
+
+      - name: Validate version input
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          if [[ ! "$V" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must look like v3.1.0 (got '$V')"
+            exit 1
+          fi
+
+      - name: Validate release ref
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          # Only allow releasing from vetted lines: master (current major) and
+          # the v2 maintenance branch. Prevents shipping arbitrary unreviewed
+          # branches straight to consumers via the moved major tag.
+          case "$REF" in
+            master|hotfix/*) echo "ref '$REF' allowed" ;;
+            *) echo "::error::ref '$REF' not permitted for release (allowed: master, or a hotfix/* branch based on the latest release tag for a back-major release)"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}   # master for the current major; a hotfix/* branch for a back-major release
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Ensure version is new
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$V" >/dev/null 2>&1; then
+            echo "::error::tag $V already exists"; exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "refs/heads/releases/$V" >/dev/null 2>&1; then
+            echo "::error::branch releases/$V already exists"; exit 1
+          fi
+
+      - name: Determine runtime node from action.yml
+        id: node
+        shell: bash
+        run: |
+          ver=$(grep "using:" action.yml | grep -oE "node[0-9]+" | grep -oE "[0-9]+" | head -1)
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}   # matches action.yml runs.using
+          cache: npm
+
+      - name: Install, build, test
+        run: |
+          npm ci
+          npm run build
+          npm test
+
+      - name: Create release branch with built lib
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "releases/$V"
+          git add -f lib
+          git commit -m "prepare release $V"
+          git push --set-upstream origin "releases/$V"
+
+      - name: Create and push tag
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          git tag -a -m "$V" "$V"
+          git push origin "$V"
+
+      - name: Move major tag (e.g. v3)
+        env:
+          V: ${{ inputs.version }}
+        run: |
+          MAJOR="${V%%.*}"          # v3.1.0 -> v3
+          git tag -d "$MAJOR" || true
+          git tag -a "$MAJOR" -m "Update $MAJOR to $V"
+          git push origin "$MAJOR" -f
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ inputs.version }}
+        run: |
+          # No --latest flag: GitHub automatically marks the highest-version
+          # release as "Latest", so a back-major release (e.g. a v2 hotfix) does
+          # not steal the badge from the current major.
+          gh release create "$V" \
+            --title "Azure Login Action $V" \
+            --generate-notes
