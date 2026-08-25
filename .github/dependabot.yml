@@ -15,9 +15,15 @@ updates:
       # below 7 (the native compiler rewrite) until ts-jest supports it.
       - dependency-name: "typescript"
         versions: [">=7"]
-      # @actions/io 3.x is ESM-only, which breaks the CommonJS ncc build.
-      # Stay on 2.x (CommonJS, Node 24 support) until the action moves to ESM.
+      # @actions/io, @actions/exec and @actions/core 3.x are ESM-only
+      # (package.json "type": "module"), which the CommonJS ncc bundle cannot
+      # require(). @actions/http-client 3.x is still CommonJS, so it is not
+      # capped. Stay on 2.x for the ESM packages until the action migrates to ESM.
       - dependency-name: "@actions/io"
+        versions: [">=3"]
+      - dependency-name: "@actions/exec"
+        versions: [">=3"]
+      - dependency-name: "@actions/core"
         versions: [">=3"]
 
   - package-ecosystem: "github-actions"
