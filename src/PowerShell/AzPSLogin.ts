@@ -15,10 +15,10 @@ export class AzPSLogin {
         core.info(`Running Azure PowerShell Login.`);
         AzPSUtils.setPSModulePathForGitHubRunner();
         await AzPSUtils.importLatestAzAccounts();
-        const [loginMethod, loginScript] = await AzPSScriptBuilder.getAzPSLoginScript(this.loginConfig);
-        core.info(`Attempting Azure PowerShell login by using ${loginMethod}...`);
-        core.debug(`Azure PowerShell Login Script: ${loginScript}`);
-        await AzPSUtils.runPSScript(loginScript);
+        const { methodName, args, env } = await AzPSScriptBuilder.getAzPSLoginInvocation(this.loginConfig);
+        core.info(`Attempting Azure PowerShell login by using ${methodName}...`);
+        core.debug(`Azure PowerShell login invocation: pwsh ${JSON.stringify(args)}`);
+        await AzPSUtils.runPSFile(args, env);
         console.log(`Running Azure PowerShell Login successfully.`);
     }
 }
