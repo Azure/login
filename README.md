@@ -27,6 +27,8 @@
     - [Login to Azure Stack Hub](#login-to-azure-stack-hub)
     - [Login without subscription](#login-without-subscription)
     - [Enable/Disable the cleanup steps](#enabledisable-the-cleanup-steps)
+  - [Troubleshooting](#troubleshooting)
+    - [OIDC login fails with `AADSTS700213` / `AADSTS7002138` (no matching federated identity record)](#oidc-login-fails-with-aadsts700213--aadsts7002138-no-matching-federated-identity-record)
   - [Security hardening](#security-hardening)
   - [Azure CLI dependency](#azure-cli-dependency)
   - [Reference](#reference)
@@ -152,6 +154,9 @@ It's used in login with OpenID Connect (OIDC) and user-assigned managed identity
 It's better to create a GitHub Action secret for this parameter when using it. Refer to [Using secrets in GitHub Actions](https://docs.github.com/actions/security-guides/using-secrets-in-github-actions).
 
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+
+> [!NOTE]
+> The action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked.
 
 ### `subscription-id`
 
@@ -575,6 +580,9 @@ jobs:
 
 ### Login to Azure Stack Hub
 
+> [!NOTE]
+> Azure CLI versions newer than 2.66.x no longer support Azure Stack Hub. To use `environment: 'AzureStack'`, pin Azure CLI to 2.66.x (LTS), for example via the [Azure CLI action](https://github.com/Azure/cli) with `azcliversion: 2.66.0`. See the [Azure CLI notice for Azure Stack Hub customers](https://learn.microsoft.com/cli/azure/whats-new-overview?view=azure-cli-latest#important-notice-for-azure-stack-hub-customers).
+
 ```yaml
 # File: .github/workflows/workflow.yml
 
@@ -746,6 +754,29 @@ jobs:
     # run some actions
 
 ```
+
+## Troubleshooting
+
+### OIDC login fails with `AADSTS700213` / `AADSTS7002138` (no matching federated identity record)
+
+When logging in with OIDC, the login may fail with an error similar to:
+
+```text
+Error: AADSTS700213: No matching federated identity record found for presented assertion subject 'repo:<org>/<repo>:environment:production'.
+```
+
+or:
+
+```text
+Error: AADSTS7002138: No matching federated identity record found for presented assertion subject 'repo:<org>/<repo>:ref:refs/heads/main'. The subject matches with case-insensitive comparison, but not with case-sensitive comparison.
+```
+
+This means Microsoft Entra ID could not find a federated identity credential whose **Subject** exactly matches the subject in the OIDC token that GitHub presented. The token's subject is shown in the run log under `Federated token details` as `subject claim`. Two common causes:
+
+- **Case mismatch.** Federated credential subjects are matched **case-sensitively**. If your organization, repository, branch, or environment name uses uppercase characters (for example `repo:My-Org/My-Repo`), the federated credential Subject must use the exact same casing as the `subject claim` in the run log.
+- **Subject includes GitHub numeric IDs.** When you create the federated credential in the Azure portal and fill in the optional GitHub owner/repository ID fields, the portal generates a Subject of the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. The OIDC token GitHub sends does **not** include those numeric IDs (its subject is `repo:<org>/<repo>:<entity>:<value>`), so it will never match. Create or edit the federated credential **without** the owner/repository IDs so the Subject matches the token exactly.
+
+In both cases, set the federated credential Subject to exactly match the `subject claim` shown in your run's `Federated token details`. See [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) for details.
 
 ## Security hardening
 
