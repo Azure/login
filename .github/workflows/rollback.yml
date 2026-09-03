@@ -59,6 +59,7 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           fetch-depth: 0
           fetch-tags: true
 
