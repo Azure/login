@@ -144,3 +144,42 @@ jobs:
           gh release create "$V" \
             --title "Azure Login Action $V" \
             --generate-notes
+
+  open-selfpin-pr:
+    needs: release
+    if: ${{ inputs.ref == 'master' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: master
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Bump azure/login self-references and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ inputs.version }}
+        run: |
+          SHA=$(git rev-parse "refs/tags/$V^{commit}")
+          for f in .github/workflows/*.yml .github/workflows/*.yaml; do
+            [ -e "$f" ] || continue
+            sed -i -E "s|(uses:[[:space:]]+azure/login@)[^[:space:]]+.*|\1${SHA} # ${V}|" "$f"
+          done
+          if git diff --quiet; then
+            echo "No azure/login self-references to update."
+            exit 0
+          fi
+          BRANCH="chore/pin-azure-login-$V"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit .github/workflows -m "chore: pin azure/login self-references to $V"
+          git push --force-with-lease --set-upstream origin "$BRANCH"
+          gh pr create --base master --head "$BRANCH" \
+            --title "Pin azure/login self-references to $V" \
+            --body "Automated post-release update: repoints \`azure/login@…\` in workflow files to the built release commit \`$SHA\` (\`$V\`)." \
+            || echo "PR for $BRANCH may already exist; skipping create."
