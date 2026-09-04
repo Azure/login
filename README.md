@@ -166,6 +166,8 @@ The input parameter `mask-client-id` controls whether the login client id is reg
 
 Set it to `false` when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
 
+The client-id is effectively a username: it is low sensitivity on its own, and only useful to an attacker who already holds the client secret or certificate. Disabling masking is therefore reasonable when the value is treated as configuration rather than as a secret.
+
 ```yaml
   - name: Azure login
     uses: azure/login@v3
