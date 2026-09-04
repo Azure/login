@@ -13,10 +13,19 @@ export function setUserAgent(): void {
 }
 
 export async function cleanupAzCLIAccounts(): Promise<void> {
-    let azPath = await io.which("az", true);
+    let azPath = core.getInput('az-path', { required: false });
+    let wrap = false
+    if (!azPath) {
+        azPath = await io.which('az', true);
+        wrap = true
+    }
+
     core.debug(`Azure CLI path: ${azPath}`);
     core.info("Clearing azure cli accounts from the local cache.");
-    await exec.exec(`"${azPath}"`, ["account", "clear"]);  
+    if (wrap) {
+        azPath = `"${azPath}"`;
+    }
+    await exec.exec(azPath, ["account", "clear"]);
 }
 
 export async function cleanupAzPSAccounts(): Promise<void> {

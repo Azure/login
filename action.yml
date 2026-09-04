@@ -34,6 +34,9 @@ inputs:
     description: 'The type of authentication. Supported values are SERVICE_PRINCIPAL, IDENTITY. Default value is SERVICE_PRINCIPAL'
     required: false
     default: 'SERVICE_PRINCIPAL'
+  az-path:
+    description: 'Override the location of the Azure CLI program'
+    required: false
 branding:
   icon: 'login.svg'
   color: 'blue'
