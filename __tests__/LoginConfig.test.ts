@@ -175,6 +175,53 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.subscriptionId).toBe("subscription-id-aa");
     });
 
+    test('initialize with mask-client-id=true', async () => {
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('mask-client-id', 'true');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+    });
+
+    test('initialize with mask-client-id=false', async () => {
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('mask-client-id', 'true');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeFalsy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+    });
+
+    test('initialize without mask-client-id', async () => {
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+    });
+
     test('validate with wrong environment', async () => {
         setEnv('environment', 'aWrongCloud');
         setEnv('enable-AzPSSession', 'false');
