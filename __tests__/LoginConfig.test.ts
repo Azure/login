@@ -183,7 +183,7 @@ describe("LoginConfig Test", () => {
         setEnv('tenant-id', 'tenant-id');
         setEnv('subscription-id', 'subscription-id');
         setEnv('client-id', 'client-id');
-        setEnv('maskclient-id', 'true');
+        setEnv('mask-client-id', 'true');
 
         let loginConfig = new LoginConfig();
         await loginConfig.initialize();
@@ -199,7 +199,7 @@ describe("LoginConfig Test", () => {
         setEnv('tenant-id', 'tenant-id');
         setEnv('subscription-id', 'subscription-id');
         setEnv('client-id', 'client-id');
-        setEnv('maskclient-id', 'true');
+        setEnv('mask-client-id', 'true');
 
         let loginConfig = new LoginConfig();
         await loginConfig.initialize();

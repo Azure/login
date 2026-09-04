@@ -10,7 +10,7 @@
   - [Security Updates](#security-updates)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
-    - [`mask-client-id](#mask-client-id)
+    - [`mask-client-id`](#mask-client-id)
     - [`subscription-id`](#subscription-id)
     - [`tenant-id`](#tenant-id)
     - [`creds`](#creds)
@@ -158,15 +158,15 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 > [!NOTE]
-> By default the action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked. Set [`mask-client-id`](#mask-client-id) to `false`to opt out of the masking.
+> By default the action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked. Set [`mask-client-id`](#mask-client-id) to `false` to opt out of the masking.
 
-### `mask-client-id
+### `mask-client-id`
 
 The input parameter `mask-client-id` controls whether the login client id is registered as a secret and masked in the workflow logs. It defaults to `true`.
 
-Set it to `false`when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
+Set it to `false` when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
 
-``yaml
+```yaml
   - name: Azure login
     uses: azure/login@v3
     with:
@@ -177,7 +177,7 @@ Set it to `false`when the client id is not treated as sensitive and masking gets
 ```
 
 > [!NOTE]
-> The value is only unmasked when it is not a Github Action secret. A value passed omfr `${{ secrets.* }}`is still masked by Github itself, regardless of this input.
+> The value is only unmasked when it is not a Github Action secret. A value passed from `${{ secrets.* }}` is still masked by Github itself, regardless of this input.
 
 ### `subscription-id`
 
