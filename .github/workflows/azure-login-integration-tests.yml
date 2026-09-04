@@ -1,8 +1,8 @@
-name: Run Azure Login Integration Tests
+name: 'Scheduled: Azure Login Integration (live Azure)'
 on: 
   workflow_dispatch:
   schedule:
-    - cron:  '0 */3 * * *'
+    - cron:  '0 8 */3 * *'
 permissions:
       id-token: write
       contents: write

@@ -1,0 +1,27 @@
+name: 'Scheduled: Close Stale Feedback Issues'
+
+# Controls when the action will run.
+on:
+  schedule:
+  - cron: "0 8 * * 1"
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        name: Close issue with no feedback for 60 days
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          close-issue-message: 'This issue has been labeled as `needs-author-feedback` for 60 days with no activity. We will close it for now. If you require additional assistance, please feel free to reopen it with the required information.'
+          days-before-stale: -1
+          days-before-close: 60
+          stale-issue-label: 'needs-author-feedback'
+          only-issue-labels: 'needs-author-feedback'
+          close-issue-reason: 'completed'
+          operations-per-run: 100

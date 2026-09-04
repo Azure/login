@@ -1,4 +1,4 @@
-name: Azure Login Action Live Tests
+name: 'PR: Azure Login Live Tests'
 on:
   workflow_dispatch:
   pull_request:
