@@ -109,6 +109,11 @@ jobs:
           npm run build
           npm test
 
+      - name: Verify build produced the action entry points
+        run: |
+          test -f lib/main/index.js && test -f lib/cleanup/index.js \
+            || { echo "::error::build did not produce lib/main/index.js and lib/cleanup/index.js; refusing to create a release"; exit 1; }
+
       - name: Create release branch with built lib
         env:
           V: ${{ inputs.version }}
