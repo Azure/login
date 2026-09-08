@@ -111,8 +111,14 @@ jobs:
 
       - name: Verify build produced the action entry points
         run: |
-          test -f lib/main/index.js && test -f lib/cleanup/index.js \
-            || { echo "::error::build did not produce lib/main/index.js and lib/cleanup/index.js; refusing to create a release"; exit 1; }
+          main_path=$(grep -oE "main:[[:space:]]*'[^']+'" action.yml | grep -oE "'[^']+'" | tr -d "'" | head -1)
+          post_path=$(grep -oE "post:[[:space:]]*'[^']+'" action.yml | grep -oE "'[^']+'" | tr -d "'" | head -1)
+          if [ -z "$main_path" ] || [ -z "$post_path" ]; then
+            echo "::error::could not read main/post entry points from action.yml"; exit 1
+          fi
+          if [ ! -f "$main_path" ] || [ ! -f "$post_path" ]; then
+            echo "::error::build did not produce $main_path and $post_path (from action.yml); refusing to create a release"; exit 1
+          fi
 
       - name: Create release branch with built lib
         env:
@@ -158,24 +164,32 @@ jobs:
           fi
           echo "Release notes start tag: ${PREV:-<none, first release>}"
 
+          # Build the notes-start-tag argument as an array so an empty PREV (first
+          # release) appends nothing, and a value is passed as a single argument.
+          notes_args=(--generate-notes)
+          if [[ -n "$PREV" ]]; then
+            notes_args+=(--notes-start-tag "$PREV")
+          fi
+
           # No --latest flag: GitHub automatically marks the highest-version
           # release as "Latest", so a back-major release (e.g. a v2 hotfix) does
           # not steal the badge from the current major.
           gh release create "$V" \
             --title "Azure Login Action $V" \
-            --generate-notes \
-            ${PREV:+--notes-start-tag "$PREV"}
+            "${notes_args[@]}"
 
   open-selfpin-pr:
     needs: release
     if: ${{ inputs.ref == 'master' }}
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           ref: master
           fetch-depth: 0
           fetch-tags: true
@@ -186,6 +200,8 @@ jobs:
           V: ${{ inputs.version }}
         run: |
           SHA=$(git rev-parse "refs/tags/$V^{commit}")
+          # Rewrite only azure/login self-references. The match starts at "uses:",
+          # so leading indentation is preserved and other actions are left untouched.
           for f in .github/workflows/*.yml .github/workflows/*.yaml; do
             [ -e "$f" ] || continue
             sed -i -E "s|(uses:[[:space:]]+azure/login@)[^[:space:]]+.*|\1${SHA} # ${V}|" "$f"
@@ -195,11 +211,14 @@ jobs:
             exit 0
           fi
           BRANCH="chore/pin-azure-login-$V"
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
           git commit .github/workflows -m "chore: pin azure/login self-references to $V"
-          git push --force-with-lease --set-upstream origin "$BRANCH"
+          # Force-push: this version-specific bot branch is safe to overwrite if a
+          # prior run left it behind, and there is no other writer to protect.
+          git push --force --set-upstream origin "$BRANCH"
+          # Tolerate an existing PR for this branch (e.g. on a re-run) without failing.
           gh pr create --base master --head "$BRANCH" \
             --title "Pin azure/login self-references to $V" \
             --body "Automated post-release update: repoints \`azure/login@…\` in workflow files to the built release commit \`$SHA\` (\`$V\`)." \

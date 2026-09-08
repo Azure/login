@@ -112,12 +112,14 @@ jobs:
   open-selfpin-pr:
     needs: rollback
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           ref: master
           fetch-depth: 0
           fetch-tags: true
@@ -130,6 +132,7 @@ jobs:
           TARGET_MAJOR="${V%%.*}"   # v3.0.1 -> v3
           # Only touch master's pins if they track the same major we are rolling back;
           # a back-major (e.g. v2) rollback must not repoint master's current-major pins.
+          # CURRENT_MAJOR reads the "# vN" suffix on the first pinned self-reference.
           CURRENT_MAJOR=$(grep -rhoE 'uses:[[:space:]]+azure/login@[0-9a-f]+[[:space:]]*#[[:space:]]*v[0-9]+' .github/workflows | head -1 | grep -oE 'v[0-9]+$')
           if [ -z "$CURRENT_MAJOR" ]; then
             echo "No pinned azure/login self-references on master; nothing to roll back."
@@ -140,6 +143,8 @@ jobs:
             exit 0
           fi
           SHA=$(git rev-parse "refs/tags/$V^{commit}")
+          # Rewrite only azure/login self-references. The match starts at "uses:",
+          # so leading indentation is preserved and other actions are left untouched.
           for f in .github/workflows/*.yml .github/workflows/*.yaml; do
             [ -e "$f" ] || continue
             sed -i -E "s|(uses:[[:space:]]+azure/login@)[^[:space:]]+.*|\1${SHA} # ${V}|" "$f"
@@ -149,11 +154,14 @@ jobs:
             exit 0
           fi
           BRANCH="chore/rollback-azure-login-$V"
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
           git commit .github/workflows -m "chore: roll back azure/login self-references to $V"
-          git push --force-with-lease --set-upstream origin "$BRANCH"
+          # Force-push: this version-specific bot branch is safe to overwrite if a
+          # prior run left it behind, and there is no other writer to protect.
+          git push --force --set-upstream origin "$BRANCH"
+          # Tolerate an existing PR for this branch (e.g. on a re-run) without failing.
           gh pr create --base master --head "$BRANCH" \
             --title "Roll back azure/login self-references to $V" \
             --body "Automated post-rollback update: repoints \`azure/login@…\` in workflow files to the rolled-back release commit \`$SHA\` (\`$V\`)." \
