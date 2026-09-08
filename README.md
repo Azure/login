@@ -104,12 +104,8 @@ Remains pinned to that specific release and does not automatically receive futur
 
 ### Branch reference
 
-```yaml
-uses: azure/login@master
-```
-
 > [!WARNING]
-> Branch references such as `@master` are **not** supported for consumption. The action's compiled output (`lib/`) is not committed to `master`; it is built and published only to release tags and `releases/*` branches, so referencing `@master` will fail to run. Use a major-version tag, an exact version tag, or a full-length commit SHA instead.
+> Branch references such as `uses: azure/login@master` are **not** supported for consumption. The action's compiled output (`lib/`) is not committed to `master`; it is built and published only to release tags and `releases/*` branches, so referencing a branch will fail to run. Use a major-version tag, an exact version tag, or a full-length commit SHA instead.
 
 ### Commit SHA
 
