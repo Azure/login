@@ -8,8 +8,10 @@
     - [Branch reference](#branch-reference)
     - [Commit SHA](#commit-sha)
   - [Security Updates](#security-updates)
+  - [Release integrity](#release-integrity)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
+    - [`mask-client-id`](#mask-client-id)
     - [`subscription-id`](#subscription-id)
     - [`tenant-id`](#tenant-id)
     - [`creds`](#creds)
@@ -103,11 +105,8 @@ Remains pinned to that specific release and does not automatically receive futur
 
 ### Branch reference
 
-```yaml
-uses: azure/login@master
-```
-
-Receives updates from the referenced branch. For stable workflows, use a supported major-version tag or pin to a full-length commit SHA.
+> [!WARNING]
+> Branch references such as `uses: azure/login@master` are **not** supported for consumption. The action's compiled output (`lib/`) is not committed to `master`; it is built and published only to release tags and `releases/*` branches, so referencing a branch will fail to run. Use a major-version tag, an exact version tag, or a full-length commit SHA instead.
 
 ### Commit SHA
 
@@ -131,6 +130,20 @@ uses: azure/login@v2.4.0
 
 Customers using v1 should migrate to v3. End-of-life releases no longer receive updates or security fixes.
 
+## Release integrity
+
+Azure Login publishes **immutable releases**. Once a release is published, its tag-to-commit binding and built artifacts are frozen and cannot be changed after the fact.
+
+- **Exact version tags are frozen.** A version tag such as `v3.0.2` always points at the same commit and the same compiled output. It is never moved, retargeted, or deleted.
+- **Built artifacts live on release refs, not `master`.** The compiled action (`lib/`) is committed to each release's `releases/*` branch and version tag. `master` holds source only and is not runnable as an action (see [Branch reference](#branch-reference)).
+- **The major-version tag floats forward.** `v3` is the one deliberately movable pointer: each new v3 release advances `v3` to the latest v3 patch, so `uses: azure/login@v3` receives compatible updates. `v3` only ever advances to a published, immutable release commit.
+
+Because published releases are immutable, referencing an exact version tag or a full-length commit SHA gives a reproducible, tamper-evident dependency. Pinning to a full-length commit SHA is recommended for supply-chain hardening:
+
+```yaml
+uses: azure/login@<full-length-commit-sha> # v3.0.2
+```
+
 ## Input Parameters
 
 |Parameter Name|Required?|Type|Default Value|Description|
@@ -144,6 +157,7 @@ Customers using v1 should migrate to v3. End-of-life releases no longer receive 
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
 |auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
+|mask-client-id|false|boolean|true|if the `client-id` value is masked in workflow logs|
 
 ### `client-id`
 
@@ -156,7 +170,28 @@ It's better to create a GitHub Action secret for this parameter when using it. R
 Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-recommended) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 > [!NOTE]
-> The action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked.
+> By default the action registers the `client-id` value as a secret (via `core.setSecret`) so it is masked in workflow logs. Some enterprises treat the client ID as sensitive, and masking also prevents it from being printed accidentally, which matters in public repositories. `tenant-id` and `subscription-id` are not masked. Set [`mask-client-id`](#mask-client-id) to `false` to opt out of the masking.
+
+### `mask-client-id`
+
+The input parameter `mask-client-id` controls whether the login client id is registered as a secret and masked in the workflow logs. It defaults to `true`.
+
+Set it to `false` when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
+
+The client-id is effectively a username: it is low sensitivity on its own, and only useful to an attacker who already holds the client secret or certificate. Disabling masking is therefore reasonable when the value is treated as configuration rather than as a secret.
+
+```yaml
+  - name: Azure login
+    uses: azure/login@v3
+    with:
+      tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      client-id: ${{ vars.AZURE_CLIENT_ID }}
+      mask-client-id: false
+```
+
+> [!NOTE]
+> The value is only unmasked when it is not a GitHub Action secret. A value passed from `${{ secrets.* }}` is still masked by GitHub itself, regardless of this input.
 
 ### `subscription-id`
 

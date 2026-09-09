@@ -1,4 +1,5 @@
 import { LoginConfig } from "../src/common/LoginConfig";
+import * as core from "@actions/core";
 
 describe("LoginConfig Test", () => {
 
@@ -40,6 +41,10 @@ describe("LoginConfig Test", () => {
 
     beforeEach(() => {
         cleanEnv();
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     test('initialize with creds, lack of clientId', async () => {
@@ -173,6 +178,137 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.servicePrincipalSecret).toBeNull();
         expect(loginConfig.tenantId).toBe("tenant-id-aa");
         expect(loginConfig.subscriptionId).toBe("subscription-id-aa");
+    });
+
+    test('initialize with mask-client-id=true', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('mask-client-id', 'true');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-id");
+    });
+
+
+    test('initialize with creds and mask-client-id=true', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('mask-client-id', 'true');
+
+        let creds = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        }
+        setEnv('creds', JSON.stringify(creds));
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-secret");
+    });
+
+    test('initialize with mask-client-id=false', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('mask-client-id', 'false');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeFalsy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).not.toHaveBeenCalledWith("client-id");
+    });
+
+    test('initialize with creds and mask-client-id=false', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('mask-client-id', 'false');
+
+        let creds = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        }
+        setEnv('creds', JSON.stringify(creds));
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeFalsy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).not.toHaveBeenCalledWith("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-secret");
+    });
+
+    test('initialize without mask-client-id', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-id");
+    });
+
+    test('initialize with creds and without mask-client-id', async () => {
+        const setSecretSpy = jest.spyOn(core, 'setSecret').mockImplementation(() => {});
+
+        setEnv('environment', 'azureusgovernment');
+        setEnv('enable-AzPSSession', 'false');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+
+        let creds = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        }
+        setEnv('creds', JSON.stringify(creds));
+
+        let loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        expect(loginConfig.maskClientId).toBeTruthy();
+        expect(loginConfig.servicePrincipalId).toBe("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-id");
+        expect(setSecretSpy).toHaveBeenCalledWith("client-secret");
     });
 
     test('validate with wrong environment', async () => {

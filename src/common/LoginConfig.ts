@@ -25,6 +25,7 @@ export class LoginConfig {
     enableAzPSSession: boolean;
     audience: string;
     federatedToken: string;
+    maskClientId: boolean;
 
     async initialize() {
         this.environment = core.getInput("environment").toLowerCase();
@@ -42,7 +43,10 @@ export class LoginConfig {
         this.audience = core.getInput('audience', { required: false });
         this.federatedToken = null;
 
-        this.mask(this.servicePrincipalId);
+        this.maskClientId = core.getInput('mask-client-id').toLowerCase() !== "false";
+        if (this.maskClientId) {
+            this.mask(this.servicePrincipalId);
+        }
         this.mask(this.servicePrincipalSecret);
     }
 

@@ -1,10 +1,10 @@
 #This workflow is used to test azure login action for CLI edge build. Visit, https://github.com/Azure/azure-cli#edge-builds for more details.
 
-name: Run Azure Login Canary Test
+name: 'Scheduled: Azure Login Canary (CLI edge build)'
 on: 
   workflow_dispatch:
   schedule:
-    - cron:  ' 0 8 * * *'  
+    - cron:  '0 8 * * *'  
 permissions:
       id-token: write
       contents: read
@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         
       - name: 'Az CLI login with subscription'
-        uses: azure/login@v3
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
@@ -41,7 +41,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login without subscription'
-        uses: azure/login@v3
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           allow-no-subscriptions: true
@@ -50,7 +50,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login with subscription OIDC'
-        uses: azure/login@v3
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}
@@ -60,7 +60,7 @@ jobs:
           az account show --output none
           
       - name: 'Az CLI login without subscription OIDC'
-        uses: azure/login@v3
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ secrets.AZURE_CLIENTID }}
           tenant-id: ${{ secrets.AZURE_TENANTID }}

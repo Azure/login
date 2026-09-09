@@ -57,8 +57,9 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           fetch-depth: 0
           fetch-tags: true
 
@@ -107,3 +108,61 @@ jobs:
           echo "- Major tag \`$MAJOR\` now points at \`$V\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Consumers using \`azure/login@$MAJOR\` now get \`$V\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- The bad tag/branch/release were NOT deleted (delete manually if required)." >> "$GITHUB_STEP_SUMMARY"
+
+  open-selfpin-pr:
+    needs: rollback
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
+          ref: master
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Roll back azure/login self-references and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ inputs.target_version }}
+        run: |
+          TARGET_MAJOR="${V%%.*}"   # v3.0.1 -> v3
+          # Only touch master's pins if they track the same major we are rolling back;
+          # a back-major (e.g. v2) rollback must not repoint master's current-major pins.
+          # CURRENT_MAJOR reads the "# vN" suffix on the first pinned self-reference.
+          CURRENT_MAJOR=$(grep -rhoE 'uses:[[:space:]]+azure/login@[0-9a-f]+[[:space:]]*#[[:space:]]*v[0-9]+' .github/workflows | head -1 | grep -oE 'v[0-9]+$')
+          if [ -z "$CURRENT_MAJOR" ]; then
+            echo "No pinned azure/login self-references on master; nothing to roll back."
+            exit 0
+          fi
+          if [ "$CURRENT_MAJOR" != "$TARGET_MAJOR" ]; then
+            echo "Rollback target major ($TARGET_MAJOR) does not match master's pinned major ($CURRENT_MAJOR); skipping self-pin update."
+            exit 0
+          fi
+          SHA=$(git rev-parse "refs/tags/$V^{commit}")
+          # Rewrite only azure/login self-references. The match starts at "uses:",
+          # so leading indentation is preserved and other actions are left untouched.
+          for f in .github/workflows/*.yml .github/workflows/*.yaml; do
+            [ -e "$f" ] || continue
+            sed -i -E "s|(uses:[[:space:]]+azure/login@)[^[:space:]]+.*|\1${SHA} # ${V}|" "$f"
+          done
+          if git diff --quiet; then
+            echo "azure/login self-references already at $V."
+            exit 0
+          fi
+          BRANCH="chore/rollback-azure-login-$V"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit .github/workflows -m "chore: roll back azure/login self-references to $V"
+          # Force-push: this version-specific bot branch is safe to overwrite if a
+          # prior run left it behind, and there is no other writer to protect.
+          git push --force --set-upstream origin "$BRANCH"
+          # Tolerate an existing PR for this branch (e.g. on a re-run) without failing.
+          gh pr create --base master --head "$BRANCH" \
+            --title "Roll back azure/login self-references to $V" \
+            --body "Automated post-rollback update: repoints \`azure/login@…\` in workflow files to the rolled-back release commit \`$SHA\` (\`$V\`)." \
+            || echo "PR for $BRANCH may already exist; skipping create."
