@@ -53,6 +53,9 @@ export default class AzPSScriptBuilder {
         if (loginConfig.environment.toLowerCase() === 'azurestack') {
             args.push('-ArmEndpoint', loginConfig.resourceManagerEndpointUrl);
         }
+        if (loginConfig.maxContextPopulation) {
+            args.push('-MaxContextPopulation', loginConfig.maxContextPopulation);
+        }
 
         if (loginConfig.authType === LoginConfig.AUTH_TYPE_SERVICE_PRINCIPAL) {
             args.push('-ApplicationId', loginConfig.servicePrincipalId);

@@ -18,6 +18,7 @@
     - [`allow-no-subscriptions`](#allow-no-subscriptions)
     - [`audience`](#audience)
     - [`auth-type`](#auth-type)
+    - [`max-context-population`](#max-context-population)
   - [Workflow Examples](#workflow-examples)
     - [Login With OpenID Connect (OIDC) \[Recommended\]](#login-with-openid-connect-oidc-recommended)
     - [Login With a Service Principal Secret](#login-with-a-service-principal-secret)
@@ -144,6 +145,7 @@ Customers using v1 should migrate to v3. End-of-life releases no longer receive 
 |allow-no-subscriptions|false|boolean|false|if login without subscription is allowed|
 |audience|false|string|api://AzureADTokenExchange|the audience to get the JWT ID token from GitHub OIDC provider|
 |auth-type|false|string|SERVICE_PRINCIPAL|the auth type|
+|max-context-population|false|integer||only used when `enable-AzPSSession` is `true`; overrides the Azure PowerShell `MaxContextPopulation`. Defaults to the Azure PowerShell default of 25 when unset.|
 
 ### `client-id`
 
@@ -232,6 +234,26 @@ Azure Login Action gets the JWT ID token from GitHub OIDC provider when login wi
 The input parameter `auth-type` specifies the type of authentication. The default value is `SERVICE_PRINCIPAL`. Users can specify it as `IDENTITY` for login with Managed Identity.
 
 Refer to [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
+
+### `max-context-population`
+
+The input parameter `max-context-population` is only used when [`enable-AzPSSession`](#enable-azpssession) is `true`. It overrides the Azure PowerShell `MaxContextPopulation` value that `Connect-AzAccount` uses, which controls how many subscription contexts are loaded into the session.
+
+Azure PowerShell loads a maximum of 25 subscription contexts by default. When the identity has access to more than 25 subscriptions, only a subset is loaded, so commands that enumerate or target subscriptions outside that subset may behave inconsistently. Set `max-context-population` to `-1` to load all subscriptions, or to a positive integer to load a specific number. When it is unset, the Azure PowerShell default of 25 applies and behavior is unchanged.
+
+```yaml
+  - name: Azure login
+    uses: azure/login@v3
+    with:
+      client-id: ${{ vars.AZURE_CLIENT_ID }}
+      tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      enable-AzPSSession: true
+      max-context-population: -1
+```
+
+> [!NOTE]
+> Loading all subscription contexts with `-1` makes `Connect-AzAccount` slower when the identity can access a large number of subscriptions, because every subscription is enumerated during login. Set it only when your workflow needs contexts beyond the default 25.
 
 ## Workflow Examples
 
