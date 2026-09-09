@@ -239,7 +239,7 @@ Refer to [Login With System-assigned Managed Identity](#login-with-system-assign
 
 The input parameter `max-context-population` is only used when [`enable-AzPSSession`](#enable-azpssession) is `true`. It overrides the Azure PowerShell `MaxContextPopulation` value that `Connect-AzAccount` uses, which controls how many subscription contexts are loaded into the session.
 
-Azure PowerShell loads a maximum of 25 subscription contexts by default. When the identity has access to more than 25 subscriptions, only a subset is loaded, so commands that enumerate or target subscriptions outside that subset may behave inconsistently. Set `max-context-population` to `-1` to load all subscriptions, or to a positive integer to load a specific number. When it is unset, the Azure PowerShell default of 25 applies and behavior is unchanged.
+Azure PowerShell loads a maximum of 25 subscription contexts by default. When the identity has access to more than 25 subscriptions, only a subset is loaded, so commands that enumerate or target subscriptions outside that subset may behave inconsistently. Set `max-context-population` to `-1` to load all subscriptions, or to a positive integer (1 to 2147483647) to load a specific number. When it is unset, the Azure PowerShell default of 25 applies and behavior is unchanged.
 
 ```yaml
   - name: Azure login

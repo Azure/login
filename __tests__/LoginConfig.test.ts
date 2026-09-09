@@ -269,4 +269,35 @@ describe("LoginConfig Test", () => {
         expect(loginConfig.subscriptionId).toBe("");
     });
 
+    async function initWithMaxContextPopulation(value: string): Promise<LoginConfig> {
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('tenant-id', 'tenant-id');
+        setEnv('subscription-id', 'subscription-id');
+        setEnv('client-id', 'client-id');
+        setEnv('max-context-population', value);
+        const loginConfig = new LoginConfig();
+        await loginConfig.initialize();
+        return loginConfig;
+    }
+
+    test.each(['-1', '1', '25', '2147483647'])('validate accepts max-context-population=%s', async (value) => {
+        const loginConfig = await initWithMaxContextPopulation(value);
+        loginConfig.validate();
+        expect(loginConfig.maxContextPopulation).toBe(value);
+    });
+
+    test.each(['0', '-2', '1e3', '0x10', '5.0', '2147483648', 'abc'])('validate rejects invalid max-context-population=%s', async (value) => {
+        const loginConfig = await initWithMaxContextPopulation(value);
+        testValidateWithErrorMessage(loginConfig, "for 'max-context-population'. It must be -1");
+    });
+
+    test('whitespace-only max-context-population is treated as unset', async () => {
+        const loginConfig = await initWithMaxContextPopulation('   ');
+        loginConfig.validate();
+        expect(loginConfig.maxContextPopulation).toBe('');
+    });
+
 });
