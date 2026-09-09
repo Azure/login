@@ -36,3 +36,8 @@ updates:
         patterns: ["*"]
     cooldown:
       default-days: 7
+    ignore:
+      # azure/login self-references are pinned by the release workflow
+      # (open-selfpin-pr job), so exclude them from Dependabot to avoid
+      # duplicate bump PRs.
+      - dependency-name: "azure/login"

@@ -26,6 +26,7 @@ export class LoginConfig {
     audience: string;
     federatedToken: string;
     maxContextPopulation: string;
+    maskClientId: boolean;
 
     async initialize() {
         this.environment = core.getInput("environment").toLowerCase();
@@ -44,7 +45,10 @@ export class LoginConfig {
         this.federatedToken = null;
         this.maxContextPopulation = core.getInput('max-context-population', { required: false }).trim();
 
-        this.mask(this.servicePrincipalId);
+        this.maskClientId = core.getInput('mask-client-id').toLowerCase() !== "false";
+        if (this.maskClientId) {
+            this.mask(this.servicePrincipalId);
+        }
         this.mask(this.servicePrincipalSecret);
     }
 
