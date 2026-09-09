@@ -8,6 +8,7 @@
     - [Branch reference](#branch-reference)
     - [Commit SHA](#commit-sha)
   - [Security Updates](#security-updates)
+  - [Release integrity](#release-integrity)
   - [Input Parameters](#input-parameters)
     - [`client-id`](#client-id)
     - [`mask-client-id`](#mask-client-id)
@@ -104,11 +105,8 @@ Remains pinned to that specific release and does not automatically receive futur
 
 ### Branch reference
 
-```yaml
-uses: azure/login@master
-```
-
-Receives updates from the referenced branch. For stable workflows, use a supported major-version tag or pin to a full-length commit SHA.
+> [!WARNING]
+> Branch references such as `uses: azure/login@master` are **not** supported for consumption. The action's compiled output (`lib/`) is not committed to `master`; it is built and published only to release tags and `releases/*` branches, so referencing a branch will fail to run. Use a major-version tag, an exact version tag, or a full-length commit SHA instead.
 
 ### Commit SHA
 
@@ -131,6 +129,20 @@ uses: azure/login@v2.4.0
 ```
 
 Customers using v1 should migrate to v3. End-of-life releases no longer receive updates or security fixes.
+
+## Release integrity
+
+Azure Login publishes **immutable releases**. Once a release is published, its tag-to-commit binding and built artifacts are frozen and cannot be changed after the fact.
+
+- **Exact version tags are frozen.** A version tag such as `v3.0.2` always points at the same commit and the same compiled output. It is never moved, retargeted, or deleted.
+- **Built artifacts live on release refs, not `master`.** The compiled action (`lib/`) is committed to each release's `releases/*` branch and version tag. `master` holds source only and is not runnable as an action (see [Branch reference](#branch-reference)).
+- **The major-version tag floats forward.** `v3` is the one deliberately movable pointer: each new v3 release advances `v3` to the latest v3 patch, so `uses: azure/login@v3` receives compatible updates. `v3` only ever advances to a published, immutable release commit.
+
+Because published releases are immutable, referencing an exact version tag or a full-length commit SHA gives a reproducible, tamper-evident dependency. Pinning to a full-length commit SHA is recommended for supply-chain hardening:
+
+```yaml
+uses: azure/login@<full-length-commit-sha> # v3.0.2
+```
 
 ## Input Parameters
 
