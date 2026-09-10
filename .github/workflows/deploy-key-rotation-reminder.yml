@@ -6,30 +6,21 @@ on:
     # 09:00 UTC on the 1st of January and July (routine 6-month cadence).
     - cron: '0 9 1 1,7 *'
 
-permissions:
-  issues: write
+permissions: {}
 
 jobs:
   remind:
     runs-on: ubuntu-latest
     steps:
-      - name: Open rotation reminder issue
+      - name: Post rotation reminder to Teams
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          TITLE: 'Rotate RELEASE_DEPLOY_KEY (routine 6-month cadence)'
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: |
-          existing=$(gh issue list --repo "$REPO" --state open --limit 200 --json title --jq '[.[] | select(.title==env.TITLE)] | length')
-          if [ "$existing" -gt 0 ]; then
-            echo "An open rotation reminder issue already exists; skipping."
-            exit 0
+          if [ -z "$TEAMS_WEBHOOK_URL" ]; then
+            echo "::error::TEAMS_WEBHOOK_URL secret is not set."; exit 1
           fi
-          gh issue create --repo "$REPO" --title "$TITLE" --body 'Routine scheduled reminder to rotate the release deploy key (`RELEASE_DEPLOY_KEY`, on the `release` environment). This is a standard 6-month rotation, not an indication of any incident.
-
-          Rotation steps (requires repo admin; add the new key before removing the old one so there is no release downtime):
-
-          1. Generate a new SSH keypair with an empty passphrase.
-          2. Add the new public key as a **write** deploy key.
-          3. Update the `RELEASE_DEPLOY_KEY` environment secret with the new private key.
-          4. Delete the previous deploy key.
-          5. Close this issue.'
+          MESSAGE="🔑 Routine reminder: rotate RELEASE_DEPLOY_KEY on Azure/login (6-month cadence, not an incident). Steps: generate a new SSH keypair, add the new public key as a write deploy key, update the RELEASE_DEPLOY_KEY environment secret, then delete the old key. See the release guide for details."
+          # The JSON body must match the Teams Workflow (Power Automate) trigger's
+          # expected schema. jq builds it so the message is safely escaped.
+          jq -n --arg text "$MESSAGE" '{text: $text}' > payload.json
+          curl -sS --fail -X POST -H "Content-Type: application/json" --data @payload.json "$TEAMS_WEBHOOK_URL"
