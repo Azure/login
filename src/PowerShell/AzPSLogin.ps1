@@ -14,7 +14,9 @@ param(
 
     [string]$ApplicationId,
 
-    [string]$ArmEndpoint
+    [string]$ArmEndpoint,
+
+    [int]$MaxContextPopulation
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,6 +36,7 @@ try {
     }
     if ($Tenant)       { $connectArgs['Tenant']       = $Tenant }
     if ($Subscription) { $connectArgs['Subscription'] = $Subscription }
+    if ($PSBoundParameters.ContainsKey('MaxContextPopulation')) { $connectArgs['MaxContextPopulation'] = $MaxContextPopulation }
 
     if ($AuthType -eq 'SERVICE_PRINCIPAL') {
         $connectArgs['ServicePrincipal'] = $true

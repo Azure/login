@@ -25,6 +25,7 @@ export class LoginConfig {
     enableAzPSSession: boolean;
     audience: string;
     federatedToken: string;
+    maxContextPopulation: string;
     maskClientId: boolean;
 
     async initialize() {
@@ -42,6 +43,7 @@ export class LoginConfig {
 
         this.audience = core.getInput('audience', { required: false });
         this.federatedToken = null;
+        this.maxContextPopulation = core.getInput('max-context-population', { required: false }).trim();
 
         this.maskClientId = core.getInput('mask-client-id').toLowerCase() !== "false";
         if (this.maskClientId) {
@@ -109,6 +111,19 @@ export class LoginConfig {
         }
         if (!this.subscriptionId && !this.allowNoSubscriptionsLogin) {
             throw new Error("Ensure 'subscription-id' is supplied or 'allow-no-subscriptions' is 'true'.");
+        }
+        if (this.maxContextPopulation) {
+            // Validate the raw string (not Number(), which accepts 1e3/0x10/5.0
+            // and out-of-range values that PowerShell's [int] then rejects).
+            const INT32_MAX = 2147483647;
+            const isValid = this.maxContextPopulation === '-1'
+                || (/^[1-9][0-9]*$/.test(this.maxContextPopulation) && Number(this.maxContextPopulation) <= INT32_MAX);
+            if (!isValid) {
+                throw new Error(`Invalid value '${this.maxContextPopulation}' for 'max-context-population'. It must be -1 (load all subscription contexts) or a positive integer between 1 and ${INT32_MAX}.`);
+            }
+            if (!this.enableAzPSSession) {
+                core.warning("'max-context-population' is only applied when 'enable-AzPSSession' is 'true'. It has no effect on Azure CLI login and will be ignored.");
+            }
         }
     }
 

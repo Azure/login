@@ -34,6 +34,9 @@ inputs:
     description: 'The type of authentication. Supported values are SERVICE_PRINCIPAL, IDENTITY. Default value is SERVICE_PRINCIPAL'
     required: false
     default: 'SERVICE_PRINCIPAL'
+  max-context-population:
+    description: 'Only used when enable-AzPSSession is true. Overrides the Azure PowerShell MaxContextPopulation used by Connect-AzAccount (the number of subscription contexts loaded). Set to -1 to load all subscriptions, or a positive integer. When unset, the Azure PowerShell default of 25 applies.'
+    required: false
   mask-client-id:
     description: 'Set this value to false to stop registering the client-id as a secret, so it is not masked in workflow logs'
     required: false

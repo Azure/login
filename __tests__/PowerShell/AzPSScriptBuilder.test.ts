@@ -160,6 +160,49 @@ describe("Building the Az PS login invocation", () => {
         });
     });
 
+    test('max-context-population set: value passed as -MaxContextPopulation param', () => {
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        setEnv('max-context-population', '-1');
+        const creds = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        };
+        setEnv('creds', JSON.stringify(creds));
+
+        const loginConfig = new LoginConfig();
+        loginConfig.initialize();
+        return AzPSScriptBuilder.getAzPSLoginInvocation(loginConfig).then(({ args }) => {
+            expect(args).toEqual(expect.arrayContaining([
+                '-MaxContextPopulation', '-1',
+            ]));
+        });
+    });
+
+    test('max-context-population unset: -MaxContextPopulation param omitted', () => {
+        setEnv('environment', 'azurecloud');
+        setEnv('enable-AzPSSession', 'true');
+        setEnv('allow-no-subscriptions', 'true');
+        setEnv('auth-type', 'SERVICE_PRINCIPAL');
+        const creds = {
+            'clientId': 'client-id',
+            'clientSecret': 'client-secret',
+            'tenantId': 'tenant-id',
+            'subscriptionId': 'subscription-id'
+        };
+        setEnv('creds', JSON.stringify(creds));
+
+        const loginConfig = new LoginConfig();
+        loginConfig.initialize();
+        return AzPSScriptBuilder.getAzPSLoginInvocation(loginConfig).then(({ args }) => {
+            expect(args).not.toContain('-MaxContextPopulation');
+        });
+    });
+
     test('SECURITY: adversarial ArmEndpoint travels as a discrete argv element', () => {
         setEnv('environment', 'azurestack');
         setEnv('enable-AzPSSession', 'true');
