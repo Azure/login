@@ -176,6 +176,8 @@ Refer to [Login With OpenID Connect (OIDC)](#login-with-openid-connect-oidc-reco
 
 ### `mask-client-id`
 
+_Available in `azure/login@v3`._
+
 The input parameter `mask-client-id` controls whether the login client id is registered as a secret and masked in the workflow logs. It defaults to `true`.
 
 Set it to `false` when the client id is not treated as sensitive and masking gets in the way, for example when the same value appears in log output or command results that you need to read.
@@ -271,6 +273,8 @@ The input parameter `auth-type` specifies the type of authentication. The defaul
 Refer to [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity) and [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity) for its usage.
 
 ### `max-context-population`
+
+_Available in `azure/login@v3`._
 
 The input parameter `max-context-population` is only used when [`enable-AzPSSession`](#enable-azpssession) is `true`. It overrides the Azure PowerShell `MaxContextPopulation` value that `Connect-AzAccount` uses, which controls how many subscription contexts are loaded into the session.
 
