@@ -115,7 +115,6 @@ jobs:
     environment: release
     permissions:
       contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -124,9 +123,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Roll back azure/login self-references and open PR
+      - name: Roll back azure/login self-references and push branch
         env:
-          GH_TOKEN: ${{ github.token }}
           V: ${{ inputs.target_version }}
         run: |
           TARGET_MAJOR="${V%%.*}"   # v3.0.1 -> v3
@@ -161,8 +159,6 @@ jobs:
           # Force-push: this version-specific bot branch is safe to overwrite if a
           # prior run left it behind, and there is no other writer to protect.
           git push --force --set-upstream origin "$BRANCH"
-          # Tolerate an existing PR for this branch (e.g. on a re-run) without failing.
-          gh pr create --base master --head "$BRANCH" \
-            --title "Roll back azure/login self-references to $V" \
-            --body "Automated post-rollback update: repoints \`azure/login@…\` in workflow files to the rolled-back release commit \`$SHA\` (\`$V\`)." \
-            || echo "PR for $BRANCH may already exist; skipping create."
+          # The org blocks Actions from creating PRs, so open it manually from the
+          # pushed branch. Print the compare link for the releaser.
+          echo "::notice::Self-pin branch pushed. Open a PR: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/compare/master...${BRANCH}?expand=1"
