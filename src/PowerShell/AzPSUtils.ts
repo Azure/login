@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as exec from '@actions/exec';
@@ -40,6 +41,13 @@ export class AzPSUtils {
     }
     
     private static pushPSModulePath(psModulePath: string) {
+        const isGitHubHosted = process.env.RUNNER_ENVIRONMENT?.toLowerCase() === 'github-hosted';
+        const entries = (process.env.PSModulePath || '').split(path.delimiter);
+        if (isGitHubHosted && entries.some(entry => entry === psModulePath ||
+            (path.dirname(entry) === psModulePath && fs.existsSync(path.join(entry, AzPSConstants.AzAccounts))))) {
+            core.debug(`Skip setting the default PowerShell module path, ${psModulePath} is already reachable.`);
+            return;
+        }
         process.env.PSModulePath = `${psModulePath}${path.delimiter}${process.env.PSModulePath}`;
         core.debug(`Set PSModulePath as ${process.env.PSModulePath}`);
     }
