@@ -43,8 +43,17 @@ export class AzPSUtils {
     private static pushPSModulePath(psModulePath: string) {
         const isGitHubHosted = process.env.RUNNER_ENVIRONMENT?.toLowerCase() === 'github-hosted';
         const entries = (process.env.PSModulePath || '').split(path.delimiter);
-        if (isGitHubHosted && entries.some(entry => entry === psModulePath ||
-            (path.dirname(entry) === psModulePath && fs.existsSync(path.join(entry, AzPSConstants.AzAccounts))))) {
+        const isWindows = path.sep === '\\';
+        if (isGitHubHosted && entries.some(entry => {
+            // Do not resolve relative paths or dot segments against the working directory or through links.
+            if (!path.isAbsolute(entry) || (isWindows && path.parse(entry).root.length === 1) ||
+                entry.split(isWindows ? /[\\/]/ : /\//).some(component => component === '.' || component === '..')) {
+                return false;
+            }
+            const relativePath = path.relative(psModulePath, entry);
+            return relativePath === '' || (relativePath !== '..' && path.dirname(relativePath) === '.' &&
+                fs.existsSync(path.join(entry, AzPSConstants.AzAccounts)));
+        })) {
             core.debug(`Skip setting the default PowerShell module path, ${psModulePath} is already reachable.`);
             return;
         }
