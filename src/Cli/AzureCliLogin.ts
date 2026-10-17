@@ -29,7 +29,8 @@ export class AzureCliLogin {
             }
         };
 
-        await this.executeAzCliCommand(["version"], true, execOptions);
+        // Force JSON even when AZURE_CORE_OUTPUT=none so version parsing still works.
+        await this.executeAzCliCommand(["version", "-o", "json"], true, execOptions);
         core.debug(`Azure CLI version used:\n${output}`);
         try {
             this.azVersion = JSON.parse(output)["azure-cli"];
