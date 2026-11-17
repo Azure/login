@@ -395,7 +395,7 @@ jobs:
 
 #### Immutable subject claims
 
-GitHub's immutable OIDC subject (`sub`) format appends the numeric owner and repository IDs to their names, helping prevent another repository from gaining access if those names are reused. For example, `repo:octo-org/octo-repo:ref:refs/heads/main` becomes `repo:octo-org@123456/octo-repo@456789:ref:refs/heads/main`.
+GitHub's [immutable OIDC subject claims](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/) append the numeric owner and repository IDs to their names in the subject (`sub`), helping prevent another repository from gaining access if those names are reused. For example, `repo:octo-org/octo-repo:ref:refs/heads/main` becomes `repo:octo-org@123456/octo-repo@456789:ref:refs/heads/main`.
 
 Both sides must use the same subject format:
 
@@ -847,9 +847,9 @@ Error: AADSTS7002138: No matching federated identity record found for presented 
 This means Microsoft Entra ID could not find a federated identity credential whose **Subject** exactly matches the subject in the OIDC token that GitHub presented. The token's subject is shown in the run log under `Federated token details` as `subject claim`. Two common causes:
 
 - **Case mismatch.** Federated credential subjects are matched **case-sensitively**. If your organization, repository, branch, or environment name uses uppercase characters (for example `repo:My-Org/My-Repo`), the federated credential Subject must use the exact same casing as the `subject claim` in the run log.
-- **Immutable subject claims enabled on Azure but not GitHub.** When you create the federated credential in the Azure portal and fill in the optional GitHub owner/repository ID fields, the portal generates a Subject of the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. If GitHub still uses the name-based subject `repo:<org>/<repo>:<entity>:<value>`, the subjects will not match. Choose one of these solutions:
+- **Immutable subject claims enabled on Azure but not GitHub.** An Azure federated identity credential whose Subject includes GitHub owner/repository IDs uses the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. If GitHub still uses the name-based subject `repo:<org>/<repo>:<entity>:<value>`, the subjects will not match. Choose one of these solutions:
   1. **Recommended:** Enable immutable subject claims on GitHub and configure the matching Azure credential as described in [Immutable subject claims](#immutable-subject-claims).
-  2. To keep GitHub's name-based format, edit or recreate the Azure federated identity credential **without** the owner/repository IDs so its Subject matches the token exactly.
+  2. To keep GitHub's name-based format, edit the Azure federated identity credential's Subject to **remove** the owner/repository IDs so it matches the token exactly.
 
 In both cases, set the federated credential Subject to exactly match the `subject claim` shown in your run's `Federated token details`. See [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) for details.
 
