@@ -23,6 +23,7 @@
     - [`max-context-population`](#max-context-population)
   - [Workflow Examples](#workflow-examples)
     - [Login With OpenID Connect (OIDC) \[Recommended\]](#login-with-openid-connect-oidc-recommended)
+      - [Immutable subject claims](#immutable-subject-claims)
     - [Login With a Service Principal Secret](#login-with-a-service-principal-secret)
     - [Login With System-assigned Managed Identity](#login-with-system-assigned-managed-identity)
     - [Login With User-assigned Managed Identity](#login-with-user-assigned-managed-identity)
@@ -391,6 +392,17 @@ jobs:
           inlineScript: |
             Get-AzContext
 ```
+
+#### Immutable subject claims
+
+GitHub's [immutable OIDC subject claims](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/) append the numeric owner and repository IDs to their names in the subject (`sub`), helping prevent another repository from gaining access if those names are reused. For example, `repo:octo-org/octo-repo:ref:refs/heads/main` becomes `repo:octo-org@123456/octo-repo@456789:ref:refs/heads/main`.
+
+Both sides must use the same subject format:
+
+1. **Azure:** Create a federated identity credential on your app registration or user-assigned managed identity with the immutable subject, including the correct owner/repository IDs and branch, tag, or environment. Keep the existing credential during migration.
+2. **GitHub:** Enable immutable subject claims in the repository or organization OIDC settings (UI or REST API). Repositories created, renamed, or transferred after July 15, 2026 use this format automatically; other existing repositories must opt in. This feature is not available on GitHub Enterprise Server.
+
+Run the workflow to verify login succeeds, then remove the old name-based credential. No additional Azure Login Action input is required. See [GitHub's immutable subject claims reference](https://docs.github.com/actions/reference/security/oidc#immutable-subject-claims) and [Microsoft Entra's migration guide](https://learn.microsoft.com/entra/workload-id/workload-identities-github-immutable-subjects) for detailed setup and migration steps.
 
 ### Login With a Service Principal Secret
 
@@ -835,7 +847,9 @@ Error: AADSTS7002138: No matching federated identity record found for presented 
 This means Microsoft Entra ID could not find a federated identity credential whose **Subject** exactly matches the subject in the OIDC token that GitHub presented. The token's subject is shown in the run log under `Federated token details` as `subject claim`. Two common causes:
 
 - **Case mismatch.** Federated credential subjects are matched **case-sensitively**. If your organization, repository, branch, or environment name uses uppercase characters (for example `repo:My-Org/My-Repo`), the federated credential Subject must use the exact same casing as the `subject claim` in the run log.
-- **Subject includes GitHub numeric IDs.** When you create the federated credential in the Azure portal and fill in the optional GitHub owner/repository ID fields, the portal generates a Subject of the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. The OIDC token GitHub sends does **not** include those numeric IDs (its subject is `repo:<org>/<repo>:<entity>:<value>`), so it will never match. Create or edit the federated credential **without** the owner/repository IDs so the Subject matches the token exactly.
+- **Immutable subject claims enabled on Azure but not GitHub.** An Azure federated identity credential whose Subject includes GitHub owner/repository IDs uses the form `repo:<org>@<org-id>/<repo>@<repo-id>:<entity>:<value>`. If GitHub still uses the name-based subject `repo:<org>/<repo>:<entity>:<value>`, the subjects will not match. Choose one of these solutions:
+  1. **Recommended:** Enable immutable subject claims on GitHub and configure the matching Azure credential as described in [Immutable subject claims](#immutable-subject-claims).
+  2. To keep GitHub's name-based format, edit the Azure federated identity credential's Subject to **remove** the owner/repository IDs so it matches the token exactly.
 
 In both cases, set the federated credential Subject to exactly match the `subject claim` shown in your run's `Federated token details`. See [Configure a federated identity credential](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions) for details.
 
